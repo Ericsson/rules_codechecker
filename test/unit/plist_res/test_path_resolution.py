@@ -17,11 +17,12 @@ Tests regex resolution from remote executor absolute path
 to local relative paths
 """
 import os
+import re
 import shutil
 import unittest
 from typing import Dict
 from common.base import TestBase
-from src.codechecker_script import fix_bazel_paths
+from src.codechecker_script import BAZEL_PATHS
 
 PATH_RESOLUTION: Dict[str, str] = {
     # {Remote execution absolute path}: {project relative path}
@@ -33,7 +34,7 @@ PATH_RESOLUTION: Dict[str, str] = {
 }
 
 
-class TestTemplate(TestBase):
+class TestPathResolve(TestBase):
     """Test regex resolution of remote execution paths"""
 
     # Set working directory
@@ -46,38 +47,18 @@ class TestTemplate(TestBase):
     )
     dir = os.path.dirname(os.path.abspath(__file__)) + "/tmp"
 
-    def setUp(self):
-        """Write absolute paths to action directory"""
-        if os.path.exists("tmp"):
-            try:
-                shutil.rmtree("tmp")
-            except Exception as e:
-                self.fail(f"Failed to clean up the existing tmp directory {e}")
-        os.mkdir("tmp")
-        with open("tmp/test.txt", "w") as f:
-            for abs, _ in PATH_RESOLUTION.items():
-                f.write(abs + "\n")
-        super().setUp()
-
-    def tearDown(self):
-        """Remove test files"""
-        if os.path.exists("tmp"):
-            try:
-                shutil.rmtree("tmp")
-            except:
-                pass
-        return super().tearDown()
-
     def test_remote_worker_path_resolution(self):
         """
         Test: Resolve absolute path of remote worker
         to a relative path of the original project
         """
-        fix_bazel_paths(self.__test_path__ + "/tmp")  # type: ignore
-        with open("tmp/test.txt", "r") as f:
-            for _, res in PATH_RESOLUTION.items():
-                # FIXME: change to assertEqual
-                self.assertNotEqual(f.readline().strip(), res)
+        test_on : Dict[str, str] = PATH_RESOLUTION.copy()
+        for before, res in test_on.items():
+            after: str = before[:]
+            for pattern, replace in BAZEL_PATHS.items():
+                after = re.sub(pattern, replace, after)
+            # FIXME: change to assertEqual
+            self.assertNotEqual(after, res)
 
 
 if __name__ == "__main__":

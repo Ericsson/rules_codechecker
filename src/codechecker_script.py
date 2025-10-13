@@ -205,10 +205,10 @@ def analyze():
         fail("Make sure that the target can be built first")
 
 
-def fix_bazel_paths(pth = None):
+def fix_bazel_paths():
     """ Remove Bazel leading paths in all files """
     stage("Fix CodeChecker output:")
-    folder = CODECHECKER_FILES if not pth else pth
+    folder = CODECHECKER_FILES
     logging.info("Fixing Bazel paths in %s", folder)
     counter = 0
     for root, _, files in os.walk(folder):

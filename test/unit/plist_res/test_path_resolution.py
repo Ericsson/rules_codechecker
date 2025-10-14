@@ -22,7 +22,7 @@ import shutil
 import unittest
 from typing import Dict
 from common.base import TestBase
-from src.codechecker_script import BAZEL_PATHS
+from src.codechecker_script import fix_path_with_regex
 
 PATH_RESOLUTION: Dict[str, str] = {
     # {Remote execution absolute path}: {project relative path}
@@ -54,9 +54,7 @@ class TestPathResolve(TestBase):
         """
         test_on : Dict[str, str] = PATH_RESOLUTION.copy()
         for before, res in test_on.items():
-            after: str = before[:]
-            for pattern, replace in BAZEL_PATHS.items():
-                after = re.sub(pattern, replace, after)
+            after: str = fix_path_with_regex(before[:])
             # FIXME: change to assertEqual
             self.assertNotEqual(after, res)
 

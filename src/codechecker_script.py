@@ -207,8 +207,12 @@ def analyze():
 
 def fix_path_with_regex(data:str) -> str:
     """
-    Try resolving Bazel paths using regexes.
-    Returns the resulting string.
+    The absolute paths of the analyzed source files found in the plist files
+    do not point to their original location, but rather wherever bazel copied
+    them. This might either be in a subdirectory in bazel-bin on the
+    local machine, or somewhere unrelated if the analysis was executed on a
+    remote worker. This function tries to replace these paths to the location
+    of the original location of the source file.
     """
     for pattern, replace in BAZEL_PATHS.items():
         data = re.sub(pattern, replace, data)

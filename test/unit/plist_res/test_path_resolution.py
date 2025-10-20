@@ -24,15 +24,6 @@ from typing import Dict
 from common.base import TestBase
 from src.codechecker_script import fix_path_with_regex
 
-PATH_RESOLUTION: Dict[str, str] = {
-    # {Remote execution absolute path}: {project relative path}
-    "/worker/build/5d2c60d87885b089/root/test/unit/legacy/src/lib.cc": "test/unit/legacy/src/lib.cc",
-    "/worker/build/a0ed5e04f7c3b444/root/test/unit/legacy/src/ctu.cc": "test/unit/legacy/src/ctu.cc",
-    "/worker/build/a0ed5e04f7c3b444/root/test/unit/legacy/src/fail.cc": "test/unit/legacy/src/fail.cc",
-    # This resolution is impossible, because "test_inc" => "inc" cannot be resolved
-    # "/worker/build/28e82627f5078a2d/root/bazel-out/k8-fastbuild/bin/test/unit/virtual_include/_virtual_includes/test_inc/zeroDiv.h": "test/unit/virtual_include/inc/zeroDiv.h"
-}
-
 
 class TestPathResolve(TestBase):
     """Test regex resolution of remote execution paths"""
@@ -52,7 +43,15 @@ class TestPathResolve(TestBase):
         Test: Resolve absolute path of remote worker
         to a relative path of the original project
         """
-        test_on : Dict[str, str] = PATH_RESOLUTION.copy()
+        test_path_collection: Dict[str, str] = {
+            # {Remote execution absolute path}: {project relative path}
+            "/worker/build/5d2c60d87885b089/root/test/unit/legacy/src/lib.cc": "test/unit/legacy/src/lib.cc",
+            "/worker/build/a0ed5e04f7c3b444/root/test/unit/legacy/src/ctu.cc": "test/unit/legacy/src/ctu.cc",
+            "/worker/build/a0ed5e04f7c3b444/root/test/unit/legacy/src/fail.cc": "test/unit/legacy/src/fail.cc",
+            # This resolution is impossible, because "test_inc" => "inc" cannot be resolved
+            # "/worker/build/28e82627f5078a2d/root/bazel-out/k8-fastbuild/bin/test/unit/virtual_include/_virtual_includes/test_inc/zeroDiv.h": "test/unit/virtual_include/inc/zeroDiv.h"
+        }
+        test_on: Dict[str, str] = test_path_collection.copy()
         for before, res in test_on.items():
             after: str = fix_path_with_regex(before[:])
             # FIXME: change to assertEqual

@@ -60,5 +60,6 @@ codechecker_test(
 #-------------------------------------------------------
 EOF
 
+echo "common --enable_workspace" >> .bazelrc
 # Add rules_codechecker repo to WORKSPACE
 cat ../templates/WORKSPACE.template >> "$1/WORKSPACE"

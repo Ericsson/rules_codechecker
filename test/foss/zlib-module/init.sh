@@ -51,3 +51,6 @@ EOF
 echo "common --enable_bzlmod" > .bazelrc
 # Add rules_codechecker repo MODULE.bazel
 cat ../../templates/MODULE.template >> MODULE.bazel
+# An empty workspace file is required to keep Bazel versions older than 6.5.0
+# in the project directory
+touch WORKSPACE

@@ -16,10 +16,12 @@
 Test the rule integrated into open source projects
 """
 
+from pathlib import Path
 import unittest
 import os
 from types import FunctionType
 from common.base import TestBase
+from common.tmpfile import TemporaryDir
 
 ROOT_DIR = f"{os.path.dirname(os.path.abspath(__file__))}/"
 NOT_PROJECT_FOLDERS = ["templates", "__pycache__", ".pytest_cache"]
@@ -67,18 +69,37 @@ def create_test_method(directory_name: str) -> FunctionType:
             f"Missing 'init.sh' in {directory_name}\n"
             + "Please consult with the README on how to add a new FOSS project",
         )
-        project_working_dir = os.path.join(project_root, "test-proj")
-        if not os.path.exists(project_working_dir):
-            ret, _, _ = self.run_command("sh init.sh", project_root)
-        self.assertTrue(os.path.exists(project_working_dir))
-        ret, _, stderr = self.run_command(
-            "bazel build :codechecker_test", project_working_dir
-        )
-        self.assertEqual(ret, 0, stderr)
-        ret, _, stderr = self.run_command(
-            "bazel build :per_file_test", project_working_dir
-        )
-        self.assertEqual(ret, 0, stderr)
+        with TemporaryDir() as project_working_dir:
+            self.assertTrue(os.path.exists(project_working_dir))
+            ret, _, _ = self.run_command(
+                f"sh init.sh {project_working_dir}", project_root
+            )
+            module_file = Path(
+                os.path.join(project_working_dir, "MODULE.bazel")
+            )
+            if os.path.exists(module_file):
+                content = module_file.read_text().replace(
+                    "{rule_path}",
+                    f"{os.path.dirname(os.path.abspath(__file__))}/../../",
+                )
+                module_file.write_text(content)
+            workspace_file = Path(
+                os.path.join(project_working_dir, "WORKSPACE")
+            )
+            if os.path.exists(workspace_file):
+                content = workspace_file.read_text().replace(
+                    "{rule_path}",
+                    f"{os.path.dirname(os.path.abspath(__file__))}/../../",
+                )
+                workspace_file.write_text(content)
+            ret, _, _ = self.run_command(
+                "bazel build :codechecker_test", project_working_dir
+            )
+            self.assertEqual(ret, 0)
+            ret, _, _ = self.run_command(
+                "bazel build :per_file_test", project_working_dir
+            )
+            self.assertEqual(ret, 0)
 
     return test_runner
 

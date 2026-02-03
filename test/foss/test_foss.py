@@ -19,9 +19,9 @@ Test the rule integrated into open source projects
 from pathlib import Path
 import unittest
 import os
+import tempfile
 from types import FunctionType
 from common.base import TestBase
-from common.tmpfile import TemporaryDir
 
 ROOT_DIR = f"{os.path.dirname(os.path.abspath(__file__))}/"
 NOT_PROJECT_FOLDERS = ["templates", "__pycache__", ".pytest_cache"]
@@ -69,7 +69,7 @@ def create_test_method(directory_name: str) -> FunctionType:
             f"Missing 'init.sh' in {directory_name}\n"
             + "Please consult with the README on how to add a new FOSS project",
         )
-        with TemporaryDir() as project_working_dir:
+        with tempfile.TemporaryDirectory() as project_working_dir:
             self.assertTrue(os.path.exists(project_working_dir))
             ret, _, _ = self.run_command(
                 f"sh init.sh {project_working_dir}", project_root

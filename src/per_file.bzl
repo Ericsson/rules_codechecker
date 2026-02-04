@@ -19,7 +19,14 @@ for each translation unit.
 
 load("@bazel_tools//tools/build_defs/cc:action_names.bzl", "ACTION_NAMES")
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
+load("@default_codechecker_tools//:defs.bzl", "BAZEL_VERSION")
 load("codechecker_config.bzl", "get_config_file")
+load(
+    "common.bzl",
+    "python_interpreter_tool",
+    "python_path",
+    "python_toolchain_type",
+)
 load(
     "compile_commands.bzl",
     "SourceFilesInfo",
@@ -27,12 +34,6 @@ load(
     "compile_commands_impl",
     "platforms_transition",
 )
-load("common.bzl",
-     "python_path",
-     "python_toolchain_type",
-     "python_interpreter_tool",
-)
-load("@default_codechecker_tools//:defs.bzl", "BAZEL_VERSION")
 
 def _run_code_checker(
         ctx,
@@ -63,7 +64,7 @@ def _run_code_checker(
             ctx.outputs.per_file_script,
             compile_commands_json,
             config_file,
-            ] + sources_and_headers
+        ] + sources_and_headers
     else:
         # NOTE: we collect only headers, so CTU may not work!
         headers = depset(transitive = target[SourceFilesInfo].headers.to_list())
@@ -73,7 +74,9 @@ def _run_code_checker(
                 compile_commands_json,
                 config_file,
                 src,
-                ], transitive = [headers])
+            ],
+            transitive = [headers],
+        )
 
     outputs = [clang_tidy_plist, clangsa_plist, codechecker_log]
 

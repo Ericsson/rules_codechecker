@@ -27,10 +27,10 @@ load(
 )
 load(
     "common.bzl",
+    "python_interpreter_tool",
     "python_path",
     "python_toolchain_type",
     "version_specific_attributes",
-    "python_interpreter_tool",
 )
 load(
     "compile_commands.bzl",
@@ -237,6 +237,7 @@ def _codechecker_test_impl(ctx):
             "{Severities}": " ".join(ctx.attr.severities),
         },
     )
+
     # For use in script the short path must be used (or absolute path)
     # For use in executable the full path
     python_interpreter_path = python_path(ctx)
@@ -250,15 +251,15 @@ def _codechecker_test_impl(ctx):
             {} {}
         """.format(
             python_interpreter_path,
-            ctx.outputs.codechecker_test_script.short_path
-            )
+            ctx.outputs.codechecker_test_script.short_path,
+        ),
     )
 
     # Return test script and all required files
     run_files = default_runfiles + [
         ctx.outputs.codechecker_test_script,
         ctx.outputs.test_script_wrapper,
-        ] + python_interpreter_tool(ctx)
+    ] + python_interpreter_tool(ctx)
 
     return [
         DefaultInfo(

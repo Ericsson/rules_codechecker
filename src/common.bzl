@@ -61,6 +61,7 @@ def python_path(ctx):
     elif hasattr(py_toolchain, "py3_runtime"):
         py_runtime = py_toolchain.py3_runtime
         python_path = py_runtime.interpreter_path
+
         # @rules_python does not provide interpreter_path, but interpreter.path
         if python_path == None:
             python_path = py_runtime.interpreter.path

@@ -57,4 +57,5 @@ def warning(ctx, msg):
     NOTE: "debug" in tags works only for rules, not aspects
     """
     if hasattr(ctx.attr, "tags") and "debug" in ctx.attr.tags:
+        # buildifier: disable=print
         print(msg)

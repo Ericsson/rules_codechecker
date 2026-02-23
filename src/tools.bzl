@@ -86,6 +86,8 @@ default_python_tools = repository_rule(
     implementation = _python_local_repository_impl,
 )
 
+# buildifier: disable=unused-variable
+# This parameter is provided, regardless if we use it or not
 def register_default_python_toolchain(ctx = None):
     default_python_tools(name = "default_python_tools")
 
@@ -120,6 +122,8 @@ default_codechecker_tools = repository_rule(
     implementation = _codechecker_local_repository_impl,
 )
 
+# buildifier: disable=unused-variable
+# This parameter is provided, regardless if we use it or not
 def register_default_codechecker(ctx = None):
     default_codechecker_tools(name = "default_codechecker_tools")
 

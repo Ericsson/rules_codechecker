@@ -215,8 +215,14 @@ def _run_analyzer(
 
 def check_valid_file_type(src):
     """
+    Checks if the file is a cpp related file.
+
     Returns True if the file type matches one of the permitted
     srcs file types for C and C++ header/source files.
+    Args:
+        src: Path of a single source file.
+    Returns:
+        Boolean value.
     """
     permitted_file_types = [
         ".c",
@@ -326,6 +332,8 @@ CompileInfo = provider(
     },
 )
 
+# buildifier: disable=unused-variable
+# The headers variable is used: headers += dep[CompileInfo].headers.to_list()
 def _process_all_deps(ctx, arguments, headers):
     for attr in SOURCE_ATTR:
         if hasattr(ctx.rule.attr, attr):
@@ -391,7 +399,7 @@ compile_info_aspect = aspect(
 
 def _clang_test(ctx, tool):
     all_files = []
-    all_headers = depset()
+    all_headers_list = []
     for target in ctx.attr.targets:
         if CompileInfo in target:
             if hasattr(target[CompileInfo], "arguments"):
@@ -411,8 +419,9 @@ def _clang_test(ctx, tool):
                         ctx.attr.name,
                     )
                     all_files.append(report)
-                    all_headers = depset(transitive = [all_headers, headers])
+                    all_headers_list.extend(headers.to_list())
 
+    all_headers = depset(all_headers_list)
     ctx.actions.write(
         output = ctx.outputs.test_script,
         is_executable = True,

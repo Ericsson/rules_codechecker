@@ -9,7 +9,7 @@ THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 TARGET_DIR="$THIS_DIR/bin"
 TARGET_PATH="$TARGET_DIR/buildifier"
 
-VERSION="v8.5.1"
+VERSION="v6.4.0"
 URL="https://github.com/bazelbuild/buildtools/releases/download/${VERSION}/buildifier-linux-amd64"
 
 case "$1" in
@@ -44,4 +44,4 @@ else
 fi
 
 export BUILDIFIER_EXE="$TARGET_PATH"
-alias buildifier='$BUILDIFIER_EXE'
+alias buildifier=`echo $BUILDIFIER_EXE`

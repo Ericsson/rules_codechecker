@@ -18,9 +18,15 @@ Ruleset for configuring codechecker.
 
 def _get_config_file_name(ctx):
     """
+    Get the name of the config file.
+
     Returns the name of the config file to be used, with correct extension
     If no config file is given, we write the configuration options into a
     config.json file.
+    Args:
+        ctx: The context variable
+    Returns:
+        Path of the config file
     """
     if ctx.attr.config:
         if type(ctx.attr.config) == "list":
@@ -37,8 +43,13 @@ def _get_config_file_name(ctx):
 
 def get_config_file(ctx):
     """
-    Returns (config_file, environment_variables)
-    config_file is a file object that is readable during Codechecker execution
+    Create config file for analysis
+
+    Args:
+        ctx: The context variable
+    Returns:
+        A tuple: (config_file, environment_variables)
+        config_file is the file object to be read by Codechecker
     """
 
     # Declare config file to use during analysis

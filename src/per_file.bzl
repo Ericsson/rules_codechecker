@@ -17,16 +17,12 @@ Rulesets for running codechecker in a different Bazel action
 for each translation unit.
 """
 
-load("@bazel_tools//tools/build_defs/cc:action_names.bzl", "ACTION_NAMES")
-load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 load("codechecker_config.bzl", "get_config_file")
-load("common.bzl", "SOURCE_ATTR")
 load(
     "compile_commands.bzl",
     "SourceFilesInfo",
     "compile_commands_aspect",
     "compile_commands_impl",
-    "platforms_transition",
 )
 
 def _run_code_checker(
@@ -84,8 +80,14 @@ def _run_code_checker(
 
 def check_valid_file_type(src):
     """
+    Checks if the file is a cpp related file.
+
     Returns True if the file type matches one of the permitted
     srcs file types for C and C++ source files.
+    Args:
+        src: Path of a single source file.
+    Returns:
+        Boolean value.
     """
     permitted_file_types = [
         ".c",

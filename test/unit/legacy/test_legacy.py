@@ -81,7 +81,6 @@ class TestBase(unittest.TestCase):
                     logging.debug(line)
                     return line
         self.fail(f"Could not find r'{regex}' in '{filename}'")
-        return ""
 
 class TestBasic(TestBase):
     """Basic tests"""

@@ -16,11 +16,14 @@
 Test the rule integrated into open source projects
 """
 
+import logging
 from pathlib import Path
 import unittest
 import os
 import tempfile
 from types import FunctionType
+
+import pytest
 from common.base import TestBase
 
 ROOT_DIR = f"{os.path.dirname(os.path.abspath(__file__))}/"
@@ -71,6 +74,7 @@ def create_test_method(directory_name: str) -> FunctionType:
         )
         with tempfile.TemporaryDirectory() as project_working_dir:
             self.assertTrue(os.path.exists(project_working_dir))
+            logging.info("Initializing project...")
             ret, _, _ = self.run_command(
                 f"sh init.sh {project_working_dir}", project_root
             )
@@ -92,14 +96,16 @@ def create_test_method(directory_name: str) -> FunctionType:
                     f"{os.path.dirname(os.path.abspath(__file__))}/../../",
                 )
                 workspace_file.write_text(content)
-            ret, _, _ = self.run_command(
+            logging.info("Running monolithic rule...")
+            ret, _, stderr = self.run_command(
                 "bazel build :codechecker_test", project_working_dir
             )
-            self.assertEqual(ret, 0)
-            ret, _, _ = self.run_command(
+            self.assertEqual(ret, 0, stderr)
+            logging.info("Running per_file rule...")
+            ret, _, stderr = self.run_command(
                 "bazel build :per_file_test", project_working_dir
             )
-            self.assertEqual(ret, 0)
+            self.assertEqual(ret, 0, stderr)
 
     return test_runner
 

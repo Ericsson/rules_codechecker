@@ -81,6 +81,7 @@ python3 -m unittest discover unit/my_test_dir -vvv
   - Clone the test project into said folder
   - To ensure the project doesn't change over time, check out a specific tag or commit instead of a branch!
   - Copy the .bazelversion file, if it exists, from the root of codechecker_bazel into the projects directory.
+    This file is usually set by developers using bazelisk, and is also used in CI.
   - Append the WORKSPACE.template file to the WORKSPACE file of the project.
   - Append the codechecker rules to the BUILD file of the project.
     - There can be only two targets, codechecker_test and per_file_test

@@ -98,6 +98,10 @@ def _codechecker_impl(ctx):
     config_file, codechecker_env = get_config_file(ctx)
 
     codechecker_files = ctx.actions.declare_directory(ctx.label.name + "/codechecker-files")
+    # For hermeticism the executable should be a python interpreter
+    # provided by Bazel. This interpreter cannot always be added to the script
+    # as a shebang. Because of this this script is explicitly marked as
+    # non executable.
     ctx.actions.expand_template(
         template = ctx.file._codechecker_script_template,
         output = ctx.outputs.codechecker_script,
@@ -225,10 +229,14 @@ def _codechecker_test_impl(ctx):
         fail("Execution results required for codechecker test are not available")
 
     # Create test script from template
+    # For hermeticism the executable should be a python interpreter
+    # provided by Bazel. This interpreter cannot always be added to the script
+    # as a shebang. Because of this this script is explicitly marked as
+    # non executable.
     ctx.actions.expand_template(
         template = ctx.file._codechecker_script_template,
         output = ctx.outputs.codechecker_test_script,
-        is_executable = True,
+        is_executable = False,
         substitutions = {
             "{Mode}": "Test",
             "{Verbosity}": "INFO",
@@ -238,12 +246,18 @@ def _codechecker_test_impl(ctx):
         },
     )
 
-    # For use in script the short path must be used (or absolute path)
-    # For use in executable the full path
+    # If we use our toolchain, the path will be an absolute path,
+    # executable by bazel
     python_interpreter_path = python_path(ctx)
+
+    # If we can find an interpreter tool provided by bazel,
+    # use that as an executable
     if python_interpreter_tool(ctx) != []:
         python_interpreter_path = python_interpreter_tool(ctx)[0].short_path
 
+    # Since we cannot give parameters to the runfiles
+    # we wrap the executable (a python binary) in a script.
+    # In the script we give the CodeChecker script as an argument.
     ctx.actions.write(
         output = ctx.outputs.test_script_wrapper,
         is_executable = True,

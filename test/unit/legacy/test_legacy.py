@@ -1,3 +1,5 @@
+# pylint: disable=duplicate-code
+
 # Copyright 2023 Ericsson AB
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -79,7 +81,6 @@ class TestBase(unittest.TestCase):
                     logging.debug(line)
                     return line
         self.fail(f"Could not find r'{regex}' in '{filename}'")
-        return ""
 
 class TestBasic(TestBase):
     """Basic tests"""

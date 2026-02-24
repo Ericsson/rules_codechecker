@@ -246,7 +246,7 @@ def _codechecker_test_impl(ctx):
         },
     )
 
-    # If we use our toolchain, the path will be an absolute path,
+    # If we use our custom toolchain, the path will be an absolute path,
     # executable by bazel
     python_interpreter_path = python_path(ctx)
 

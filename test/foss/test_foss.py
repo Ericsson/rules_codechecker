@@ -48,6 +48,7 @@ class FOSSTestCollector(TestBase):
     """
     Test class for FOSS tests
     """
+
     # Set working directory
     __test_path__ = os.path.dirname(os.path.abspath(__file__))
     # These are irrelevant for these kind of tests
@@ -80,20 +81,20 @@ def create_test_method(directory_name: str) -> FunctionType:
                 os.path.join(project_working_dir, "MODULE.bazel")
             )
             if os.path.exists(module_file):
-                content = module_file.read_text().replace(
+                content = module_file.read_text("utf-8").replace(
                     "{rule_path}",
                     f"{os.path.dirname(os.path.abspath(__file__))}/../../",
                 )
-                module_file.write_text(content)
+                module_file.write_text(content, "utf-8")
             workspace_file = Path(
                 os.path.join(project_working_dir, "WORKSPACE")
             )
             if os.path.exists(workspace_file):
-                content = workspace_file.read_text().replace(
+                content = workspace_file.read_text("utf-8").replace(
                     "{rule_path}",
                     f"{os.path.dirname(os.path.abspath(__file__))}/../../",
                 )
-                workspace_file.write_text(content)
+                workspace_file.write_text(content, "utf-8")
             logging.info("Running monolithic rule...")
             ret, _, stderr = self.run_command(
                 "bazel build :codechecker_test", project_working_dir

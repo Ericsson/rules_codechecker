@@ -17,13 +17,11 @@ Test the rule integrated into open source projects
 """
 
 import logging
-from pathlib import Path
 import unittest
 import os
 import tempfile
+from pathlib import Path
 from types import FunctionType
-
-import pytest
 from common.base import TestBase
 
 ROOT_DIR = f"{os.path.dirname(os.path.abspath(__file__))}/"

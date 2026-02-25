@@ -262,10 +262,10 @@ def _codechecker_test_impl(ctx):
         output = ctx.outputs.test_script_wrapper,
         is_executable = True,
         content = """
-            {} {}
+            {python_bin} {test_script}
         """.format(
-            python_interpreter_path,
-            ctx.outputs.codechecker_test_script.short_path,
+            python_bin = python_interpreter_path,
+            test_script = ctx.outputs.codechecker_test_script.short_path,
         ),
     )
 

@@ -19,10 +19,15 @@ py_binary(
     visibility = ["//visibility:public"],
 )
 
+py_binary(
+    name = "codechecker_script",
+    srcs = ["codechecker_script.py"],
+    visibility = ["//visibility:public"],
+)
+
 # Build & Test script template
 exports_files(
     [
-        "codechecker_script.py",
         "per_file_script.py",
     ],
 )

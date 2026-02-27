@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # Copyright 2023 Ericsson AB
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,20 +24,47 @@ import re
 import shlex
 import subprocess
 import sys
+import argparse
 
-EXECUTION_MODE = "{Mode}"
-VERBOSITY = "{Verbosity}"
-CODECHECKER_PATH = os.path.realpath("{codechecker_bin}")
-CLANG_PATH = os.path.realpath("{clang_bin}")
-CLANG_TIDY_PATH = os.path.realpath("{clang_tidy_bin}")
-CODECHECKER_SKIPFILE = "{codechecker_skipfile}"
-CODECHECKER_CONFIG = "{codechecker_config}"
-CODECHECKER_ANALYZE = "{codechecker_analyze}"
-CODECHECKER_FILES = "{codechecker_files}"
-CODECHECKER_LOG = "{codechecker_log}"
-CODECHECKER_SEVERITIES = "{Severities}"
-CODECHECKER_ENV = "{codechecker_env}"
-COMPILE_COMMANDS = "{compile_commands}"
+parser = argparse.ArgumentParser(description="CodeChecker Bazel Wrapper")
+
+parser.add_argument("--mode", required=True, help="Execution mode")
+parser.add_argument("--verbosity", default="INFO", help="Log level")
+parser.add_argument(
+    "--codechecker_path", required=True, help="CodeChecker path"
+)
+parser.add_argument("--clang_tidy", required=False, help="CodeChecker path")
+parser.add_argument("--clang", required=False, help="CodeChecker path")
+parser.add_argument("--commands", help="Compile commands json")
+parser.add_argument("--skip", help="Skipfile path")
+parser.add_argument("--config", help="Config file path")
+parser.add_argument("--analyze", default="", help="Analysis options")
+parser.add_argument(
+    "--files", help="Folder where CodeChecker will store its results"
+)
+parser.add_argument("--log", help="Log file path")
+parser.add_argument("--env", help="Environment for CodeChecker")
+parser.add_argument("--severities", help="List of severities to fail on")
+
+if __name__ == "__main__":
+    # Arguments should only be parsed, if this script is the entry point
+    args = parser.parse_args()
+
+    EXECUTION_MODE = args.mode
+    VERBOSITY = args.verbosity
+    CODECHECKER_PATH = os.path.realpath(args.codechecker_path)
+    COMPILE_COMMANDS = args.commands
+    CLANG_PATH = os.path.realpath(args.clang) if args.clang else None
+    CLANG_TIDY_PATH = (
+        os.path.realpath(args.clang_tidy) if args.clang_tidy else None
+    )
+    CODECHECKER_SKIPFILE = args.skip
+    CODECHECKER_CONFIG = args.config
+    CODECHECKER_ANALYZE = args.analyze
+    CODECHECKER_FILES = args.files
+    CODECHECKER_LOG = args.log
+    CODECHECKER_ENV = args.env
+    CODECHECKER_SEVERITIES = args.severities
 
 START_PATH = r"\/(?:(?!\.\s+)\S)+"
 BAZEL_PATHS = {

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # Copyright 2023 Ericsson AB
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,24 +22,24 @@ import shutil
 import subprocess
 import sys
 
-COMPILE_COMMANDS_JSON: str = "{compile_commands_json}"
+COMPILE_COMMANDS_JSON: str = sys.argv[2]
 COMPILE_COMMANDS_ABSOLUTE: str = f"{COMPILE_COMMANDS_JSON}.abs"
-CODECHECKER_ARGS: str = "{codechecker_args}"
-CONFIG_FILE: str = "{config_file}"
-SKIP_FILE: str = sys.argv[5]
+CODECHECKER_ARGS: str = sys.argv[3]
+CONFIG_FILE: str = sys.argv[4]
+SKIP_FILE: str = sys.argv[8]
 CODECHECKER_BIN = os.path.realpath(sys.argv[1])
 # The output directory for CodeChecker
-DATA_DIR = sys.argv[2]
+DATA_DIR = sys.argv[5]
 # The file to be analyzed
-FILE_PATH = sys.argv[3]
-LOG_FILE = sys.argv[4]
-METADATA_FILE = sys.argv[6]
+FILE_PATH = sys.argv[6]
+LOG_FILE = sys.argv[7]
+METADATA_FILE = sys.argv[9]
 # List of pairs of analyzers and their plist files
-ANALYZER_PLIST_PATHS = [item.split(",") for item in sys.argv[7].split(";")]
+ANALYZER_PLIST_PATHS = [item.split(",") for item in sys.argv[10].split(";")]
 ANALYZER_EXECUTABLES_ENV_VAR = ";".join(
     f"{name}:{os.path.realpath(path)}"
     for name, path in [
-        pair.split(":", 1) for pair in sys.argv[8].split(";") if pair
+        pair.split(":", 1) for pair in sys.argv[11].split(";") if pair
     ]
 )
 
@@ -217,7 +215,7 @@ def main():
     """
     Main function of CodeChecker wrapper
     """
-    if len(sys.argv) != 9:
+    if len(sys.argv) != 12:
         print("Wrong amount of arguments")
         sys.exit(1)
     _create_compile_commands_json_with_absolute_paths()

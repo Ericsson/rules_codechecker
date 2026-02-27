@@ -29,6 +29,7 @@ load(
 # buildifier: disable=unused-variable
 def _run_code_checker(
         ctx,
+        per_file_script,
         src,
         arguments,
         info,
@@ -94,13 +95,21 @@ def _run_code_checker(
                            ";clang-tidy:" + info.clang_tidy.path
 
     # Action to run CodeChecker for a file
+    # env_vars are unused for now, since
+    # use_default_shell_env and env are incompatible
     ctx.actions.run(
         inputs = inputs,
         outputs = outputs,
-        executable = ctx.outputs.per_file_script,
-        tools = [info.runfiles],
+        executable = per_file_script,
+        tools = [
+            info.runfiles,
+            ctx.attr._per_file_script[DefaultInfo].files_to_run,
+        ],
         arguments = [
             info.codechecker.path,
+            compile_commands_json.path,
+            " ".join(options),
+            config_file.path,
             data_dir,
             src.path,
             codechecker_log.path,
@@ -156,21 +165,6 @@ def _collect_all_sources_and_headers(ctx):
                 all_files += headers
     return all_files
 
-def _create_wrapper_script(ctx, options, compile_commands_json, config_file):
-    options_str = ""
-    for item in options:
-        options_str += item + " "
-    ctx.actions.expand_template(
-        template = ctx.file._per_file_script_template,
-        output = ctx.outputs.per_file_script,
-        is_executable = True,
-        substitutions = {
-            "{codechecker_args}": options_str,
-            "{compile_commands_json}": compile_commands_json.path,
-            "{config_file}": config_file.path,
-        },
-    )
-
 def _per_file_impl(ctx):
     info = ctx.toolchains["//:toolchain_type"].codecheckerinfo
     compile_commands = None
@@ -185,7 +179,13 @@ def _per_file_impl(ctx):
     options = ctx.attr.default_options + ctx.attr.options
     config_file, env_vars = get_config_file(ctx)
     all_files = [compile_commands, config_file]
-    _create_wrapper_script(ctx, options, compile_commands, config_file)
+
+    # Create per_file_script
+    per_file_script = ctx.actions.declare_file(ctx.label.name + "/per_file_script")
+    ctx.actions.symlink(
+        output = per_file_script,
+        target_file = ctx.executable._per_file_script,
+    )
 
     info = ctx.toolchains["//:toolchain_type"].codecheckerinfo
     for target in ctx.attr.targets:
@@ -202,6 +202,7 @@ def _per_file_impl(ctx):
                     args = target[SourceFilesInfo].compilation_db.to_list()
                     outputs = _run_code_checker(
                         ctx,
+                        per_file_script,
                         src,
                         args,
                         info,
@@ -270,14 +271,15 @@ per_file_test = rule(
             ],
             doc = "List of compilable targets which should be checked.",
         ),
-        "_per_file_script_template": attr.label(
-            default = ":per_file_script.py",
-            allow_single_file = True,
+        "_per_file_script": attr.label(
+            allow_files = True,
+            executable = True,
+            cfg = "target",
+            default = ":per_file_script",
         ),
     },
     outputs = {
         "compile_commands": "%{name}/compile_commands.json",
-        "per_file_script": "%{name}/per_file_script.py",
         "test_script": "%{name}/test_script.sh",
     },
     test = True,

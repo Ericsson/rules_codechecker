@@ -26,34 +26,34 @@ import subprocess
 import sys
 
 
-EXECUTION_MODE = os.environ.get("RULES_CODECHECKER_Mode", "{Mode}")
-VERBOSITY = os.environ.get("RULES_CODECHECKER_Verbosity", "{Verbosity}")
+EXECUTION_MODE = os.environ.get("RULES_CODECHECKER_MODE", "{Mode}")
+VERBOSITY = os.environ.get("RULES_CODECHECKER_VERBOSITY", "{Verbosity}")
 CODECHECKER_PATH = os.environ.get(
-    "RULES_CODECHECKER_codechecker_bin", "{codechecker_bin}"
+    "RULES_CODECHECKER_CODECHECKER_BIN", "{codechecker_bin}"
 )
 CODECHECKER_SKIPFILE = os.environ.get(
-    "RULES_CODECHECKER_codechecker_skipfile", "{codechecker_skipfile}"
+    "RULES_CODECHECKER_CODECHECKER_SKIPFILE", "{codechecker_skipfile}"
 )
 CODECHECKER_CONFIG = os.environ.get(
-    "RULES_CODECHECKER_codechecker_config", "{codechecker_config}"
+    "RULES_CODECHECKER_CODECHECKER_CONFIG", "{codechecker_config}"
 )
 CODECHECKER_ANALYZE = os.environ.get(
-    "RULES_CODECHECKER_codechecker_analyze", "{codechecker_analyze}"
+    "RULES_CODECHECKER_CODECHECKER_ANALYZE", "{codechecker_analyze}"
 )
 CODECHECKER_FILES = os.environ.get(
-    "RULES_CODECHECKER_codechecker_files", "{codechecker_files}"
+    "RULES_CODECHECKER_CODECHECKER_FILES", "{codechecker_files}"
 )
 CODECHECKER_LOG = os.environ.get(
-    "RULES_CODECHECKER_codechecker_log", "{codechecker_log}"
+    "RULES_CODECHECKER_CODECHECKER_LOG", "{codechecker_log}"
 )
 CODECHECKER_SEVERITIES = os.environ.get(
-    "RULES_CODECHECKER_Severities", "{Severities}"
+    "RULES_CODECHECKER_SEVERITIES", "{Severities}"
 )
 CODECHECKER_ENV = os.environ.get(
-    "RULES_CODECHECKER_codechecker_env", "{codechecker_env}"
+    "RULES_CODECHECKER_CODECHECKER_ENV", "{codechecker_env}"
 )
 COMPILE_COMMANDS = os.environ.get(
-    "RULES_CODECHECKER_compile_commands", "{compile_commands}"
+    "RULES_CODECHECKER_COMPILE_COMMANDS", "{compile_commands}"
 )
 
 START_PATH = r"\/(?:(?!\.\s+)\S)+"

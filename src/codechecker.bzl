@@ -100,17 +100,16 @@ def _codechecker_impl(ctx):
     
     # Use environment variables instead of expand_template
     environment_variables = {
-        "RULES_CODECHECKER_Mode": "Run",
-        "RULES_CODECHECKER_Verbosity": "DEBUG",
-        "RULES_CODECHECKER_PythonPath": python_path(ctx),  # "/usr/bin/env python3",
-        "RULES_CODECHECKER_codechecker_bin": CODECHECKER_BIN_PATH,
-        "RULES_CODECHECKER_compile_commands": ctx.outputs.codechecker_commands.path,
-        "RULES_CODECHECKER_codechecker_skipfile": ctx.outputs.codechecker_skipfile.path,
-        "RULES_CODECHECKER_codechecker_config": config_file.path,
-        "RULES_CODECHECKER_codechecker_analyze": " ".join(ctx.attr.analyze),
-        "RULES_CODECHECKER_codechecker_files": codechecker_files.path,
-        "RULES_CODECHECKER_codechecker_log": ctx.outputs.codechecker_log.path,
-        "RULES_CODECHECKER_codechecker_env": codechecker_env,
+        "RULES_CODECHECKER_MODE": "Run",
+        "RULES_CODECHECKER_VERBOSITY": "DEBUG",
+        "RULES_CODECHECKER_CODECHECKER_BIN": CODECHECKER_BIN_PATH,
+        "RULES_CODECHECKER_COMPILE_COMMANDS": ctx.outputs.codechecker_commands.path,
+        "RULES_CODECHECKER_CODECHECKER_SKIPFILE": ctx.outputs.codechecker_skipfile.path,
+        "RULES_CODECHECKER_CODECHECKER_CONFIG": config_file.path,
+        "RULES_CODECHECKER_CODECHECKER_ANALYZE": " ".join(ctx.attr.analyze),
+        "RULES_CODECHECKER_CODECHECKER_FILES": codechecker_files.path,
+        "RULES_CODECHECKER_CODECHECKER_LOG": ctx.outputs.codechecker_log.path,
+        "RULES_CODECHECKER_CODECHECKER_ENV": codechecker_env,
     }
     codechecker_script = ctx.actions.declare_file(ctx.label.name + "/codechecker_script")
     ctx.actions.symlink(
@@ -230,12 +229,12 @@ def _codechecker_test_impl(ctx):
 
     # Use environment variables instead of expand_template
     environment_variables = {
-        "RULES_CODECHECKER_Mode": "Test",
-        "RULES_CODECHECKER_Verbosity": "INFO",
-        "RULES_CODECHECKER_PythonPath": python_path(ctx),  # "/usr/bin/env python3",
-        "RULES_CODECHECKER_codechecker_bin": CODECHECKER_BIN_PATH,
-        "RULES_CODECHECKER_codechecker_files": codechecker_files.short_path,
-        "RULES_CODECHECKER_Severities": " ".join(ctx.attr.severities),
+        "RULES_CODECHECKER_MODE": "Test",
+        "RULES_CODECHECKER_VERBOSITY": "INFO",
+        "RULES_CODECHECKER_PYTHONPATH": python_path(ctx),  # "/usr/bin/env python3",
+        "RULES_CODECHECKER_CODECHECKER_BIN": CODECHECKER_BIN_PATH,
+        "RULES_CODECHECKER_CODECHECKER_FILES": codechecker_files.short_path,
+        "RULES_CODECHECKER_SEVERITIES": " ".join(ctx.attr.severities),
     }
 
     # Create test script

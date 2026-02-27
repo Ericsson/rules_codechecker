@@ -23,13 +23,21 @@ from common.base import TestBase
 
 class TestTemplate(TestBase):
     """TODO: Add a description"""
+
     # Set working directory
     __test_path__ = os.path.dirname(os.path.abspath(__file__))
     # TODO: fix folder name
-    BAZEL_BIN_DIR = os.path.join("../../..", "bazel-bin", "test", 
-                                        "unit", "my_test_folder")
-    BAZEL_TESTLOGS_DIR = os.path.join("../../..", "bazel-testlogs", "test", 
-                                        "unit", "my_test_folder")
+    BAZEL_BIN_DIR = os.path.join(
+        "../../..", "bazel-bin", "test", "unit", "my_test_folder"
+    )
+    BAZEL_TESTLOGS_DIR = os.path.join(
+        "../../..", "bazel-testlogs", "test", "unit", "my_test_folder"
+    )
+    # TODO: define bazel targets
+    BUILD_TARGET = []  # Targets to be build with bazel build
+    PASSING_TARGET = []  # Targets to be build with bazel test and pass
+    FAILING_TARGET = []  # Targets to be build with bazel test and fail
+    BAZEL_CMD_ARGS = ""  # Arguments to be given to the bazel commands
 
     @final
     @classmethod

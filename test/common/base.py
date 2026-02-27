@@ -66,6 +66,10 @@ class TestBase(unittest.TestCase):
     __test_path__: Optional[str] = None
     BAZEL_BIN_DIR: Optional[str] = None
     BAZEL_TESTLOGS_DIR: Optional[str] = None
+    BUILD_TARGET: Optional[list[str]] = None
+    PASSING_TARGET: Optional[list[str]] = None
+    FAILING_TARGET: Optional[list[str]] = None
+    BAZEL_CMD_ARGS: str = ""
 
     @classmethod
     def setUpClass(cls):
@@ -99,6 +103,44 @@ class TestBase(unittest.TestCase):
         # Save environment and location
         cls.save_env = os.environ
         cls.save_cwd = os.getcwd()
+        cls.run_command("pwd")
+        logging.debug(os.getcwd())
+        if cls.BUILD_TARGET:
+            cmd = (
+                f"bazel build {' '.join(cls.BUILD_TARGET)} {cls.BAZEL_CMD_ARGS}"
+            )
+            logging.debug(cmd)
+            ret, stdout, stderr = cls.run_command(cmd)
+            assert ret == 0, f"stdout:\n{stdout}\nstderr:\n{stderr}"
+        if cls.PASSING_TARGET:
+            cmd = (
+                f"bazel test {' '.join(cls.PASSING_TARGET)} "
+                f"{cls.BAZEL_CMD_ARGS}"
+            )
+            logging.debug(cmd)
+            ret, stdout, stderr = cls.run_command(cmd)
+            assert ret == 0, f"stdout:\n{stdout}\nstderr:\n{stderr}"
+        if cls.FAILING_TARGET:
+            # The FAILED report will always be displayed with an absolute path
+            for target in cls.FAILING_TARGET:
+                if not target.startswith("//"):
+                    assert (
+                        False
+                    ), f"Target must be given with absolute path! {target}"
+            cmd = (
+                f"bazel test {' '.join(cls.FAILING_TARGET)} "
+                f"{cls.BAZEL_CMD_ARGS}"
+            )
+            logging.debug(cmd)
+            ret, stdout, stderr = cls.run_command(cmd)
+            assert (
+                ret == 3
+            ), f"return code: {ret}\nstdout:\n{stdout}\nstderr:\n{stderr}"
+            for target in cls.FAILING_TARGET:
+                pattern = re.compile(rf"{re.escape(target)}\s+FAILED")
+                assert pattern.search(
+                    stdout
+                ), f"stdout:\n{stdout}\nstderr:\n{stderr}"
 
     @classmethod
     def tearDownClass(cls):
@@ -188,7 +230,7 @@ class TestBase(unittest.TestCase):
             "8001",  # user running unittest must make this port free!
         ]
         # pylint: disable=consider-using-with
-        cls.devnull = open(os.devnull, "w", encoding='utf-8')
+        cls.devnull = open(os.devnull, "w", encoding="utf-8")
         # pylint: disable=consider-using-with
         cls.server_process: subprocess.Popen = subprocess.Popen(
             server_command, stdout=cls.devnull

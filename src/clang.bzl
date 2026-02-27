@@ -350,7 +350,7 @@ def _process_all_deps(ctx, arguments, headers):
 
 def _get_sources(ctx):
     sources = _rule_sources(ctx)
-    arguments = {src: [] for src in sources}
+    arguments = { src: [] for src in sources }
     headers = []
     _process_all_deps(ctx, arguments, headers)
     return arguments.keys()

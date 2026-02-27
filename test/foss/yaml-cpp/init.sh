@@ -14,15 +14,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-git clone --recurse https://github.com/jbeder/yaml-cpp.git test-proj
-cd test-proj
-git checkout yaml-cpp-0.7.0
+if [ -z "$1" ]; then
+    echo "[Error]: Missing parameter."
+    echo "Usage: $0 [folder_name]"
+    printf "%s %s %s\n" \
+           "[WARNING]: This script was meant to be used in automated testing." \
+           "To use it manually, provide a folder name where the project" \
+           "should be initialized."
+    exit 1
+fi
+
+git clone https://github.com/jbeder/yaml-cpp.git "$1"
+git -C "$1" checkout yaml-cpp-0.7.0
 
 # This file must be in the root of the project to be analyzed for bazelisk to work
-cp ../../templates/.bazelversion ./.bazelversion
+bazelversion="../../../.bazelversion"
+[ -f $bazelversion ] && cp $bazelversion "$1"
 
 # Add codechecker to the project
-cat <<EOF >> BUILD.bazel
+cat <<EOF >> "$1/BUILD.bazel"
 #-------------------------------------------------------
 
 # codechecker rules
@@ -51,4 +61,4 @@ codechecker_test(
 EOF
 
 # Add rules_codechecker repo to WORKSPACE
-cat ../../templates/WORKSPACE.template >> WORKSPACE
+cat ../templates/WORKSPACE.template >> "$1/WORKSPACE"

@@ -1,5 +1,5 @@
 local_path_override(
     module_name = "rules_codechecker",
-    path = "../../../../",
+    path = "{rule_path}",
 )
 bazel_dep(name = "rules_codechecker")

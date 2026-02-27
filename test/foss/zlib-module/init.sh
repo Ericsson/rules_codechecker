@@ -14,14 +14,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-git clone --recurse https://github.com/madler/zlib.git test-proj
-cd test-proj
-git checkout 5a82f71ed1dfc0bec044d9702463dbdf84ea3b71
+if [ -z "$1" ]; then
+    echo "[Error]: Missing parameter."
+    echo "Usage: $0 [folder_name]"
+    printf "%s %s %s\n" \
+           "[WARNING]: This script was meant to be used in automated testing." \
+           "To use it manually, provide a folder name where the project" \
+           "should be initialized."
+    exit 1
+fi
+
+git clone --recurse https://github.com/madler/zlib.git "$1"
+git -C "$1" checkout 5a82f71ed1dfc0bec044d9702463dbdf84ea3b71
 
 # This file must be in the root of the project to be analyzed for bazelisk to work
-cp ../../templates/.bazelversion ./.bazelversion
+bazelversion="../../../.bazelversion"
+[ -f $bazelversion ] && cp $bazelversion "$1"
+
 # Add codechecker to the project
-cat <<EOF >> BUILD.bazel
+cat <<EOF >> "$1/BUILD.bazel"
 #-------------------------------------------------------
 
 # codechecker rules
@@ -48,6 +59,9 @@ codechecker_test(
 EOF
 
 # Enable MODULE.bazel (in Bazel 6)
-echo "common --enable_bzlmod" > .bazelrc
+echo "common --enable_bzlmod" > "$1/.bazelrc"
 # Add rules_codechecker repo MODULE.bazel
-cat ../../templates/MODULE.template >> MODULE.bazel
+cat ../templates/MODULE.template >> "$1/MODULE.bazel"
+# An empty workspace file is required to keep Bazel versions older than 6.5.0
+# in the project directory
+touch "$1/WORKSPACE"

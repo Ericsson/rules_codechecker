@@ -1,5 +1,3 @@
-#!{PythonPath}
-
 # Copyright 2023 Ericsson AB
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,17 +26,35 @@ import subprocess
 import sys
 
 
-EXECUTION_MODE = "{Mode}"
-VERBOSITY = "{Verbosity}"
-CODECHECKER_PATH = "{codechecker_bin}"
-CODECHECKER_SKIPFILE = "{codechecker_skipfile}"
-CODECHECKER_CONFIG = "{codechecker_config}"
-CODECHECKER_ANALYZE = "{codechecker_analyze}"
-CODECHECKER_FILES = "{codechecker_files}"
-CODECHECKER_LOG = "{codechecker_log}"
-CODECHECKER_SEVERITIES = "{Severities}"
-CODECHECKER_ENV = "{codechecker_env}"
-COMPILE_COMMANDS = "{compile_commands}"
+EXECUTION_MODE = os.environ.get("RULES_CODECHECKER_MODE", "{Mode}")
+VERBOSITY = os.environ.get("RULES_CODECHECKER_VERBOSITY", "{Verbosity}")
+CODECHECKER_PATH = os.environ.get(
+    "RULES_CODECHECKER_CODECHECKER_BIN", "{codechecker_bin}"
+)
+CODECHECKER_SKIPFILE = os.environ.get(
+    "RULES_CODECHECKER_CODECHECKER_SKIPFILE", "{codechecker_skipfile}"
+)
+CODECHECKER_CONFIG = os.environ.get(
+    "RULES_CODECHECKER_CODECHECKER_CONFIG", "{codechecker_config}"
+)
+CODECHECKER_ANALYZE = os.environ.get(
+    "RULES_CODECHECKER_CODECHECKER_ANALYZE", "{codechecker_analyze}"
+)
+CODECHECKER_FILES = os.environ.get(
+    "RULES_CODECHECKER_CODECHECKER_FILES", "{codechecker_files}"
+)
+CODECHECKER_LOG = os.environ.get(
+    "RULES_CODECHECKER_CODECHECKER_LOG", "{codechecker_log}"
+)
+CODECHECKER_SEVERITIES = os.environ.get(
+    "RULES_CODECHECKER_SEVERITIES", "{Severities}"
+)
+CODECHECKER_ENV = os.environ.get(
+    "RULES_CODECHECKER_CODECHECKER_ENV", "{codechecker_env}"
+)
+COMPILE_COMMANDS = os.environ.get(
+    "RULES_CODECHECKER_COMPILE_COMMANDS", "{compile_commands}"
+)
 
 START_PATH = r"\/(?:(?!\.\s+)\S)+"
 BAZEL_PATHS = {

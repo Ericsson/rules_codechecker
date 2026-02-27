@@ -35,16 +35,14 @@ class TestBasic(TestBase):
     BAZEL_TESTLOGS_DIR = os.path.join(
         "../../..", "bazel-testlogs", "test", "unit", "compile_flags"
     )
+    BUILD_TARGET = [
+        "//test/unit/compile_flags:compile_commands_filter",
+        "//test/unit/compile_flags:per_file_filter",
+    ]
+    BAZEL_CMD_ARGS = "--cxxopt=__CXX__ --conlyopt=__CONLY__"
 
     def test_bazel_test_compile_commands_filter(self):
         """Test: bazel test :compile_commands_filter"""
-        build_cmd = (
-            "bazel build "
-            + "//test/unit/compile_flags:compile_commands_filter "
-            + "--cxxopt=__CXX__ --conlyopt=__CONLY__"
-        )
-        exit_code, _, stderr = self.run_command(build_cmd)
-        self.assertEqual(0, exit_code, stderr)
         compile_commands = os.path.join(
             self.BAZEL_BIN_DIR,  # pyright: ignore
             "compile_commands_filter",
@@ -75,13 +73,6 @@ class TestBasic(TestBase):
 
     def test_bazel_test_per_file_filter(self):
         """Test: bazel test :per_file_filter"""
-        build_cmd = (
-            "bazel build "
-            + "//test/unit/compile_flags:per_file_filter "
-            + "--cxxopt=__CXX__ --conlyopt=__CONLY__"
-        )
-        exit_code, _, stderr = self.run_command(build_cmd)
-        self.assertEqual(0, exit_code, stderr)
         compile_commands = os.path.join(
             self.BAZEL_BIN_DIR,  # pyright: ignore
             "per_file_filter",

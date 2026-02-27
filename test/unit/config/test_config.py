@@ -31,13 +31,19 @@ class TestConfig(TestBase):
     BAZEL_TESTLOGS_DIR = os.path.join(
         "../../..", "bazel-testlogs", "test", "unit", "config"
     )
+    BUILD_TARGET = [
+        "//test/unit/config:codechecker_json",
+        "//test/unit/config:codechecker_yaml",
+    ]
+    PASSING_TARGET = [
+        "//test/unit/config:codechecker_test_json",
+        "//test/unit/config:codechecker_test_yaml",
+        "//test/unit/config:per_file_test_json",
+        "//test/unit/config:per_file_test_yaml",
+    ]
 
     def test_codechecker_json(self):
         """Test: bazel build //test/unit/config:codechecker_json"""
-        ret, _, stderr = self.run_command(
-            "bazel build //test/unit/config:codechecker_json"
-        )
-        self.assertEqual(ret, 0, stderr)
         copied_config = os.path.join(
             self.BAZEL_BIN_DIR,  # type: ignore
             "codechecker_json",
@@ -47,10 +53,6 @@ class TestConfig(TestBase):
 
     def test_codechecker_yaml(self):
         """Test: bazel build //test/unit/config:codechecker_yaml"""
-        ret, _, stderr = self.run_command(
-            "bazel build //test/unit/config:codechecker_yaml"
-        )
-        self.assertEqual(ret, 0, stderr)
         copied_config = os.path.join(
             self.BAZEL_BIN_DIR,  # type: ignore
             "codechecker_yaml",
@@ -60,11 +62,6 @@ class TestConfig(TestBase):
 
     def test_codechecker_test_json(self):
         """Test: bazel test //test/unit/config:codechecker_test_json"""
-        ret, _, stderr = self.run_command(
-            "bazel test //test/unit/config:codechecker_test_json"
-        )
-        # Should not find the division by zero bug
-        self.assertEqual(ret, 0, stderr)
         copied_config = os.path.join(
             self.BAZEL_BIN_DIR,  # type: ignore
             "codechecker_test_json",
@@ -76,11 +73,6 @@ class TestConfig(TestBase):
 
     def test_codechecker_test_yaml(self):
         """Test: bazel test //test/unit/config:codechecker_test_yaml"""
-        ret, _, stderr = self.run_command(
-            "bazel test //test/unit/config:codechecker_test_yaml"
-        )
-        # Should not find the division by zero bug
-        self.assertEqual(ret, 0, stderr)
         copied_config = os.path.join(
             self.BAZEL_BIN_DIR,  # type: ignore
             "codechecker_test_yaml",
@@ -90,11 +82,6 @@ class TestConfig(TestBase):
 
     def test_per_file_test_json(self):
         """Test: bazel test //test/unit/config:per_file_test_json"""
-        ret, _, stderr = self.run_command(
-            "bazel test //test/unit/config:per_file_test_json"
-        )
-        # Should not find the division by zero bug
-        self.assertEqual(ret, 0, stderr)
         copied_config = os.path.join(
             self.BAZEL_BIN_DIR,  # type: ignore
             "per_file_test_json",
@@ -104,11 +91,6 @@ class TestConfig(TestBase):
 
     def test_per_file_test_yaml(self):
         """Test: bazel test //test/unit/config:per_file_test_yaml"""
-        ret, _, stderr = self.run_command(
-            "bazel test //test/unit/config:per_file_test_yaml"
-        )
-        # Should not find the division by zero bug
-        self.assertEqual(ret, 0, stderr)
         copied_config = os.path.join(
             self.BAZEL_BIN_DIR,  # type: ignore
             "per_file_test_yaml",

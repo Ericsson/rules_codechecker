@@ -71,14 +71,14 @@ def create_test_method(directory_name: str) -> FunctionType:
             f"Missing 'init.sh' in {directory_name}\n"
             + "Please consult with the README on how to add a new FOSS project",
         )
-        with tempfile.TemporaryDirectory() as project_working_dir:
-            self.assertTrue(os.path.exists(project_working_dir))
+        with tempfile.TemporaryDirectory() as test_dir:
+            self.assertTrue(os.path.exists(test_dir))
             logging.info("Initializing project...")
             ret, _, _ = self.run_command(
-                f"sh init.sh {project_working_dir}", project_root
+                f"sh init.sh {test_dir}", project_root
             )
             module_file = Path(
-                os.path.join(project_working_dir, "MODULE.bazel")
+                os.path.join(test_dir, "MODULE.bazel")
             )
             if os.path.exists(module_file):
                 content = module_file.read_text("utf-8").replace(
@@ -87,7 +87,7 @@ def create_test_method(directory_name: str) -> FunctionType:
                 )
                 module_file.write_text(content, "utf-8")
             workspace_file = Path(
-                os.path.join(project_working_dir, "WORKSPACE")
+                os.path.join(test_dir, "WORKSPACE")
             )
             if os.path.exists(workspace_file):
                 content = workspace_file.read_text("utf-8").replace(
@@ -97,12 +97,12 @@ def create_test_method(directory_name: str) -> FunctionType:
                 workspace_file.write_text(content, "utf-8")
             logging.info("Running monolithic rule...")
             ret, _, stderr = self.run_command(
-                "bazel build :codechecker_test", project_working_dir
+                "bazel build :codechecker_test", test_dir
             )
             self.assertEqual(ret, 0, stderr)
             logging.info("Running per_file rule...")
             ret, _, stderr = self.run_command(
-                "bazel build :per_file_test", project_working_dir
+                "bazel build :per_file_test", test_dir
             )
             self.assertEqual(ret, 0, stderr)
 

@@ -147,7 +147,7 @@ class TestBase(unittest.TestCase):
             )
 
     @classmethod
-    def grep_file(cls, filename: str, regex: str):
+    def grep_file(cls, filename: str, regex: str, only_first: bool = False):
         """
         Grep given filename.
         Returns list of matched lines.
@@ -161,6 +161,8 @@ class TestBase(unittest.TestCase):
                 if pattern.search(line):
                     logging.debug(line)
                     results.append(line)
+                    if only_first:
+                        return results
         return results
 
     @classmethod
@@ -168,7 +170,7 @@ class TestBase(unittest.TestCase):
         """
         Returns a boolean, whether the specified file contains the regex or not.
         """
-        return bool(cls.grep_file(file_path, regex))
+        return bool(cls.grep_file(file_path, regex, True))
 
     @classmethod
     def start_codechecker_server(cls):

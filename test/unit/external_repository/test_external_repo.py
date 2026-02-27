@@ -15,6 +15,7 @@
 """
 Test external repositories with codechecker
 """
+import glob
 import logging
 import os
 import shutil
@@ -39,12 +40,6 @@ class TestImplDepExternalDep(TestBase):
         Copy bazelversion from main, otherwise bazelisk will download the latest
         bazel version.
         """
-        # The folder bazel-external_repository
-        # created by bazel during bazel build/test
-        # contains a copy of this test file
-        # and the unittest test discovery finds it.
-        # This is why, it is imperative that these directories get cleared
-        cls.run_command("bazel clean")
         super().setUpClass()
         try:
             shutil.copy("../../../.bazelversion", ".bazelversion")
@@ -64,10 +59,14 @@ class TestImplDepExternalDep(TestBase):
     def tearDownClass(cls):
         """Remove bazelversion from this test"""
         super().tearDownClass()
-        # The folder bazel-external_repository contains this script
-        # and the unittest test discovery finds it.
-        # This is why, it is imperative that these directories get cleared
-        cls.run_command("bazel clean")
+        # Only run  bazel clean if a test script would be discovered
+        # inside the bazel-bin directory
+        search_path = os.path.join(
+            cls.BAZEL_BIN_DIR, "**", "test_*.py"  # type: ignore
+        )
+        stray_files = glob.glob(search_path, recursive=True)
+        if stray_files:
+            cls.run_command("bazel clean")
         try:
             os.remove(".bazelversion")
         # If no such file exists assume user doesn't use bazelisk

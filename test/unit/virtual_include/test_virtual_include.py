@@ -26,7 +26,6 @@ import logging
 import os
 import unittest
 import glob
-from typing import final
 from common.base import TestBase
 
 
@@ -41,13 +40,6 @@ class TestVirtualInclude(TestBase):
     BAZEL_TESTLOGS_DIR = os.path.join(
         "../../..", "bazel-testlogs", "test", "unit", "virtual_include"
     )
-
-    @final
-    @classmethod
-    def setUpClass(cls):
-        """Set up before the test suite"""
-        super().setUpClass()
-        cls.run_command("bazel clean")
 
     def contains_in_files(self, regex, file_list):
         """

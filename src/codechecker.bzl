@@ -46,6 +46,8 @@ def get_platform_alias(platform):
     """
     Get platform alias for full platform names being used
 
+    Args:
+        platform: A string containing the platform
     Returns:
     string: If the full platform name is consistent with
     valid syntax, returns the short alias to represent it.
@@ -190,7 +192,7 @@ codechecker = rule(
         "_compile_commands_filter": attr.label(
             allow_files = True,
             executable = True,
-            cfg = "host",
+            cfg = "exec",
             default = ":compile_commands_filter",
         ),
         "_codechecker_script_template": attr.label(
@@ -267,7 +269,7 @@ _codechecker_test = rule(
         "_compile_commands_filter": attr.label(
             allow_files = True,
             executable = True,
-            cfg = "host",
+            cfg = "exec",
             default = ":compile_commands_filter",
         ),
         "_codechecker_script_template": attr.label(
@@ -316,7 +318,24 @@ def codechecker_test(
         tags = [],
         per_file = False,
         **kwargs):
-    """ Bazel test to run CodeChecker """
+    """
+    Macro to choose the appropriate codechecker rule
+
+    Args:
+        name: Name of the target invoking CodeChecker.
+        targets: List of targets to be analyzed by CodeChecker.
+        platform: Platform to be analyzed on.
+        severities: List of warning levels that should be considered failing.
+        skip: Skip patterns for CodeChecker.
+        config: Config target for CodeChecker.
+        analyze: List of analyze command arguments.
+        tags: Bazel tags
+        per_file: Boolean value, toggles wether to run the analysis
+                  with the experimental per_file rule.
+        **kwargs: Other miscellaneous arguments.
+    Returns:
+        none
+    """
     codechecker_tags = [] + tags
     if "codechecker" not in tags:
         codechecker_tags.append("codechecker")
@@ -352,7 +371,22 @@ def codechecker_suite(
         analyze = [],
         tags = [],
         **kwargs):
-    """ Bazel test suite to run CodeChecker for different platforms """
+    """
+    Bazel test suite to run CodeChecker for different platforms
+
+    Args:
+        name: Name of the target invoking CodeChecker.
+        targets: List of targets to be analyzed by CodeChecker.
+        platforms: List of platform to be analyzed on.
+        severities: List of warning levels that should be considered failing.
+        skip: Skip patterns for CodeChecker.
+        config: Config target for CodeChecker.
+        analyze: List of analyze command arguments.
+        tags: Bazel tags
+        **kwargs: Other miscellaneous arguments.
+    Returns:
+        none
+    """
     tests = []
     for platform in platforms:
         shortname = get_platform_alias(platform)

@@ -18,7 +18,7 @@ Ruleset for running the clang static analyzer with CTU analysis.
 
 load("@bazel_tools//tools/build_defs/cc:action_names.bzl", "ACTION_NAMES")
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
-load("common.bzl", "SOURCE_ATTR", "version_specific_attributes")
+load("common.bzl", "SOURCE_ATTR")
 
 CLANG_CTU_WRAPPER_SCRIPT = """#!/usr/bin/env bash
 #set -x
@@ -132,8 +132,14 @@ def _run_clang_ctu(
 
 def check_valid_file_type(src):
     """
+    Checks if the file is a cpp related file.
+
     Returns True if the file type matches one of the permitted
     srcs file types for C and C++ header/source files.
+    Args:
+        src: Path of a single source file.
+    Returns:
+        Boolean value.
     """
     permitted_file_types = [
         ".c",
@@ -158,8 +164,8 @@ def check_valid_file_type(src):
 def _rule_sources(ctx):
     srcs = []
     if hasattr(ctx.rule.attr, "srcs"):
-        for src in ctx.rule.attr.srcs:
-            srcs += [src for src in src.files.to_list() if src.is_source and check_valid_file_type(src)]
+        for src_outer in ctx.rule.attr.srcs:
+            srcs += [src for src in src_outer.files.to_list() if src.is_source and check_valid_file_type(src)]
     return srcs
 
 def _toolchain_flags(ctx, action_name, with_compiler = False):
@@ -324,7 +330,7 @@ def _generate_ast_and_def_files(ctx, target, all_sources):
 
 def _collect_all_sources_and_headers(ctx):
     all_files = []
-    headers = depset()
+    headers_list = []
     for target in ctx.attr.targets:
         if not CcInfo in target:
             continue
@@ -333,10 +339,8 @@ def _collect_all_sources_and_headers(ctx):
                 srcs = target[CompileInfo].arguments.keys()
                 all_files += srcs
                 compilation_context = target[CcInfo].compilation_context
-                headers = depset(
-                    transitive = [headers, compilation_context.headers],
-                )
-    sources_and_headers = all_files + headers.to_list()
+                headers_list.extend(compilation_context.headers.to_list())
+    sources_and_headers = all_files + headers_list
     return sources_and_headers
 
 def _clang_ctu_impl(ctx):

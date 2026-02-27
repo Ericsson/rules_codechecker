@@ -52,7 +52,12 @@ def python_toolchain_type():
 
 def python_path(ctx):
     """
-    Returns version specific Python path
+    Function to obtain a python executable path
+
+    Args:
+        ctx: The context variable
+    Returns:
+        version specific Python path
     """
     py_toolchain = ctx.toolchains[python_toolchain_type()]
     if hasattr(py_toolchain, "py3_runtime_info"):
@@ -74,4 +79,5 @@ def warning(ctx, msg):
     NOTE: "debug" in tags works only for rules, not aspects
     """
     if hasattr(ctx.attr, "tags") and "debug" in ctx.attr.tags:
+        # buildifier: disable=print
         print(msg)

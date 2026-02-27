@@ -27,6 +27,7 @@ load(
 )
 load(
     "common.bzl",
+    "python_interpreter_tool",
     "python_path",
     "python_toolchain_type",
     "version_specific_attributes",
@@ -97,14 +98,17 @@ def _codechecker_impl(ctx):
     config_file, codechecker_env = get_config_file(ctx)
 
     codechecker_files = ctx.actions.declare_directory(ctx.label.name + "/codechecker-files")
+    # For hermeticism the executable should be a python interpreter
+    # provided by Bazel. This interpreter cannot always be added to the script
+    # as a shebang. Because of this this script is explicitly marked as
+    # non executable.
     ctx.actions.expand_template(
         template = ctx.file._codechecker_script_template,
         output = ctx.outputs.codechecker_script,
-        is_executable = True,
+        is_executable = False,
         substitutions = {
             "{Mode}": "Run",
             "{Verbosity}": "DEBUG",
-            "{PythonPath}": python_path(ctx),  # "/usr/bin/env python3",
             "{codechecker_bin}": CODECHECKER_BIN_PATH,
             "{compile_commands}": ctx.outputs.codechecker_commands.path,
             "{codechecker_skipfile}": ctx.outputs.codechecker_skipfile.path,
@@ -129,13 +133,12 @@ def _codechecker_impl(ctx):
             codechecker_files,
             ctx.outputs.codechecker_log,
         ],
-        executable = ctx.outputs.codechecker_script,
-        arguments = [],
-        # executable = python_path(ctx),
-        # arguments = [ctx.outputs.codechecker_script.path],
+        executable = python_path(ctx),
+        tools = python_interpreter_tool(ctx),
+        arguments = [ctx.outputs.codechecker_script.path],
         mnemonic = "CodeChecker",
         progress_message = "CodeChecker %s" % str(ctx.label),
-        # use_default_shell_env = True,
+        use_default_shell_env = True,
     )
 
     # List all files required at build and run (test) time
@@ -226,27 +229,57 @@ def _codechecker_test_impl(ctx):
         fail("Execution results required for codechecker test are not available")
 
     # Create test script from template
+    # For hermeticism the executable should be a python interpreter
+    # provided by Bazel. This interpreter cannot always be added to the script
+    # as a shebang. Because of this this script is explicitly marked as
+    # non executable.
     ctx.actions.expand_template(
         template = ctx.file._codechecker_script_template,
         output = ctx.outputs.codechecker_test_script,
-        is_executable = True,
+        is_executable = False,
         substitutions = {
             "{Mode}": "Test",
             "{Verbosity}": "INFO",
-            "{PythonPath}": python_path(ctx),  # "/usr/bin/env python3",
             "{codechecker_bin}": CODECHECKER_BIN_PATH,
             "{codechecker_files}": codechecker_files.short_path,
             "{Severities}": " ".join(ctx.attr.severities),
         },
     )
 
+    # If we use our custom toolchain, the path will be an absolute path,
+    # executable by bazel
+    python_interpreter_path = python_path(ctx)
+
+    # If we can find an interpreter tool provided by bazel,
+    # use that as an executable
+    if python_interpreter_tool(ctx) != []:
+        python_interpreter_path = python_interpreter_tool(ctx)[0].short_path
+
+    # Since we cannot give parameters to the runfiles
+    # we wrap the executable (a python binary) in a script.
+    # In the script we give the CodeChecker script as an argument.
+    ctx.actions.write(
+        output = ctx.outputs.test_script_wrapper,
+        is_executable = True,
+        content = """
+            {python_bin} {test_script}
+        """.format(
+            python_bin = python_interpreter_path,
+            test_script = ctx.outputs.codechecker_test_script.short_path,
+        ),
+    )
+
     # Return test script and all required files
-    run_files = default_runfiles + [ctx.outputs.codechecker_test_script]
+    run_files = default_runfiles + [
+        ctx.outputs.codechecker_test_script,
+        ctx.outputs.test_script_wrapper,
+    ] + python_interpreter_tool(ctx)
+
     return [
         DefaultInfo(
             files = depset(all_files),
             runfiles = ctx.runfiles(files = run_files),
-            executable = ctx.outputs.codechecker_test_script,
+            executable = ctx.outputs.test_script_wrapper,
         ),
     ]
 
@@ -300,6 +333,7 @@ _codechecker_test = rule(
         "codechecker_script": "%{name}/codechecker_script.py",
         "codechecker_log": "%{name}/codechecker.log",
         "codechecker_test_script": "%{name}/codechecker_test_script.py",
+        "test_script_wrapper": "%{name}/test_script_wrapper.sh",
     },
     toolchains = [python_toolchain_type()],
     test = True,

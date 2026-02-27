@@ -25,11 +25,10 @@ py_binary(
     visibility = ["//visibility:public"],
 )
 
-# Build & Test script template
-exports_files(
-    [
-        "per_file_script.py",
-    ],
+py_binary(
+    name = "per_file_script",
+    srcs = ["per_file_script.py"],
+    visibility = ["//visibility:public"],
 )
 
 # The following are flags and default values for clang_tidy_aspect

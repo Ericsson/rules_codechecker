@@ -24,15 +24,15 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-git clone --recurse https://github.com/madler/zlib.git $1
-git -C $1 checkout 5a82f71ed1dfc0bec044d9702463dbdf84ea3b71
+git clone --recurse https://github.com/madler/zlib.git "$1"
+git -C "$1" checkout 5a82f71ed1dfc0bec044d9702463dbdf84ea3b71
 
 # This file must be in the root of the project to be analyzed for bazelisk to work
 bazelversion="../../../.bazelversion"
-[ -f $bazelversion ] && cp $bazelversion $1
+[ -f $bazelversion ] && cp $bazelversion "$1"
 
 # Add codechecker to the project
-cat <<EOF >> $1/BUILD.bazel
+cat <<EOF >> "$1/BUILD.bazel"
 #-------------------------------------------------------
 
 # codechecker rules
@@ -59,9 +59,9 @@ codechecker_test(
 EOF
 
 # Enable MODULE.bazel (in Bazel 6)
-echo "common --enable_bzlmod" > $1/.bazelrc
+echo "common --enable_bzlmod" > "$1/.bazelrc"
 # Add rules_codechecker repo MODULE.bazel
-cat ../templates/MODULE.template >> $1/MODULE.bazel
+cat ../templates/MODULE.template >> "$1/MODULE.bazel"
 # An empty workspace file is required to keep Bazel versions older than 6.5.0
 # in the project directory
-touch $1/WORKSPACE
+touch "$1/WORKSPACE"

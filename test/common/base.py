@@ -214,11 +214,11 @@ class TestBase(unittest.TestCase):
             path - Path of the result files
             name - name of the project to be saved under
         """
-        ret, _, _ = self.run_command(
+        ret, stdout, stderr = self.run_command(
             f"CodeChecker store {path} -n {name}"
             " --url=http://localhost:8001/Default"
         )
-        self.assertEqual(ret, 0)
+        self.assertEqual(ret, 0, stdout + "\n" + stderr)
 
     def check_parse(self, path: str, will_find_bug: bool = True):
         """

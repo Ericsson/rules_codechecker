@@ -17,9 +17,10 @@
 if [ -z "$1" ]; then
     echo "[Error]: Missing parameter."
     echo "Usage: $0 [folder_name]"
-    echo "[WARNING]: This script was meant to be used in automated testing.\n \
-          To use it manually, provide a folder name where the project should \
-be initialized."
+    printf "%s %s %s\n" \
+           "[WARNING]: This script was meant to be used in automated testing." \
+           "To use it manually, provide a folder name where the project" \
+           "should be initialized."
     exit 1
 fi
 

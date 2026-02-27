@@ -20,6 +20,9 @@ venv
 .ci/micromamba/bin/
 .ci/micromamba/micromamba/
 
+# Ignore installed dependencies
+dependency/bin/
+
 # Ignore FOSS project clone dirs
 /test/foss/*/test-proj/
 

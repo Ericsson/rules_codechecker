@@ -30,19 +30,25 @@ class TestGeneratedFiles(TestBase):
     BAZEL_TESTLOGS_DIR = os.path.join(
         "../../..", "bazel-testlogs", "test", "unit", "generated_files"
     )
+    FAILING_TARGET = [
+        "//test/unit/generated_files:codechecker_genrule_header",
+        "//test/unit/generated_files:codechecker_genrule_source",
+        "//test/unit/generated_files:per_file_genrule_header",
+        "//test/unit/generated_files:per_file_genrule_source",
+    ]
+    BUILD_TARGET = [
+        "//test/unit/generated_files:compile_commands_genrule_source",
+        "//test/unit/generated_files:compile_commands_genrule_header",
+    ]
 
     def test_genrule_header_codechecker(self):
         """
         Test: bazel test //test/unit/generated_files:codechecker_genrule_header
         """
-        ret, _, stderr = self.run_command(
-            "bazel test //test/unit/generated_files:codechecker_genrule_header"
-        )
-        self.assertEqual(ret, 3, stderr)
         test_log = os.path.join(
             self.BAZEL_TESTLOGS_DIR,  # type: ignore
             "codechecker_genrule_header",
-            "test.log"
+            "test.log",
         )
         self.assertTrue(os.path.exists(test_log))
         self.assertTrue(
@@ -55,14 +61,10 @@ class TestGeneratedFiles(TestBase):
         """
         Test: bazel test //test/unit/generated_files:codechecker_genrule_source
         """
-        ret, _, stderr = self.run_command(
-            "bazel test //test/unit/generated_files:codechecker_genrule_source"
-        )
-        self.assertEqual(ret, 3, stderr)
         test_log = os.path.join(
             self.BAZEL_TESTLOGS_DIR,  # type: ignore
             "codechecker_genrule_source",
-            "test.log"
+            "test.log",
         )
         self.assertTrue(os.path.exists(test_log))
         self.assertTrue(
@@ -75,14 +77,10 @@ class TestGeneratedFiles(TestBase):
         """
         Test: bazel test //test/unit/generated_files:per_file_genrule_header
         """
-        ret, _, stderr = self.run_command(
-            "bazel test //test/unit/generated_files:per_file_genrule_header"
-        )
-        self.assertEqual(ret, 3, stderr)
         test_log = os.path.join(
             self.BAZEL_TESTLOGS_DIR,  # type: ignore
             "per_file_genrule_header",
-            "test.log"
+            "test.log",
         )
         self.assertTrue(os.path.exists(test_log))
         self.assertTrue(
@@ -95,10 +93,6 @@ class TestGeneratedFiles(TestBase):
         """
         Test: bazel test //test/unit/generated_files:per_file_genrule_source
         """
-        ret, _, stderr = self.run_command(
-            "bazel test //test/unit/generated_files:per_file_genrule_source"
-        )
-        self.assertEqual(ret, 3, stderr)
         test_log = os.path.join(
             self.BAZEL_TESTLOGS_DIR,  # type: ignore
             "per_file_genrule_source",
@@ -117,15 +111,10 @@ class TestGeneratedFiles(TestBase):
         bazel build //test/unit/generated_files:compile_commands_genrule_source
         """
         target = "genrule_source"
-        ret, _, stderr = self.run_command(
-            "bazel build "
-            + f"//test/unit/generated_files:compile_commands_{target}"
-        )
-        self.assertEqual(ret, 0, stderr)
         compile_commands = os.path.join(
             self.BAZEL_BIN_DIR,  # type: ignore
             f"compile_commands_{target}",
-            "compile_commands.json"
+            "compile_commands.json",
         )
         self.assertTrue(os.path.exists(compile_commands))
         self.assertTrue(
@@ -140,15 +129,10 @@ class TestGeneratedFiles(TestBase):
         bazel build //test/unit/generated_files:compile_commands_genrule_header
         """
         target = "genrule_header"
-        ret, _, stderr = self.run_command(
-            "bazel build "
-            f"//test/unit/generated_files:compile_commands_{target}"
-        )
-        self.assertEqual(ret, 0, stderr)
         compile_commands = os.path.join(
             self.BAZEL_BIN_DIR,  # type: ignore
             f"compile_commands_{target}",
-            "compile_commands.json"
+            "compile_commands.json",
         )
         self.assertTrue(os.path.exists(compile_commands))
         self.assertTrue(

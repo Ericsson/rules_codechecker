@@ -31,17 +31,20 @@ class TestImplementationDeps(TestBase):
     BAZEL_TESTLOGS_DIR = os.path.join(
         "../../..", "bazel-testlogs", "test", "unit", "implementation_deps"
     )
+    BAZEL_CMD_ARGS = "--experimental_cc_implementation_deps"
+    FAILING_TARGET = [
+        "//test/unit/implementation_deps:codechecker_implementation_deps",
+        "//test/unit/implementation_deps:per_file_implementation_deps",
+    ]
+    BUILD_TARGET = [
+        ":compile_commands_implementation_deps",
+    ]
 
     def test_codechecker_implementation_deps(self):
         """
         Test: bazel test --experimental_cc_implementation_deps
         //test/unit/implementation_deps:codechecker_implementation_deps
         """
-        ret, _, stderr = self.run_command(
-            "bazel test --experimental_cc_implementation_deps "
-            "//test/unit/implementation_deps:codechecker_implementation_deps"
-        )
-        self.assertEqual(ret, 3, stderr)
         test_log = os.path.join(
             self.BAZEL_TESTLOGS_DIR,  # type: ignore
             "codechecker_implementation_deps",
@@ -59,11 +62,6 @@ class TestImplementationDeps(TestBase):
         Test: bazel test --experimental_cc_implementation_deps
         //test/unit/implementation_deps:pre_file_implementation_deps
         """
-        ret, _, stderr = self.run_command(
-            "bazel test --experimental_cc_implementation_deps "
-            "//test/unit/implementation_deps:per_file_implementation_deps"
-        )
-        self.assertEqual(ret, 3, stderr)
         test_log = os.path.join(
             self.BAZEL_TESTLOGS_DIR,  # type: ignore
             "per_file_implementation_deps",
@@ -81,11 +79,6 @@ class TestImplementationDeps(TestBase):
         Test: bazel build --experimental_cc_implementation_deps
         //test/unit/implementation_deps:compile_commands_implementation_deps
         """
-        ret, _, stderr = self.run_command(
-            "bazel build --experimental_cc_implementation_deps //test/unit/"
-            "implementation_deps:compile_commands_implementation_deps"
-        )
-        self.assertEqual(ret, 0, stderr)
         compile_commands = os.path.join(
             self.BAZEL_BIN_DIR,  # type: ignore
             "compile_commands_implementation_deps",

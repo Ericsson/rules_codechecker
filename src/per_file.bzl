@@ -31,6 +31,7 @@ load(
 
 def _run_code_checker(
         ctx,
+        per_file_script,
         src,
         arguments,
         target,
@@ -66,16 +67,22 @@ def _run_code_checker(
                             ";clang-tidy," + clang_tidy_plist.path
 
     # Action to run CodeChecker for a file
+    # env_vars are unused for now, since
+    # use_default_shell_env and env are incompatible
     ctx.actions.run(
         inputs = inputs,
         outputs = outputs,
-        executable = ctx.outputs.per_file_script,
+        executable = per_file_script,
         arguments = [
+            compile_commands_json.path,
+            ' '.join(options),
+            config_file.path,
             data_dir,
             src.path,
             codechecker_log.path,
             analyzer_output_paths,
         ],
+        tools = [ctx.attr._per_file_script[DefaultInfo].files_to_run],
         mnemonic = "CodeChecker",
         use_default_shell_env = True,
         progress_message = "CodeChecker analyze {}".format(src.short_path),
@@ -117,21 +124,20 @@ def _collect_all_sources_and_headers(ctx):
                 all_files += headers
     return all_files
 
-def _create_wrapper_script(ctx, options, compile_commands_json, config_file):
-    options_str = ""
-    for item in options:
-        options_str += item + " "
-    ctx.actions.expand_template(
-        template = ctx.file._per_file_script_template,
-        output = ctx.outputs.per_file_script,
-        is_executable = True,
-        substitutions = {
-            "{PythonPath}": ctx.attr._python_runtime[PyRuntimeInfo].interpreter_path,
-            "{compile_commands_json}": compile_commands_json.path,
-            "{codechecker_args}": options_str,
-            "{config_file}": config_file.path,
-        },
-    )
+def _update_env_vars(
+    ctx,
+    options,
+    compile_commands_json,
+    config_file,
+    env_vars):
+    options_str = " ".join(options)
+    if not env_vars:
+        env_vars = {}
+    return (env_vars | {
+        "RULES_CODECHECKER_COMPILE_COMMANDS_JSON": compile_commands_json.path,
+        "RULES_CODECHECKER_CODECHECKER_ARGS": options_str,
+        "RULES_CODECHECKER_CONFIG_FILE": config_file.path,
+    })
 
 def _per_file_impl(ctx):
     compile_commands = None
@@ -146,7 +152,13 @@ def _per_file_impl(ctx):
     options = ctx.attr.default_options + ctx.attr.options
     all_files = [compile_commands]
     config_file, env_vars = get_config_file(ctx)
-    _create_wrapper_script(ctx, options, compile_commands, config_file)
+    env_vars =_update_env_vars(ctx, options, compile_commands, config_file, env_vars)
+    # Create per_file_script
+    per_file_script = ctx.actions.declare_file(ctx.label.name + "/per_file_script")
+    ctx.actions.symlink(
+        output = per_file_script,
+        target_file = ctx.executable._per_file_script,
+    )
     for target in ctx.attr.targets:
         if not CcInfo in target:
             continue
@@ -161,6 +173,7 @@ def _per_file_impl(ctx):
                     args = target[SourceFilesInfo].compilation_db.to_list()
                     outputs = _run_code_checker(
                         ctx,
+                        per_file_script,
                         src,
                         args,
                         target,
@@ -221,9 +234,11 @@ per_file_test = rule(
             default = None,
             doc = "CodeChecker configuration",
         ),
-        "_per_file_script_template": attr.label(
-            default = ":per_file_script.py",
-            allow_single_file = True,
+        "_per_file_script": attr.label(
+            allow_files = True,
+            executable = True,
+            cfg = "target",
+            default = ":per_file_script",
         ),
         "_python_runtime": attr.label(
             default = "@default_python_tools//:py3_runtime",
@@ -232,7 +247,7 @@ per_file_test = rule(
     outputs = {
         "compile_commands": "%{name}/compile_commands.json",
         "test_script": "%{name}/test_script.sh",
-        "per_file_script": "%{name}/per_file_script.py",
+        "per_file_script": "%{name}/per_file_script",
     },
     test = True,
 )

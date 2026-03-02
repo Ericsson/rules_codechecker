@@ -82,6 +82,9 @@ QUOTE_INCLUDE = "-iquote "
 def get_compile_flags(ctx, dep):
     """ Return a list of compile options
 
+    Args:
+        ctx: The context variable.
+        dep: A target with CcInfo.
     Returns:
       List of compile options.
     """
@@ -137,6 +140,8 @@ def get_compile_flags(ctx, dep):
 def get_sources(ctx):
     """ Return a list of source files
 
+    Args:
+        ctx: The context variable.
     Returns:
       List of source files.
     """
@@ -211,6 +216,9 @@ def _cc_compiler_info(ctx, target, src, feature_configuration, cc_toolchain):
 def get_compilation_database(target, ctx):
     """ Return a "compilation database" or "compile commands" ready to create a JSON file
 
+    Args:
+        ctx: The context variable.
+        target: Target to create the compilation database for.
     Returns:
       List of struct(file, command, directory).
     """
@@ -262,6 +270,9 @@ def get_compilation_database(target, ctx):
 def collect_headers(target, ctx):
     """ Return list of required header files
 
+    Args:
+        ctx: The context variable.
+        target: Target which headers should be collected
     Returns:
       depset of header files
     """
@@ -375,6 +386,8 @@ def _compile_commands_json(compilation_db):
 def compile_commands_impl(ctx):
     """ Creates compile_commands.json file for given targets and platform
 
+    Args:
+        ctx: The context variable.
     Returns:
       DefaultInfo(
         files,     # as compile_commands.json
@@ -448,7 +461,18 @@ def compile_commands(
         platform = "",  #"@platforms//os:linux",
         tags = [],
         **kwargs):
-    """ Bazel rule to generate compile_commands.json file """
+    """
+    Bazel rule to generate compile_commands.json file
+
+    Args:
+        name: Name of the target.
+        targets: List of targets to generate compile_commands.json for.
+        platform: Platform to consider during compile database creation.
+        tags: Bazel tags
+        **kwargs: Other miscellaneous arguments.
+    Returns:
+        None
+    """
     compile_commands_tags = [] + tags
     if "compile_commands" not in tags:
         compile_commands_tags.append("compile_commands")
@@ -457,4 +481,5 @@ def compile_commands(
         platform = platform,
         targets = targets,
         tags = compile_commands_tags,
+        **kwargs
     )

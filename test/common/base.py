@@ -23,6 +23,8 @@ import shlex
 import shutil
 import signal
 import socket
+import urllib.request
+import urllib.error
 import subprocess
 import tempfile
 import time
@@ -31,32 +33,32 @@ import sys
 from typing import Optional
 
 
-# Based on:
-# https://dev.to/farcellier/wait-for-a-server-to-respond-in-python-488e
-def wait_port(
-    port: int,
+def find_free_port():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("", 0))
+        return s.getsockname()[1]
+
+def wait_codechecker_server(
+    product: str = "Default",
     host: str = "localhost",
-    timeout: int = 3000,
+    port: int = 8001,
+    timeout: int = 10000,
     attempt_every: int = 100,
 ) -> bool:
     """
-    Wait until a port would be open,
-    for example the port 8001 for CodeChecker server
+    Wait until the product is available in the CodeChecker server
     """
     start = time.monotonic()
-    while True:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            try:
-                s.connect((host, port))
-                s.close()
-                return True
-            except ConnectionRefusedError:
-                if timeout is not None and time.monotonic() - start > (
-                    timeout / 1000
-                ):
-                    return False
-
+    url = f"http://{host}:{port}/{product}"
+    while time.monotonic() - start < timeout:
+        try:
+            with urllib.request.urlopen(url, timeout=timeout / 1000) as resp:
+                if resp.getcode() == 200:
+                    return True
+        except (urllib.error.URLError, urllib.error.HTTPError):
+            pass
         time.sleep(attempt_every / 1000)
+    return False
 
 
 class TestBase(unittest.TestCase):
@@ -177,22 +179,23 @@ class TestBase(unittest.TestCase):
         This server must be shutdown with stop_codechecker_sever
         """
         cls.temp_workspace = tempfile.mkdtemp()
+        cls.port: int = find_free_port()
         server_command = [
             "CodeChecker",
             "server",
             "--workspace",
             cls.temp_workspace,
             "--port",
-            "8001",  # user running unittest must make this port free!
+            str(cls.port),
         ]
         # pylint: disable=consider-using-with
-        cls.devnull = open(os.devnull, "w", encoding='utf-8')
+        cls.devnull = open(os.devnull, "w", encoding="utf-8")
         # pylint: disable=consider-using-with
         cls.server_process: subprocess.Popen = subprocess.Popen(
             server_command, stdout=cls.devnull
         )
-        assert wait_port(
-            port=8001, timeout=10000
+        assert wait_codechecker_server(
+            port=cls.port
         ), "Failed to start CodeChecker server"
 
     @classmethod
@@ -214,11 +217,12 @@ class TestBase(unittest.TestCase):
             path - Path of the result files
             name - name of the project to be saved under
         """
-        ret, _, _ = self.run_command(
+        port = getattr(self, 'port', 8001)
+        ret, stdout, stderr = self.run_command(
             f"CodeChecker store {path} -n {name}"
-            " --url=http://localhost:8001/Default"
+            f" --url=http://localhost:{port}/Default"
         )
-        self.assertEqual(ret, 0)
+        self.assertEqual(ret, 0, stdout + "\n" + stderr)
 
     def check_parse(self, path: str, will_find_bug: bool = True):
         """

@@ -57,7 +57,10 @@ class TestImplDepExternalDep(TestBase):
             logging.debug("No bazel version set, using system default")
         _, stdout, _ = cls.run_command("bazel --version")
         cls.BAZEL_VERSION = stdout.split(" ")[2].strip()
-        logging.debug("Using Bazel %s", cls.BAZEL_VERSION)
+        logging.debug("Bazel version: %s", cls.BAZEL_VERSION)
+        major_version = int(cls.BAZEL_VERSION.split(".")[0])
+        if major_version < 7:
+            raise unittest.SkipTest("Skip tests for Bazel older than 7")
 
     @final
     @classmethod
@@ -84,11 +87,11 @@ class TestImplDepExternalDep(TestBase):
     def test_compile_commands_external_lib(self):
         """
         Test: bazel build :compile_commands_isystem "
-        "--experimental_cc_implementation_deps --enable_bzlmod
+        "--experimental_cc_implementation_deps
         """
         ret, _, stderr = self.run_command(
             "bazel build :compile_commands_isystem "
-            "--experimental_cc_implementation_deps --enable_bzlmod"
+            "--experimental_cc_implementation_deps"
         )
         self.assertEqual(ret, 0, stderr)
         comp_json_file = os.path.join(
@@ -97,19 +100,11 @@ class TestImplDepExternalDep(TestBase):
             "compile_commands.json",
         )
 
-        # The ~override part is a consquence of using Bzlmod.
-        if self.BAZEL_VERSION.startswith("6"):  # type: ignore
-            pattern1 = "-isystem external/external_lib~override/include"
-            pattern2 = (
-                "-isystem bazel-out/k8-fastbuild/bin/external/"
-                "external_lib~override/include"
-            )
-        else:
-            pattern1 = "-isystem external/external_lib~/include"
-            pattern2 = (
-                "-isystem bazel-out/k8-fastbuild/bin/external/"
-                "external_lib~/include"
-            )
+        pattern1 = r"-isystem external/external_lib./include"
+        pattern2 = (
+            r"-isystem bazel-out/k8-fastbuild/bin/external/"
+            "external_lib./include"
+        )
 
         self.assertTrue(self.contains_regex_in_file(comp_json_file, pattern1))
         self.assertTrue(self.contains_regex_in_file(comp_json_file, pattern2))
@@ -117,11 +112,11 @@ class TestImplDepExternalDep(TestBase):
     def test_codechecker_external_lib(self):
         """
         Test: bazel build :codechecker_external_deps
-        --experimental_cc_implementation_deps --enable_bzlmod
+        --experimental_cc_implementation_deps
         """
         ret, _, stderr = self.run_command(
             "bazel build :codechecker_external_deps "
-            "--experimental_cc_implementation_deps --enable_bzlmod"
+            "--experimental_cc_implementation_deps"
         )
         self.assertEqual(ret, 0, stderr)
 
@@ -130,7 +125,7 @@ class TestImplDepExternalDep(TestBase):
         "--experimental_cc_implementation_deps"""
         ret, _, stderr = self.run_command(
             "bazel build :per_file_external_deps "
-            "--experimental_cc_implementation_deps --enable_bzlmod"
+            "--experimental_cc_implementation_deps"
         )
         self.assertEqual(ret, 0, stderr)
 

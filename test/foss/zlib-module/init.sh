@@ -58,10 +58,7 @@ codechecker_test(
 #-------------------------------------------------------
 EOF
 
-# Enable MODULE.bazel (in Bazel 6)
-echo "common --enable_bzlmod" > "$1/.bazelrc"
-# Add rules_codechecker repo MODULE.bazel
+# Add rules_codechecker repo to WORKSPACE for Bazel 6
+cat ../templates/WORKSPACE.template >> "$1/WORKSPACE"
+# And to MODULE.bazel for Bazel 7, 8 and higher
 cat ../templates/MODULE.template >> "$1/MODULE.bazel"
-# An empty workspace file is required to keep Bazel versions older than 6.5.0
-# in the project directory
-touch "$1/WORKSPACE"

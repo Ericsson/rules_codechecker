@@ -60,5 +60,7 @@ codechecker_test(
 #-------------------------------------------------------
 EOF
 
-# Add rules_codechecker repo to WORKSPACE
+# Add rules_codechecker repo to WORKSPACE for Bazel 6
 cat ../templates/WORKSPACE.template >> "$1/WORKSPACE"
+# And to MODULE.bazel for Bazel 7, 8 and higher
+cat ../templates/MODULE.template >> "$1/MODULE.bazel"

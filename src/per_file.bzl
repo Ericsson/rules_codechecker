@@ -20,7 +20,7 @@ for each translation unit.
 load("@bazel_tools//tools/build_defs/cc:action_names.bzl", "ACTION_NAMES")
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 load("codechecker_config.bzl", "get_config_file")
-load("common.bzl", "SOURCE_ATTR")
+load("common.bzl", "python_toolchain_type", "SOURCE_ATTR")
 load(
     "compile_commands.bzl",
     "SourceFilesInfo",
@@ -126,7 +126,6 @@ def _create_wrapper_script(ctx, options, compile_commands_json, config_file):
         output = ctx.outputs.per_file_script,
         is_executable = True,
         substitutions = {
-            "{PythonPath}": ctx.attr._python_runtime[PyRuntimeInfo].interpreter_path,
             "{compile_commands_json}": compile_commands_json.path,
             "{codechecker_args}": options_str,
             "{config_file}": config_file.path,
@@ -225,14 +224,12 @@ per_file_test = rule(
             default = ":per_file_script.py",
             allow_single_file = True,
         ),
-        "_python_runtime": attr.label(
-            default = "@default_python_tools//:py3_runtime",
-        ),
     },
     outputs = {
         "compile_commands": "%{name}/compile_commands.json",
         "test_script": "%{name}/test_script.sh",
         "per_file_script": "%{name}/per_file_script.py",
     },
+    toolchains = [python_toolchain_type()],
     test = True,
 )

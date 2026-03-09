@@ -53,6 +53,7 @@ def python_toolchain_type():
 def python_path(ctx):
     """
     Returns version specific Python path
+    NOTE: this function is not being used
     """
     py_toolchain = ctx.toolchains[python_toolchain_type()]
     if hasattr(py_toolchain, "py3_runtime_info"):
@@ -61,6 +62,8 @@ def python_path(ctx):
     elif hasattr(py_toolchain, "py3_runtime"):
         py_runtime = py_toolchain.py3_runtime
         python_path = py_runtime.interpreter_path
+        if not python_path:
+            python_path = py_runtime.interpreter.path
     else:
         fail("The resolved Python toolchain does not provide a Python3 runtime.")
     if not python_path:

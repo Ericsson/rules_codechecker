@@ -4,10 +4,10 @@ experimental = true
 
 [tools]
 # Environment tools:
-"bazel" = "6.5"
+"bazel" = "7"
 "python" = "3.11"
 "pipx" = "latest"
-"pipx:codechecker" = "6.26"
+"pipx:codechecker" = "6.27"
 
 # Clang tools:
 "conda:clang" = "latest"
@@ -70,11 +70,17 @@ run = "# Installing tools"
 quiet = true
 
 
-[tasks."test"]
-depends = ["install:bazel-7", "install:codechecker-26", "install:codechecker-27"]
+[tasks."legacy"]
+depends = [
+    "install:bazel-8",
+    "install:bazel-7",
+    "install:bazel-6",
+    "install:codechecker-27",
+]
 run = [
-    { task = "test:7-26" },
-    { task = "test:7-27" },
+    { task = "test:8-27 test/unit/legacy" },
+    { task = "test:7-27 test/unit/legacy" },
+    { task = "test:6-27 test/unit/legacy" },
 ]
 
 [tasks."test:all"]

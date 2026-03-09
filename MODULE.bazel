@@ -16,18 +16,21 @@ limitations under the License.
 
 module(name = "rules_codechecker")
 
-python_extension = use_extension(
-    "//src:tools.bzl",
-    "module_register_default_python_toolchain",
-)
+# C/C++ rules: cc_library, cc_binary
+bazel_dep(name = "rules_cc", version = "0.2.14")
 
+# Python rules and toolchain
+bazel_dep(name = "rules_python", version = "1.9.0")
+python_extension = use_extension(
+    "@rules_python//python/extensions:python.bzl",
+    "default_python_tools",
+)
+python_extension.toolchain(python_version = "3.11", is_default = True)
+use_repo(python_extension, "default_python_tools")
+
+# CodeChecker support
 codechecker_extension = use_extension(
     "//src:tools.bzl",
     "module_register_default_codechecker",
 )
-
-use_repo(python_extension, "default_python_tools")
-
 use_repo(codechecker_extension, "default_codechecker_tools")
-
-register_toolchains("@default_python_tools//:python_toolchain")

@@ -1,3 +1,8 @@
+load("@rules_cc//cc:defs.bzl",
+    "cc_binary",
+    "cc_library",
+)
+
 # clang-tidy and clang -analyze rules
 load(
     "//src:clang.bzl",

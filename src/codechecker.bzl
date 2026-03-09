@@ -104,7 +104,6 @@ def _codechecker_impl(ctx):
         substitutions = {
             "{Mode}": "Run",
             "{Verbosity}": "DEBUG",
-            "{PythonPath}": python_path(ctx),  # "/usr/bin/env python3",
             "{codechecker_bin}": CODECHECKER_BIN_PATH,
             "{compile_commands}": ctx.outputs.codechecker_commands.path,
             "{codechecker_skipfile}": ctx.outputs.codechecker_skipfile.path,
@@ -233,7 +232,6 @@ def _codechecker_test_impl(ctx):
         substitutions = {
             "{Mode}": "Test",
             "{Verbosity}": "INFO",
-            "{PythonPath}": python_path(ctx),  # "/usr/bin/env python3",
             "{codechecker_bin}": CODECHECKER_BIN_PATH,
             "{codechecker_files}": codechecker_files.short_path,
             "{Severities}": " ".join(ctx.attr.severities),

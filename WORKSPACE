@@ -50,3 +50,29 @@ bazel_skylib_workspace()
 load("@buildifier_prebuilt//:defs.bzl", "buildifier_prebuilt_register_toolchains")
 
 buildifier_prebuilt_register_toolchains()
+
+http_archive(
+    name = "aspect_rules_lint",
+    sha256 = "329cf5ba776a75b70049a5695e9ca29a25113230f4f447aff7102b62afe7c24a",
+    strip_prefix = "rules_lint-1.11.0",
+    url = "https://github.com/aspect-build/rules_lint/releases/download/v1.11.0/rules_lint-v1.11.0.tar.gz",
+)
+
+http_archive(
+    name = "bazel_lib",
+    sha256 = "0758ace949a93f709230a8e08ef35c5f0aacae2ff5d219b27da1d21d8233a709",
+    strip_prefix = "bazel-lib-3.0.0-rc.0",
+    url = "https://github.com/bazel-contrib/bazel-lib/releases/download/v3.0.0-rc.0/bazel-lib-v3.0.0-rc.0.tar.gz",
+)
+
+load("@bazel_lib//lib:repositories.bzl", "bazel_lib_dependencies")
+
+bazel_lib_dependencies()
+
+load(
+    "@aspect_rules_lint//format:repositories.bzl",
+    # Fetch additional formatter binaries you need:
+    "rules_lint_dependencies",
+)
+
+rules_lint_dependencies()

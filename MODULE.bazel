@@ -24,6 +24,7 @@ bazel_dep(
     version = "6.4.0",
     dev_dependency = True,
 )
+bazel_dep(name = "aspect_rules_lint", version = "1.11.0", dev_dependency = True)
 
 codechecker_extension = use_extension(
     "//src:tools.bzl",

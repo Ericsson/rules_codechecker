@@ -27,6 +27,3 @@ test/unit/external_repository/third_party/my_lib/.bazelversion
 # Ignore Bazel specific files
 .bazelversion
 MODULE.bazel.lock
-
-# Ignore dependency binaries
-dependency/bin/

@@ -27,7 +27,6 @@ load(
 )
 load(
     "common.bzl",
-    "python_path",
     "python_toolchain_type",
     "version_specific_attributes",
 )
@@ -97,29 +96,28 @@ def _codechecker_impl(ctx):
     config_file, codechecker_env = get_config_file(ctx)
 
     codechecker_files = ctx.actions.declare_directory(ctx.label.name + "/codechecker-files")
-    ctx.actions.expand_template(
-        template = ctx.file._codechecker_script_template,
-        output = ctx.outputs.codechecker_script,
-        is_executable = True,
-        substitutions = {
-            "{Mode}": "Run",
-            "{Verbosity}": "DEBUG",
-            "{PythonPath}": python_path(ctx),  # "/usr/bin/env python3",
-            "{codechecker_bin}": CODECHECKER_BIN_PATH,
-            "{compile_commands}": ctx.outputs.codechecker_commands.path,
-            "{codechecker_skipfile}": ctx.outputs.codechecker_skipfile.path,
-            "{codechecker_config}": config_file.path,
-            "{codechecker_analyze}": " ".join(ctx.attr.analyze),
-            "{codechecker_files}": codechecker_files.path,
-            "{codechecker_log}": ctx.outputs.codechecker_log.path,
-            "{codechecker_env}": codechecker_env,
-        },
-    )
 
+    codechecker_script = ctx.actions.declare_file(ctx.label.name + "/codechecker_script")
+    ctx.actions.symlink(
+        output = codechecker_script,
+        target_file = ctx.executable._codechecker_script,
+    )
+    cmd_args = ctx.actions.args()
+    cmd_args.add("--mode", "Run")
+    cmd_args.add("--verbosity", "DEBUG")
+    cmd_args.add("--codechecker_path", CODECHECKER_BIN_PATH)
+    cmd_args.add("--commands", ctx.outputs.codechecker_commands.path)
+    cmd_args.add("--skip", ctx.outputs.codechecker_skipfile.path)
+    cmd_args.add("--config", config_file.path)
+    if len(ctx.attr.analyze) != 0:
+        cmd_args.add("--analyze", "'" + " ".join(ctx.attr.analyze) + "'")
+    cmd_args.add("--files", codechecker_files.path)
+    cmd_args.add("--log", ctx.outputs.codechecker_log.path)
+    cmd_args.add("--env", codechecker_env)
     ctx.actions.run(
         inputs = depset(
             [
-                ctx.outputs.codechecker_script,
+                codechecker_script,
                 ctx.outputs.codechecker_commands,
                 ctx.outputs.codechecker_skipfile,
                 config_file,
@@ -129,10 +127,9 @@ def _codechecker_impl(ctx):
             codechecker_files,
             ctx.outputs.codechecker_log,
         ],
-        executable = ctx.outputs.codechecker_script,
-        arguments = [],
-        # executable = python_path(ctx),
-        # arguments = [ctx.outputs.codechecker_script.path],
+        executable = codechecker_script,
+        tools = [ctx.attr._codechecker_script[DefaultInfo].files_to_run],
+        arguments = [cmd_args],
         mnemonic = "CodeChecker",
         progress_message = "CodeChecker %s" % str(ctx.label),
         # use_default_shell_env = True,
@@ -193,16 +190,18 @@ codechecker = rule(
             cfg = "host",
             default = ":compile_commands_filter",
         ),
-        "_codechecker_script_template": attr.label(
-            default = ":codechecker_script.py",
-            allow_single_file = True,
+        "_codechecker_script": attr.label(
+            allow_files = True,
+            executable = True,
+            cfg = "target",
+            default = ":codechecker_script",
         ),
     },
     outputs = {
         "compile_commands": "%{name}/compile_commands.json",
         "codechecker_commands": "%{name}/codechecker_commands.json",
         "codechecker_skipfile": "%{name}/codechecker_skipfile.cfg",
-        "codechecker_script": "%{name}/codechecker_script.py",
+        "codechecker_script": "%{name}/codechecker_script",
         "codechecker_log": "%{name}/codechecker.log",
     },
     toolchains = [python_toolchain_type()],
@@ -225,28 +224,40 @@ def _codechecker_test_impl(ctx):
     if not codechecker_files:
         fail("Execution results required for codechecker test are not available")
 
-    # Create test script from template
-    ctx.actions.expand_template(
-        template = ctx.file._codechecker_script_template,
-        output = ctx.outputs.codechecker_test_script,
+    # Create test script
+    codechecker_test_script = ctx.actions.declare_file(ctx.label.name + "/codechecker_test_script")
+    ctx.actions.symlink(
+        output = codechecker_test_script,
+        target_file = ctx.executable._codechecker_script,
+    )
+
+    launcher = ctx.actions.declare_file(ctx.label.name + "_launcher.sh")
+    ctx.actions.write(
+        output = launcher,
+        content = """#!/bin/bash
+            exec {tool} --mode=Test --verbosity=INFO \
+            --codechecker_path '{codechecker_path}' \
+            --files '{codechecker_files}' --severities '{severities}'
+            """.format(
+            tool = ctx.outputs.codechecker_test_script.short_path,
+            codechecker_path = CODECHECKER_BIN_PATH,
+            codechecker_files = codechecker_files.short_path,
+            severities = " ".join(ctx.attr.severities),
+        ),
         is_executable = True,
-        substitutions = {
-            "{Mode}": "Test",
-            "{Verbosity}": "INFO",
-            "{PythonPath}": python_path(ctx),  # "/usr/bin/env python3",
-            "{codechecker_bin}": CODECHECKER_BIN_PATH,
-            "{codechecker_files}": codechecker_files.short_path,
-            "{Severities}": " ".join(ctx.attr.severities),
-        },
     )
 
     # Return test script and all required files
-    run_files = default_runfiles + [ctx.outputs.codechecker_test_script]
+    run_files = default_runfiles + [ctx.outputs.codechecker_test_script, launcher]
+    all_runfiles = ctx.runfiles(files = run_files)
+
+    # Add runfiles from the py_binary target:
+    all_runfiles = all_runfiles.merge(ctx.attr._codechecker_script[DefaultInfo].default_runfiles)
     return [
         DefaultInfo(
             files = depset(all_files),
-            runfiles = ctx.runfiles(files = run_files),
-            executable = ctx.outputs.codechecker_test_script,
+            runfiles = all_runfiles,
+            executable = launcher,
         ),
     ]
 
@@ -270,9 +281,11 @@ _codechecker_test = rule(
             cfg = "host",
             default = ":compile_commands_filter",
         ),
-        "_codechecker_script_template": attr.label(
-            default = ":codechecker_script.py",
-            allow_single_file = True,
+        "_codechecker_script": attr.label(
+            allow_files = True,
+            executable = True,
+            cfg = "target",
+            default = ":codechecker_script",
         ),
         "severities": attr.string_list(
             default = ["HIGH"],
@@ -297,9 +310,9 @@ _codechecker_test = rule(
         "compile_commands": "%{name}/compile_commands.json",
         "codechecker_commands": "%{name}/codechecker_commands.json",
         "codechecker_skipfile": "%{name}/codechecker_skipfile.cfg",
-        "codechecker_script": "%{name}/codechecker_script.py",
+        "codechecker_script": "%{name}/codechecker_script",
         "codechecker_log": "%{name}/codechecker.log",
-        "codechecker_test_script": "%{name}/codechecker_test_script.py",
+        "codechecker_test_script": "%{name}/codechecker_test_script",
     },
     toolchains = [python_toolchain_type()],
     test = True,

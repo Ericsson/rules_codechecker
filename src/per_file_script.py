@@ -1,5 +1,3 @@
-#!{PythonPath}
-
 # Copyright 2023 Ericsson AB
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,14 +30,14 @@ FILE_PATH: Optional[str] = None
 # List of pairs of analyzers and their plist files
 ANALYZER_PLIST_PATHS: Optional[list[list[str]]] = None
 LOG_FILE: Optional[str] = None
-COMPILE_COMMANDS_JSON: str = "{compile_commands_json}"
+COMPILE_COMMANDS_JSON: str = sys.argv[1]
 COMPILE_COMMANDS_ABSOLUTE: str = f"{COMPILE_COMMANDS_JSON}.abs"
-CODECHECKER_ARGS: str = "{codechecker_args}"
-CONFIG_FILE: str = "{config_file}"
-DATA_DIR = sys.argv[1]
-FILE_PATH = sys.argv[2]
-LOG_FILE = sys.argv[3]
-ANALYZER_PLIST_PATHS = [item.split(",") for item in sys.argv[4].split(";")]
+CODECHECKER_ARGS: str = sys.argv[2]
+CONFIG_FILE: str = sys.argv[3]
+DATA_DIR = sys.argv[4]
+FILE_PATH = sys.argv[5]
+LOG_FILE = sys.argv[6]
+ANALYZER_PLIST_PATHS = [item.split(",") for item in sys.argv[7].split(";")]
 
 
 def log(msg: str) -> None:
@@ -147,7 +145,7 @@ def main():
     """
     Main function of CodeChecker wrapper
     """
-    if len(sys.argv) != 5:
+    if len(sys.argv) != 8:
         print("Wrong amount of arguments")
         sys.exit(1)
     _create_compile_commands_json_with_absolute_paths()

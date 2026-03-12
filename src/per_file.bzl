@@ -126,7 +126,6 @@ def _create_wrapper_script(ctx, options, compile_commands_json, config_file):
         output = ctx.outputs.per_file_script,
         is_executable = True,
         substitutions = {
-            "{PythonPath}": ctx.attr._python_runtime[PyRuntimeInfo].interpreter_path,
             "{compile_commands_json}": compile_commands_json.path,
             "{codechecker_args}": options_str,
             "{config_file}": config_file.path,

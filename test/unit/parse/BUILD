@@ -23,6 +23,19 @@ load(
     "cc_library",
 )
 
+filegroup(
+    name = "all_files",
+    srcs = glob(
+        ["**/*"],
+        exclude = [
+            "bazel-*/**",       # Exclude bazel symlinks
+            ".git/**",
+            "**/__pycache__/**",
+        ],
+    ),
+    visibility = ["//visibility:public"],
+)
+
 cc_library(
     name = "c_target",
     srcs = ["simple.c"],

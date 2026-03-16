@@ -24,6 +24,19 @@ load(
     "cc_library",
 )
 
+filegroup(
+    name = "all_files",
+    srcs = glob(
+        ["**/*"],
+        exclude = [
+            "bazel-*/**",       # Exclude bazel symlinks
+            ".git/**",
+            "**/__pycache__/**",
+        ],
+    ),
+    visibility = ["//visibility:public"],
+)
+
 # Test for strip_include_prefix
 cc_library(
     name = "test_inc",

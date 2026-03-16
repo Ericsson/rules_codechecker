@@ -24,6 +24,19 @@ load(
     "cc_library",
 )
 
+filegroup(
+    name = "all_files",
+    srcs = glob(
+        ["**/*"],
+        exclude = [
+            "bazel-*/**",       # Exclude bazel symlinks
+            ".git/**",
+            "**/__pycache__/**",
+        ],
+    ),
+    visibility = ["//visibility:public"],
+)
+
 # We are not interested in finding bugs, we are only interested in whether the
 # analysis re-runs after the files have been modified. As such, these files emit no
 # warnings.

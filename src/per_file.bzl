@@ -224,9 +224,6 @@ per_file_test = rule(
             default = ":per_file_script.py",
             allow_single_file = True,
         ),
-        "_python_runtime": attr.label(
-            default = "@default_python_tools//:py3_runtime",
-        ),
     },
     outputs = {
         "compile_commands": "%{name}/compile_commands.json",

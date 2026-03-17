@@ -1,0 +1,20 @@
+name: "zlib"
+url: "https://github.com/madler/zlib.git"
+targets:
+  - name: "z"
+version_tags:
+  - bazel_version: "6"
+    hash: "5a82f71ed1dfc0bec044d9702463dbdf84ea3b71"
+    bzlmod: False
+  - bazel_version: "6"
+    hash: "5a82f71ed1dfc0bec044d9702463dbdf84ea3b71"
+    bzlmod: True
+  - bazel_version: "7"
+    hash: "5a82f71ed1dfc0bec044d9702463dbdf84ea3b71"
+    bzlmod: False
+  - bazel_version: "7"
+    hash: "5a82f71ed1dfc0bec044d9702463dbdf84ea3b71"
+    bzlmod: True
+  - bazel_version: "8"
+    hash: "5a82f71ed1dfc0bec044d9702463dbdf84ea3b71"
+    bzlmod: True

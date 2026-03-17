@@ -70,13 +70,15 @@ class FOSSTestCollector(TestBase):
 def create_test_method(
     project_name: str,
     url: str,
-    git_hash: str,
-    bzlmod: bool,
     targets: list[dict[str, str]],
+    context,
+    bzlmod,
 ) -> FunctionType:
     """
     Returns a function pointer that points to a function for the given directory
     """
+    git_hash = context["hash"]
+    patch = context.get("patch", "")
 
     def test_runner(self) -> None:
         with tempfile.TemporaryDirectory() as test_dir:
@@ -84,7 +86,14 @@ def create_test_method(
             logging.info("Initializing project...")
             subprocess.run(["git", "clone", url, test_dir], check=True)
             subprocess.run(
-                ["git", "-C", test_dir, "checkout", git_hash], check=True
+                [
+                    "git",
+                    "-C",
+                    test_dir,
+                    "checkout",
+                    git_hash,  # pyright: ignore
+                ],
+                check=True,
             )
 
             bazelversion = Path("../../.bazelversion")
@@ -162,6 +171,8 @@ def create_test_method(
                 workspace_file = Path(os.path.join(test_dir, "WORKSPACE"))
                 with open(workspace_file, "a", encoding="utf-8") as f:
                     f.write(workspace_final)
+            if patch:
+                subprocess.run(patch, cwd=test_dir, check=True)
             logging.info("Running monolithic rule...")
             for target in targets:
                 ret, _, stderr = self.run_command(
@@ -187,24 +198,21 @@ for config_file in get_test_config():
     with open(config_file, "r", encoding="utf-8") as conf:
         CONTENT = yaml.safe_load(conf)
     assert CONTENT is not None
-    test_name: str = CONTENT.get("name")
-    test_url: str = CONTENT.get("url")
+    test_name: str = CONTENT["name"]
 
-    for tag in CONTENT.get("version_tags"):
-        bazel_version: str = tag.get("bazel_version")
-        bzlmod_on: bool = tag.get(
-            "bzlmod", (True if int(bazel_version) >= 8 else False)
-        )
+    for tag in CONTENT["version_tags"]:
+        bazel_version: str = tag["bazel_version"]
+        bzlmod_on: bool = tag.get("bzlmod", (int(bazel_version) >= 8))
         if bazel_version == BAZEL_MAJOR_VERSION:
             setattr(
                 FOSSTestCollector,
                 f"test_{test_name}_{'bzlmod' if bzlmod_on else 'workspace'}",
                 create_test_method(
                     test_name,
-                    test_url,
-                    tag.get("hash"),
+                    CONTENT["url"],
+                    CONTENT["targets"],
+                    tag,
                     bzlmod_on,
-                    CONTENT.get("targets"),
                 ),
             )
 

@@ -77,9 +77,12 @@ def create_test_method(directory_name: str) -> FunctionType:
             ret, _, _ = self.run_command(
                 f"sh init.sh {test_dir}", project_root
             )
-            module_file = Path(
-                os.path.join(test_dir, "MODULE.bazel")
-            )
+            skip_test = Path(os.path.join(test_dir, ".skipfosstest"))
+            if os.path.exists(skip_test):
+                self.skipTest(
+                    "This project is not compatible with this bazel version"
+                )
+            module_file = Path(os.path.join(test_dir, "MODULE.bazel"))
             if os.path.exists(module_file):
                 content = module_file.read_text("utf-8").replace(
                     "{rule_path}",

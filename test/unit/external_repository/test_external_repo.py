@@ -104,11 +104,17 @@ class TestImplDepExternalDep(TestBase):
                 "-isystem bazel-out/k8-fastbuild/bin/external/"
                 "external_lib~override/include"
             )
-        else:
+        elif self.BAZEL_VERSION.startswith("7"):  # type:ignore
             pattern1 = "-isystem external/external_lib~/include"
             pattern2 = (
                 "-isystem bazel-out/k8-fastbuild/bin/external/"
                 "external_lib~/include"
+            )
+        else:
+            pattern1 = r"-isystem external/external_lib\+/include"
+            pattern2 = (
+                r"-isystem "
+                r"bazel-out/k8-fastbuild/bin/external/external_lib\+/include"
             )
 
         self.assertTrue(self.contains_regex_in_file(comp_json_file, pattern1))

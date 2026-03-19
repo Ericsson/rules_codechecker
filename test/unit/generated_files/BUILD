@@ -27,6 +27,19 @@ load(
     "cc_binary",
 )
 
+filegroup(
+    name = "all_files",
+    srcs = glob(
+        ["**/*"],
+        exclude = [
+            "bazel-*/**",       # Exclude bazel symlinks
+            ".git/**",
+            "**/__pycache__/**",
+        ],
+    ),
+    visibility = ["//visibility:public"],
+)
+
 # First, define the rule that generates our file.
 genrule(
     name = "generate_header",

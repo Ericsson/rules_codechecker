@@ -26,6 +26,19 @@ load(
     "cc_binary",
 )
 
+filegroup(
+    name = "all_files",
+    srcs = glob(
+        ["**/*"],
+        exclude = [
+            "bazel-*/**",       # Exclude bazel symlinks
+            ".git/**",
+            "**/__pycache__/**",
+        ],
+    ),
+    visibility = ["//visibility:public"],
+)
+
 # C++ binary containing a division by zero bug
 cc_binary(
     name = "test_zero",

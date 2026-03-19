@@ -41,14 +41,21 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--file",
+        nargs="+",
         required=True,
-        help="Path to the file to search within (e.g., a test log file).",
+        help="Path to the file(s) to search within.",
     )
     parser.add_argument(
         "--patterns",
         nargs="+",
         required=True,
-        help="One or more patterns to assert are present in the file.",
+        help="One or more patterns to assert are present in the file(s).",
+    )
+    parser.add_argument(
+        "--negative_patterns",
+        nargs="+",
+        required=True,
+        help="One or more patterns to assert are not present in the file(s).",
     )
     return parser.parse_args()
 

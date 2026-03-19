@@ -1,0 +1,17 @@
+name: "yaml-cpp"
+url: "https://github.com/jbeder/yaml-cpp.git"
+targets:
+  - name: "yaml-cpp"
+version_tags:
+  - bazel_version: "6"
+    hash: "yaml-cpp-0.7.0"
+    bzlmod: False
+  - bazel_version: "7"
+    hash: "yaml-cpp-0.7.0"
+    bzlmod: False
+  - bazel_version: "7"
+    hash: "yaml-cpp-0.9.0"
+    bzlmod: True
+  - bazel_version: "8"
+    hash: "yaml-cpp-0.9.0"
+    bzlmod: True

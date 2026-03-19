@@ -17,30 +17,39 @@ Test the rule integrated into open source projects
 """
 
 import logging
+import shutil
+import subprocess
 import unittest
 import os
 import tempfile
 from pathlib import Path
 from types import FunctionType
+import yaml
 from common.base import TestBase
 
 ROOT_DIR = f"{os.path.dirname(os.path.abspath(__file__))}/"
-NOT_PROJECT_FOLDERS = ["templates", "__pycache__", ".pytest_cache"]
 
 
-def get_test_dirs() -> list[str]:
+def get_test_config() -> list[Path]:
     """
-    Collect directories containing a test project
+    Collect config files for test projects
     """
-    dirs = []
-    for entry in os.listdir(ROOT_DIR):
-        full_path = os.path.join(ROOT_DIR, entry)
-        if os.path.isdir(full_path) and entry not in NOT_PROJECT_FOLDERS:
-            dirs.append(entry)
-    return dirs
+    path = Path(ROOT_DIR)
+    yaml_files = list(path.rglob("*.yaml")) + list(path.rglob("*.yml"))
+    return yaml_files
 
 
-PROJECT_DIRS = get_test_dirs()
+def get_bazel_version():
+    """
+    Return the installed Bazel version string
+    """
+    out = subprocess.check_output(["bazel", "--version"], text=True).strip()
+    version = out.split(" ")[1]
+    return version
+
+
+BAZEL_VERSION = get_bazel_version()
+BAZEL_MAJOR_VERSION = BAZEL_VERSION.split(".")[0]
 
 
 # This will contain the generated tests.
@@ -58,66 +67,154 @@ class FOSSTestCollector(TestBase):
 
 # Creates test functions with the parameter: directory_name. Based on:
 # https://eli.thegreenplace.net/2014/04/02/dynamically-generating-python-test-cases
-def create_test_method(directory_name: str) -> FunctionType:
+def create_test_method(
+    project_name: str,
+    url: str,
+    targets: list[dict[str, str]],
+    context,
+    bzlmod,
+) -> FunctionType:
     """
     Returns a function pointer that points to a function for the given directory
     """
+    git_hash = context["hash"]
+    patch = context.get("patch", "")
 
     def test_runner(self) -> None:
-        project_root = os.path.join(ROOT_DIR, directory_name)
-
-        self.assertTrue(
-            os.path.exists(os.path.join(project_root, "init.sh")),
-            f"Missing 'init.sh' in {directory_name}\n"
-            + "Please consult with the README on how to add a new FOSS project",
-        )
         with tempfile.TemporaryDirectory() as test_dir:
             self.assertTrue(os.path.exists(test_dir))
             logging.info("Initializing project...")
-            ret, _, _ = self.run_command(
-                f"sh init.sh {test_dir}", project_root
+            subprocess.run(["git", "clone", url, test_dir], check=True)
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    test_dir,
+                    "checkout",
+                    git_hash,  # pyright: ignore
+                ],
+                check=True,
             )
-            skip_test = Path(os.path.join(test_dir, ".skipfosstest"))
-            if os.path.exists(skip_test):
-                self.skipTest(
-                    "This project is not compatible with this bazel version"
+
+            bazelversion = Path("../../.bazelversion")
+            if bazelversion.is_file():
+                shutil.copy(
+                    bazelversion, os.path.join(test_dir, ".bazelversion")
                 )
-            module_file = Path(os.path.join(test_dir, "MODULE.bazel"))
-            if os.path.exists(module_file):
-                content = module_file.read_text("utf-8").replace(
+
+            build_file = Path(os.path.join(test_dir), "BUILD")
+            if not build_file.is_file():
+                build_file = Path(os.path.join(test_dir), "BUILD.bazel")
+            if not build_file.is_file():
+                self.fail(
+                    f"No build file found for project {project_name}",
+                )
+
+            with open(build_file, "a", encoding="utf-8") as f:
+                f.write(
+                    "#-------------------------------------------------------\n"
+                    "# codechecker rules\n"
+                    "load(\n"
+                    '"@rules_codechecker//src:codechecker.bzl",\n'
+                    '"codechecker_test",\n'
+                    ")\n"
+                )
+                for target in targets:
+                    target_name = target["name"]
+                    f.write(
+                        "codechecker_test(\n"
+                        f'name = "codechecker_test_{target_name}",\n'
+                        "targets = [\n"
+                        f'":{target_name}",\n'
+                        "],\n"
+                        ")\n"
+                    )
+                    f.write(
+                        "codechecker_test(\n"
+                        f'name = "per_file_test_{target_name}",\n'
+                        "targets = [\n"
+                        f'":{target_name}",\n'
+                        "],\n"
+                        "per_file = True,\n"
+                        ")\n"
+                    )
+                f.write(
+                    "#-------------------------------------------------------\n"
+                )
+            if bzlmod:
+                module_template = Path("templates/MODULE.template").read_text(
+                    "utf-8"
+                )
+                module_final = module_template.replace(
                     "{rule_path}",
                     f"{os.path.dirname(os.path.abspath(__file__))}/../../",
                 )
-                module_file.write_text(content, "utf-8")
-            workspace_file = Path(
-                os.path.join(test_dir, "WORKSPACE")
-            )
-            if os.path.exists(workspace_file):
-                content = workspace_file.read_text("utf-8").replace(
+                module_file = Path(os.path.join(test_dir, "MODULE.bazel"))
+                with open(module_file, "a", encoding="utf-8") as f:
+                    f.write(module_final)
+                if BAZEL_MAJOR_VERSION == "6":
+                    with open(
+                        os.path.join(test_dir, ".bazelrc"),
+                        "a",
+                        encoding="utf-8",
+                    ) as f:
+                        f.write("common --enable_bzlmod")
+                    Path(os.path.join(test_dir, "WORKSPACE")).touch()
+            else:
+                workspace_template = Path(
+                    "templates/WORKSPACE.template"
+                ).read_text("utf-8")
+                workspace_final = workspace_template.replace(
                     "{rule_path}",
                     f"{os.path.dirname(os.path.abspath(__file__))}/../../",
                 )
-                workspace_file.write_text(content, "utf-8")
+                workspace_file = Path(os.path.join(test_dir, "WORKSPACE"))
+                with open(workspace_file, "a", encoding="utf-8") as f:
+                    f.write(workspace_final)
+            if patch:
+                subprocess.run(patch, cwd=test_dir, check=True)
             logging.info("Running monolithic rule...")
-            ret, _, stderr = self.run_command(
-                "bazel build :codechecker_test", test_dir
-            )
-            self.assertEqual(ret, 0, stderr)
+            for target in targets:
+                ret, _, stderr = self.run_command(
+                    f"bazel build :codechecker_test_{target['name']}",
+                    test_dir,
+                )
+                self.assertEqual(ret, 0, stderr)
             logging.info("Running per_file rule...")
-            ret, _, stderr = self.run_command(
-                "bazel build :per_file_test", test_dir
-            )
-            self.assertEqual(ret, 0, stderr)
+            for target in targets:
+                ret, _, stderr = self.run_command(
+                    f"bazel build :per_file_test_{target['name']}", test_dir
+                )
+                self.assertEqual(ret, 0, stderr)
 
     return test_runner
 
 
 # Dynamically add a test method for each project
-# For each project directory it adds a new test function to the class
-# This must be outside of the __main__ if, pytest doesn't run it that way
-for dir_name in PROJECT_DIRS:
-    test_name = f"test_{dir_name}"
-    setattr(FOSSTestCollector, test_name, create_test_method(dir_name))
+# For each project config it adds new test functions to the class
+# This must be outside of the __main__, to work well with pytest
+for config_file in get_test_config():
+    CONTENT = None
+    with open(config_file, "r", encoding="utf-8") as conf:
+        CONTENT = yaml.safe_load(conf)
+    assert CONTENT is not None
+    test_name: str = CONTENT["name"]
+
+    for tag in CONTENT["version_tags"]:
+        bazel_version: str = tag["bazel_version"]
+        bzlmod_on: bool = tag.get("bzlmod", (int(bazel_version) >= 8))
+        if bazel_version == BAZEL_MAJOR_VERSION:
+            setattr(
+                FOSSTestCollector,
+                f"test_{test_name}_{'bzlmod' if bzlmod_on else 'workspace'}",
+                create_test_method(
+                    test_name,
+                    CONTENT["url"],
+                    CONTENT["targets"],
+                    tag,
+                    bzlmod_on,
+                ),
+            )
 
 if __name__ == "__main__":
     unittest.main()

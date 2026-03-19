@@ -22,10 +22,11 @@ Intended to be used as the main of a py_test Bazel target.
 """
 
 import argparse
-import logging
-import shlex
-import subprocess
+import glob
+import re
 import sys
+
+from pyparsing import Regex
 
 
 def parse_args() -> argparse.Namespace:
@@ -40,36 +41,57 @@ def parse_args() -> argparse.Namespace:
         )
     )
     parser.add_argument(
-        "--file",
+        "--files",
         nargs="+",
         required=True,
-        help="Path to the file(s) to search within.",
+        help="Path or glob pattern to the file(s) to search within.",
     )
     parser.add_argument(
         "--patterns",
         nargs="+",
-        required=True,
+        required=False,
         help="One or more patterns to assert are present in the file(s).",
     )
     parser.add_argument(
         "--negative_patterns",
         nargs="+",
-        required=True,
+        required=False,
         help="One or more patterns to assert are not present in the file(s).",
     )
     return parser.parse_args()
 
+
 def main() -> None:
     """Entry point for the pattern-matching test."""
     args = parse_args()
-    with open(args.file, "r", encoding="utf-8") as f:
-        content = f.read()
+
+    if not args.negative_patterns and not args.patterns:
+        print("  [ERROR] Must define at least one pattern or negative pattern.")
+        sys.exit(1)
 
     all_passed = True
-    for pattern in args.patterns:
-        if pattern not in content:
-            print(f"  [FAIL] Pattern missing: '{pattern}'")
-            all_passed = False
+
+    file_paths = []
+    for file_pattern in args.files:
+        matched_files = glob.glob(file_pattern, recursive=True)
+        if not matched_files:
+            print(f"  [WARN] No files matched pattern/path: '{file_pattern}'")
+        file_paths.extend(matched_files)
+    for file in file_paths:
+        with open(file, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        if args.patterns:
+            for pattern in args.patterns:
+                if not re.search(pattern, content):
+                    print(f"  [FAIL] Pattern missing: '{pattern}'")
+                    all_passed = False
+
+        if args.negative_patterns:
+            for pattern in args.negative_patterns:
+                if re.search(pattern, content):
+                    print(f"  [FAIL] Negative pattern found: '{pattern}'")
+                    all_passed = False
 
     if not all_passed:
         print("\nOne or more patterns missing. Test FAILED.")

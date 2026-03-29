@@ -15,47 +15,52 @@
 """
 Macro for generating FOSS integration tests for rules_codechecker.
 
-Each foss_test() generates a local sh_test that:
+Each foss_test() generates a local py_test that:
   1. Downloads a FOSS project into a temp directory
   2. Sets up a standalone Bazel project with rules_codechecker
   3. Runs "bazel build" on codechecker targets to verify the rules work
+  4. Validates the outputs (compile_commands.json, codechecker artifacts)
 
 Example:
     foss_test(
         name = "zlib",
         url = "https://github.com/madler/zlib/archive/<commit>.tar.gz",
-        build_content = "cc_library(...)",
-        targets = [":codechecker_test"],
+        tests = [":codechecker_test", ":compile_commands"],
     )
 """
 
 def foss_test(
         name,
         url,
-        build_content,
-        targets,
+        tests,
+        target = None,
         tags = [],
-        size = "enormous",
+        size = "large",
         **kwargs):
-    """Generate an sh_test that runs rules_codechecker on a FOSS project.
+    """Generate a py_test that runs rules_codechecker on a FOSS project.
 
     Args:
         name: Test name.
         url: URL to the source archive (.tar.gz).
-        build_content: BUILD file content appended to the project.
-        targets: Bazel targets to build inside the FOSS project.
+        tests: Analysis targets to build (e.g. codechecker_test, compile_commands).
+        target: The cc_library target to analyze. Defaults to ":<name>".
         tags: Additional test tags.
         size: Test size (default: enormous, as these download + run bazel).
-        **kwargs: Forwarded to sh_test.
+        **kwargs: Forwarded to py_test.
     """
-    native.sh_test(
+    if target == None:
+        target = ":" + name
+
+    native.py_test(
         name = name,
-        srcs = ["foss_test_runner.sh"],
-        env = {
-            "FOSS_URL": url,
-            "FOSS_BUILD": build_content,
-            "FOSS_TARGETS": " ".join(targets),
-        },
+        srcs = ["foss_test_runner.py"],
+        main = "foss_test_runner.py",
+        args = [
+            "-vvv",
+            "--url=" + url,
+            "--target=" + target,
+            "--tests"
+        ] + tests,
         local = True,
         tags = ["foss", "external"] + tags,
         size = size,

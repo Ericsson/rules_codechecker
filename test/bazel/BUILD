@@ -27,32 +27,10 @@
 
 load(":foss_test.bzl", "foss_test")
 
-BUILD_CONTENT = """
-load("@rules_codechecker//src:codechecker.bzl", "codechecker_test")
-load("@rules_codechecker//src:compile_commands.bzl", "compile_commands")
-
-codechecker_test(
-    name = "codechecker_test",
-    targets = ["//{target}"],
-)
-
-codechecker_test(
-    name = "codechecker_per_file",
-    targets = ["//{target}"],
-    per_file = True,
-)
-
-compile_commands(
-    name = "compile_commands",
-    targets = ["//{target}"],
-)
-"""
-
 foss_test(
     name = "zlib",
-    url = "https://github.com/madler/zlib/archive/5a82f71ed1dfc0bec044d9702463dbdf84ea3b71.tar.gz",
-    build_content = BUILD_CONTENT.format(target = ":z"),
-    targets = [
+    url = "https://github.com/madler/zlib/releases/download/v1.3.2/zlib-1.3.2.tar.gz",
+    tests = [
         ":codechecker_test",
         ":compile_commands",
         ":codechecker_per_file",
@@ -60,10 +38,9 @@ foss_test(
 )
 
 foss_test(
-    name = "yaml_cpp",
+    name = "yaml-cpp",
     url = "https://github.com/jbeder/yaml-cpp/archive/refs/tags/0.8.0.tar.gz",
-    build_content = BUILD_CONTENT.format(target = ":yaml-cpp"),
-    targets = [
+    tests = [
         ":codechecker_test",
         ":compile_commands",
         # FIXME: output 'analysis/codechecker_per_file/data/src-emit.cpp_clangsa.plist' was not created

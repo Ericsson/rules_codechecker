@@ -23,10 +23,10 @@ Intended to be used as the main of a py_test Bazel target.
 
 import argparse
 import glob
+from itertools import chain
 import re
 import sys
-
-from pyparsing import Regex
+from typing import Callable
 
 
 def parse_args() -> argparse.Namespace:
@@ -58,18 +58,113 @@ def parse_args() -> argparse.Namespace:
         required=False,
         help="One or more patterns to assert are not present in the file(s).",
     )
+    parser.add_argument(
+        "--regex_patterns",
+        nargs="+",
+        required=False,
+        help="One or more patterns to assert are present in the file(s).",
+    )
+    parser.add_argument(
+        "--negative_regex_patterns",
+        nargs="+",
+        required=False,
+        help="One or more patterns to assert are not present in the file(s).",
+    )
+    parser.add_argument(
+        "--any",
+        required=False,
+        action="store_true",
+        help="If provided, the program will succeed if at least one file "
+        "contains the patterns",
+    )
     return parser.parse_args()
+
+
+def check_args(args):
+    """Checks wether the arguments are correct, aborts if not"""
+    if (
+        not args.patterns
+        and not args.negative_patterns
+        and not args.regex_patterns
+        and not args.negative_regex_patterns
+    ):
+        print("  [ERROR] Must define at least one pattern or negative pattern.")
+        sys.exit(1)
+
+
+def exact_match(pattern: str, content: str) -> bool:
+    """Default search: checks if pattern is exactly in content."""
+    return pattern in content
+
+
+def check_patterns(
+    content: str,
+    patterns: list[str],
+    search: Callable[[str, str], bool] = exact_match,
+    negative: bool = False,
+) -> tuple[bool, set[str], set[str]]:
+    """
+    Checks wether a string contains every pattern in a list.
+
+    Args:
+        content: Text to search in.
+        patterns: List of search patterns.
+        search: Function with signature func(pattern, content) -> bool.
+                Defaults to `pattern in content`.
+        negative: Boolean, wether to check patterns as positive or negative.
+    Returns:
+        bool - Wether all patterns are correctly (not) found.
+        set[str] - Set of patterns that are correctly (not) found.
+        set[str] - Set of patterns that are incorrectly (not) found.
+    """
+    all_passed = True
+    found_patterns = set()
+    missing_pattern = set()
+    for pattern in patterns:
+        if bool(search(pattern, content)) == negative:
+            missing_pattern.add(pattern)
+            all_passed = False
+        else:
+            found_patterns.add(pattern)
+    return all_passed, found_patterns, missing_pattern
+
+
+def check_file(content: str, args) -> tuple[bool, set[str], set[str]]:
+    """
+    Checks if file contains all regexes.
+    Returns boolean value, and set of patterns correctly identified.
+    """
+    all_passed = True
+    found_patterns = set()
+    missing_patterns = set()
+
+    groups = [
+        (args.patterns, exact_match, False),
+        (args.negative_patterns, exact_match, True),
+        (args.regex_patterns, re.search, False),
+        (args.negative_regex_patterns, re.search, True),
+    ]
+
+    for patterns, search, negative in groups:
+        if patterns:
+            group_pass, found, missing = check_patterns(
+                content, patterns, search, negative
+            )
+            all_passed = all_passed and group_pass
+            found_patterns.update(found)
+            missing_patterns.update(missing)
+
+    return all_passed, found_patterns, missing_patterns
 
 
 def main() -> None:
     """Entry point for the pattern-matching test."""
     args = parse_args()
-
-    if not args.negative_patterns and not args.patterns:
-        print("  [ERROR] Must define at least one pattern or negative pattern.")
-        sys.exit(1)
+    check_args(args)
 
     all_passed = True
+    found_patterns = set()
+    missing_patterns = set()
 
     file_paths = []
     for file_pattern in args.files:
@@ -77,23 +172,33 @@ def main() -> None:
         if not matched_files:
             print(f"  [WARN] No files matched pattern/path: '{file_pattern}'")
         file_paths.extend(matched_files)
+
     for file in file_paths:
         with open(file, "r", encoding="utf-8") as f:
             content = f.read()
+            all_found_in_file, patterns_in_file, missing_patterns_in_file = (
+                check_file(content, args)
+            )
+            all_passed = all_passed and all_found_in_file
+            found_patterns.update(patterns_in_file)
+            for pattern in missing_patterns_in_file:
+                missing_patterns.add((file, pattern))
 
-        if args.patterns:
-            for pattern in args.patterns:
-                if not re.search(pattern, content):
-                    print(f"  [FAIL] Pattern missing: '{pattern}'")
-                    all_passed = False
-
-        if args.negative_patterns:
-            for pattern in args.negative_patterns:
-                if re.search(pattern, content):
-                    print(f"  [FAIL] Negative pattern found: '{pattern}'")
-                    all_passed = False
+    if args.any:
+        all_passed = True
+        for pattern in chain(
+            args.patterns or [],
+            args.negative_patterns or [],
+            args.regex_patterns or [],
+            args.negative_regex_patterns or [],
+        ):
+            if pattern not in found_patterns:
+                all_passed = False
+                break
 
     if not all_passed:
+        for file, pattern in missing_patterns:
+            print(f"Missing pattern {pattern} in file {file}")
         print("\nOne or more patterns missing. Test FAILED.")
         sys.exit(1)
 

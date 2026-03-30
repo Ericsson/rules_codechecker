@@ -87,3 +87,34 @@ codechecker_test(
         "virtual_implementation_deps_include",
     ],
 )
+
+py_test(
+    name = "per_file_plist_path_resolved_test",
+    srcs = ["//test/common:grep_check.py"],
+    main = "grep_check.py",
+    data = [":per_file_virtual_include"],
+    args = [
+        "--files",
+        "test/unit/virtual_include/per_file_virtual_include/**/*.plist",
+        # FIXME: In the postprocessed plists, all _virtual_include paths
+        # should've been removed. Update to negative_patterns
+        "--patterns",
+        r"/_virtual_includes/",
+    ],
+)
+
+py_test(
+    name = "codechecker_plist_path_resolved_test",
+    srcs = ["//test/common:grep_check.py"],
+    main = "grep_check.py",
+    data = [":codechecker_virtual_include"],
+    args = [
+        "--files",
+        "test/unit/virtual_include/codechecker_virtual_include/**/*.plist",
+        # FIXME: In the postprocessed plists, all _virtual_include paths
+        # should've been removed. Update to negative_patterns
+        "--patterns",
+        r"/_virtual_includes/",
+        "--any",
+    ],
+)

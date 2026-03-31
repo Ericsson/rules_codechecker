@@ -18,6 +18,7 @@
 Codechecker wrapper script for per-file analysis
 """
 
+import fnmatch
 import os
 from pathlib import Path
 import re
@@ -32,7 +33,7 @@ DATA_DIR: Optional[str] = None
 FILE_PATH: str = None  # pyright: ignore
 # List of pairs of analyzers and their plist files
 ANALYZER_PLIST_PATHS: list[list[str]] = None  # pyright: ignore
-LOG_FILE: Optional[str] = None
+LOG_FILE: str = None  # pyright: ignore
 COMPILE_COMMANDS_JSON: str = "{compile_commands_json}"
 COMPILE_COMMANDS_ABSOLUTE: str = f"{COMPILE_COMMANDS_JSON}.abs"
 CODECHECKER_ARGS: str = "{codechecker_args}"
@@ -43,12 +44,36 @@ FILE_PATH = sys.argv[2]
 LOG_FILE = sys.argv[3]
 ANALYZER_PLIST_PATHS = [item.split(",") for item in sys.argv[4].split(";")]
 
+EMPTY_PLIST = """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>diagnostics</key>
+    <array/>
+    <key>files</key>
+    <array/>
+</dict>
+</plist>
+"""
 
 def skipped():
+    skip_this = False
+    
+    positive_patterns = []
+    negative_patterns = []
+    
     for pattern in SKIP_LIST:
+        if pattern[0] == '+':
+            positive_patterns.append(fnmatch.translate(pattern[1::]))
+        else:
+            negative_patterns.append(fnmatch.translate(pattern[1::]))
+    for pattern in negative_patterns:
         if re.search(pattern, FILE_PATH):
-            return True
-    return False
+                skip_this = True
+    for pattern in positive_patterns:
+        if re.search(pattern, FILE_PATH):
+                skip_this = False
+    return skip_this
 
 
 def log(msg: str) -> None:
@@ -160,12 +185,14 @@ def main():
         print("Wrong amount of arguments")
         sys.exit(1)
     _create_compile_commands_json_with_absolute_paths()
+    Path(LOG_FILE).touch()
     if skipped():
         for analyzer_list in ANALYZER_PLIST_PATHS:
-            Path(analyzer_list[1]).touch()
+            with open(analyzer_list[1], "w", encoding="utf-8") as file:
+                file.write(EMPTY_PLIST)
     else:
         _run_codechecker()
-    _move_plist_files()
+        _move_plist_files()
 
 
 if __name__ == "__main__":

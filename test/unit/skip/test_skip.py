@@ -41,7 +41,7 @@ class TestSkip(TestBase):
         )
         self.assertEqual(ret, 0, stderr)
 
-    def test_per_file_skipfile_full_path(self):
+    def test_per_file_skipfile_exact_file_path(self):
         """
         Test: bazel test //test/unit/skip:per_file_skipfile_exact_file_path
         """
@@ -53,8 +53,7 @@ class TestSkip(TestBase):
             f"{self.BAZEL_TESTLOGS_DIR}/"
             "per_file_skipfile_exact_file_path/test.log"
         )
-        # FIXME: change to assertFalse, this file should be skipped
-        self.assertTrue(
+        self.assertFalse(
             self.contains_regex_in_file(log_file, r"defect\(s\) in skip.cc")
         )
         self.assertTrue(
@@ -73,8 +72,7 @@ class TestSkip(TestBase):
             f"{self.BAZEL_TESTLOGS_DIR}/"
             "per_file_skipfile_folder_skip_path/test.log"
         )
-        # FIXME: change to assertFalse, this file should be skipped
-        self.assertTrue(
+        self.assertFalse(
             self.contains_regex_in_file(log_file, r"defect\(s\) in skip.cc")
         )
         # This is correct.
@@ -89,17 +87,35 @@ class TestSkip(TestBase):
         ret, _, stderr = self.run_command(
             "bazel test //test/unit/skip:per_file_skipfile_both_files"
         )
-        # FIXME: The return code here should be 0, both files should be skipped
-        self.assertEqual(ret, 3, stderr)
+        self.assertEqual(ret, 0, stderr)
         log_file = (
             f"{self.BAZEL_TESTLOGS_DIR}/per_file_skipfile_both_files/test.log"
         )
-        # FIXME: Change to assertFalse after fix, should have been skipped.
+        self.assertFalse(
+            self.contains_regex_in_file(log_file, r"defect\(s\) in skip.cc")
+        )
+        self.assertFalse(
+            self.contains_regex_in_file(log_file, r"defect\(s\) in skip2.cc")
+        )
+
+    def test_per_file_skipfile_both_files_except_one(self):
+        """
+        Test: bazel test
+        //test/unit/skip:per_file_skipfile_both_files_except_one
+        """
+        ret, _, stderr = self.run_command(
+            "bazel test //test/unit/skip:"
+            "per_file_skipfile_both_files_except_one"
+        )
+        self.assertEqual(ret, 3, stderr)
+        log_file = (
+            f"{self.BAZEL_TESTLOGS_DIR}/"
+            "per_file_skipfile_both_files_except_one/test.log"
+        )
         self.assertTrue(
             self.contains_regex_in_file(log_file, r"defect\(s\) in skip.cc")
         )
-        # FIXME: Change to assertFalse after fix, should have been skipped.
-        self.assertTrue(
+        self.assertFalse(
             self.contains_regex_in_file(log_file, r"defect\(s\) in skip2.cc")
         )
 

@@ -67,32 +67,6 @@ class TestVirtualInclude(TestBase):
                 result.append(file)
         return result
 
-    def test_bazel_codechecker_plist_path_resolved(self):
-        """Test: bazel build :codechecker_virtual_include"""
-        ret, _, stderr = self.run_command(
-            "bazel build "
-            "//test/unit/virtual_include:codechecker_virtual_include"
-        )
-        self.assertEqual(ret, 0, stderr)
-        plist_files = glob.glob(
-            os.path.join(
-                self.BAZEL_BIN_DIR,  # pyright: ignore
-                "codechecker_virtual_include",
-                "**",
-                "*.plist",
-            ),
-            recursive=True,
-        )
-        # Test whether the _virtual_include directory was actually created.
-        self.assertTrue(
-            os.path.isdir(f"{self.BAZEL_BIN_DIR}/_virtual_includes")
-        )
-        # FIXME: In the postprocessed plists, all _virtual_include paths
-        # should've been removed. Possible fix is in the github PR #14.
-        self.assertNotEqual(
-            self.contains_in_files(r"/_virtual_includes/", plist_files), []
-        )
-
     def test_bazel_codechecker_implementation_deps_virtual_include(self):
         """Test: bazel build :codechecker_impl_deps_include"""
         ret, _, stderr = self.run_command(

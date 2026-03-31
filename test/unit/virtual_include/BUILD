@@ -23,6 +23,16 @@ load(
     "//src:codechecker.bzl",
     "codechecker_test",
 )
+load(
+    "//test/common:unit_test.bzl",
+    "unit_test",
+)
+
+# codechecker rules
+load(
+    "//src:codechecker.bzl",
+    "codechecker_test",
+)
 
 # Test for strip_include_prefix
 cc_library(
@@ -88,33 +98,19 @@ codechecker_test(
     ],
 )
 
-py_test(
+unit_test(
     name = "per_file_plist_path_resolved_test",
-    srcs = ["//test/common:grep_check.py"],
-    main = "grep_check.py",
     data = [":per_file_virtual_include"],
-    args = [
-        "--files",
-        "test/unit/virtual_include/per_file_virtual_include/**/*.plist",
-        # FIXME: In the postprocessed plists, all _virtual_include paths
-        # should've been removed. Update to negative_patterns
-        "--patterns",
-        r"/_virtual_includes/",
-    ],
+    files = "test/unit/virtual_include/per_file_virtual_include/**/*.plist",
+    patterns = r"/_virtual_includes/",
 )
 
-py_test(
+unit_test(
     name = "codechecker_plist_path_resolved_test",
-    srcs = ["//test/common:grep_check.py"],
-    main = "grep_check.py",
+    any = True,
     data = [":codechecker_virtual_include"],
-    args = [
-        "--files",
-        "test/unit/virtual_include/codechecker_virtual_include/**/*.plist",
-        # FIXME: In the postprocessed plists, all _virtual_include paths
-        # should've been removed. Update to negative_patterns
-        "--patterns",
-        r"/_virtual_includes/",
-        "--any",
-    ],
+    files = "test/unit/virtual_include/codechecker_virtual_include/**/*.plist",
+    # FIXME: In the postprocessed plists, all _virtual_include paths
+    # should've been removed. Update to negative_patterns
+    patterns = r"/_virtual_includes/",
 )

@@ -56,23 +56,27 @@ EMPTY_PLIST = """<?xml version="1.0" encoding="UTF-8"?>
 </plist>
 """
 
+
 def skipped():
+    """
+    Checks if this file should be skipped.
+    Return a boolean value.
+    """
     skip_this = False
-    
     positive_patterns = []
     negative_patterns = []
-    
+
     for pattern in SKIP_LIST:
-        if pattern[0] == '+':
+        if pattern[0] == "+":
             positive_patterns.append(fnmatch.translate(pattern[1::]))
         else:
             negative_patterns.append(fnmatch.translate(pattern[1::]))
     for pattern in negative_patterns:
         if re.search(pattern, FILE_PATH):
-                skip_this = True
+            skip_this = True
     for pattern in positive_patterns:
         if re.search(pattern, FILE_PATH):
-                skip_this = False
+            skip_this = False
     return skip_this
 
 
@@ -169,12 +173,11 @@ def _move_plist_files():
                 rf"_{analyzer_info[0]}_.*\.plist$", file
             ) and os.path.isfile(
                 os.path.join(DATA_DIR, file)  # type: ignore
-
             ):
                 shutil.move(
-                    os.path.join(DATA_DIR, file),   # type: ignore
+                    os.path.join(DATA_DIR, file),  # type: ignore
                     analyzer_info[1],
-                    )
+                )
 
 
 def main():

@@ -28,12 +28,14 @@ Example:
         tests = [":codechecker_test", ":compile_commands"],
     )
 """
+load("@default_codechecker_tools//:defs.bzl", "BAZEL_VERSION")
 
 def foss_test(
         name,
         url,
         tests,
         target = None,
+        bzlmod = True,
         tags = [],
         size = "large",
         **kwargs):
@@ -44,6 +46,7 @@ def foss_test(
         url: URL to the source archive (.tar.gz).
         tests: Analysis targets to build (e.g. codechecker_test, compile_commands).
         target: The cc_library target to analyze. Defaults to ":<name>".
+        bzlmod: Whether to use bzlmod over the legacy WORKSPACE. Default True.
         tags: Additional test tags.
         size: Test size (default: enormous, as these download + run bazel).
         **kwargs: Forwarded to py_test.
@@ -51,12 +54,17 @@ def foss_test(
     if target == None:
         target = ":" + name
 
+    if bzlmod == False and int(BAZEL_VERSION.split('.')[0]) >= 8:
+        return
+
     native.py_test(
         name = name,
         srcs = ["foss_test_runner.py"],
         main = "foss_test_runner.py",
         args = [
             "-vvv",
+            "--bazel_version=" + BAZEL_VERSION.split('.')[0],
+            "--bzlmod=" + str(bzlmod),
             "--url=" + url,
             "--target=" + target,
             "--tests"

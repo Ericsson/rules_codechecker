@@ -21,6 +21,7 @@ rules_codechecker, builds codechecker targets, and verifies outputs.
 
 import argparse
 import json
+import logging
 import os
 import shutil
 import subprocess
@@ -59,12 +60,34 @@ compile_commands(
 )
 """
 
+WORKSPACE_TEMPLATE = """
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+local_repository(
+    name = "rules_codechecker",
+    path = "{rules_path}",
+)
+
+load(
+    "@rules_codechecker//src:tools.bzl",
+    "register_default_codechecker",
+    "register_default_python_toolchain",
+)
+
+register_default_python_toolchain()
+register_toolchains("@default_python_tools//:python_toolchain")
+
+register_default_codechecker()
+"""
+
 
 class FossTest(unittest.TestCase):
     """Base test that downloads a FOSS project and runs rules_codechecker."""
 
     # Set by main()
     url = None
+    bazel_version = None
+    bzlmod = None
     target = None
     tests = None
 
@@ -81,8 +104,11 @@ class FossTest(unittest.TestCase):
     def tearDown(self):
         if self.work_dir.exists():
             subprocess.run(
-                ["bazel", f"--output_base={self.work_dir / '.bazel_output'}",
-                 "shutdown"],
+                [
+                    "bazel",
+                    f"--output_base={self.work_dir / '.bazel_output'}",
+                    "shutdown",
+                ],
                 capture_output=True,
             )
             subprocess.run(
@@ -101,7 +127,7 @@ class FossTest(unittest.TestCase):
             members = tar.getmembers()
             prefix = members[0].name.split("/")[0]
             for m in members:
-                m.name = m.name[len(prefix):].lstrip("/")
+                m.name = m.name[len(prefix) :].lstrip("/")
                 if m.name:
                     tar.extract(m, self.work_dir / "src")
         self.project_dir = self.work_dir / "src"
@@ -113,29 +139,49 @@ class FossTest(unittest.TestCase):
             BUILD_TEMPLATE.format(target=self.target)
         )
 
-        (self.project_dir / "MODULE.bazel").write_text(
-            MODULE_TEMPLATE.format(rules_path=self.rules_path)
-        )
+        if self.bzlmod:
+            (self.project_dir / "MODULE.bazel").write_text(
+                MODULE_TEMPLATE.format(rules_path=self.rules_path)
+            )
+        else:
+            (self.project_dir / "WORKSPACE").write_text(
+                WORKSPACE_TEMPLATE.format(rules_path=self.rules_path)
+            )
+        # We do need the workspace file in either case for bazel 7
         (self.project_dir / "WORKSPACE").touch()
 
     def _bazel_build(self):
-        prefixed = [f"//analysis{t}" for t in self.tests]
+        cmd = [
+            "bazel",
+            f"--output_base={self.work_dir / '.bazel_output'}",
+            "build",
+        ]
+        if self.bazel_version <= 6 and self.bzlmod:  # pyright: ignore
+            cmd.append("--enable_bzlmod")
+        cmd.extend([f"//analysis{t}" for t in self.tests])
+        logging.debug(cmd)
         result = subprocess.run(
-            ["bazel",
-             f"--output_base={self.work_dir / '.bazel_output'}",
-             "build"] + prefixed,
+            cmd,
             cwd=self.project_dir,
             capture_output=True,
             text=True,
         )
-        self.assertEqual(result.returncode, 0,
-                         f"bazel build failed:\n{result.stderr}")
+        self.assertEqual(
+            result.returncode, 0, f"bazel build failed:\n{result.stderr}"
+        )
 
     def _bazel_bin(self):
+        cmd = [
+                "bazel",
+                f"--output_base={self.work_dir / '.bazel_output'}",
+                "info",
+                "bazel-bin",
+            ]
+        # The bazel bin directory is different for the bzlmod system
+        if self.bazel_version <= 6 and self.bzlmod:
+            cmd.append("--enable_bzlmod")
         result = subprocess.run(
-            ["bazel",
-             f"--output_base={self.work_dir / '.bazel_output'}",
-             "info", "bazel-bin"],
+            cmd,
             cwd=self.project_dir,
             capture_output=True,
             text=True,
@@ -150,13 +196,18 @@ class FossTest(unittest.TestCase):
         """Verify compile_commands.json is valid and non-empty."""
         self._bazel_build()
         bazel_bin = self._bazel_bin()
-        cc_json = bazel_bin / "analysis" / "compile_commands" / "compile_commands.json"
-        self.assertTrue(cc_json.exists(),
-                        f"compile_commands.json not found at {cc_json}")
+        cc_json = (
+            bazel_bin
+            / "analysis"
+            / "compile_commands"
+            / "compile_commands.json"
+        )
+        self.assertTrue(
+            cc_json.exists(), f"compile_commands.json not found at {cc_json}"
+        )
         data = json.loads(cc_json.read_text())
         self.assertIsInstance(data, list)
-        self.assertGreater(len(data), 0,
-                           "compile_commands.json is empty")
+        self.assertGreater(len(data), 0, "compile_commands.json is empty")
         for entry in data:
             self.assertIn("file", entry)
             self.assertIn("directory", entry)
@@ -166,16 +217,20 @@ class FossTest(unittest.TestCase):
         self._bazel_build()
         bazel_bin = self._bazel_bin()
         cc_dir = bazel_bin / "analysis" / "codechecker_test"
-        self.assertTrue(cc_dir.exists(),
-                        f"codechecker output dir not found at {cc_dir}")
+        self.assertTrue(
+            cc_dir.exists(), f"codechecker output dir not found at {cc_dir}"
+        )
         cc_json = cc_dir / "compile_commands.json"
-        self.assertTrue(cc_json.exists(),
-                        "codechecker compile_commands.json not found")
+        self.assertTrue(
+            cc_json.exists(), "codechecker compile_commands.json not found"
+        )
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--url", required=True)
+    parser.add_argument("--bazel_version", required=True)
+    parser.add_argument("--bzlmod", required=True)
     parser.add_argument("--target", required=True)
     parser.add_argument("--tests", nargs="+", required=True)
     args, remaining = parser.parse_known_args()
@@ -183,5 +238,7 @@ if __name__ == "__main__":
     FossTest.url = args.url
     FossTest.target = args.target
     FossTest.tests = args.tests
+    FossTest.bazel_version = int(args.bazel_version)
+    FossTest.bzlmod = args.bzlmod == "True"
 
     unittest.main(argv=[sys.argv[0]] + remaining)

@@ -35,6 +35,20 @@ foss_test(
         ":compile_commands",
         ":codechecker_per_file",
     ],
+    bzlmod = False,
+)
+
+foss_test(
+    # FIXME: compile commands is not in expected path
+    name = "zlib_bzlmod",
+    target = ":z",
+    url = "https://github.com/madler/zlib/releases/download/v1.3.2/zlib-1.3.2.tar.gz",
+    tests = [
+        ":codechecker_test",
+        ":compile_commands",
+        ":codechecker_per_file",
+    ],
+    bzlmod = True,
 )
 
 foss_test(
@@ -43,7 +57,19 @@ foss_test(
     tests = [
         ":codechecker_test",
         ":compile_commands",
-        # FIXME: output 'analysis/codechecker_per_file/data/src-emit.cpp_clangsa.plist' was not created
-        # ":codechecker_per_file",
+        ":codechecker_per_file",
     ],
 )
+
+foss_test(
+    name = "yaml-cpp_bzlmod",
+    target = ":yaml_cpp",
+    url = "https://github.com/jbeder/yaml-cpp/archive/refs/tags/0.8.0.tar.gz",
+    tests = [
+        ":codechecker_test",
+        ":compile_commands",
+        ":codechecker_per_file",
+    ],
+    bzlmod = True,
+)
+

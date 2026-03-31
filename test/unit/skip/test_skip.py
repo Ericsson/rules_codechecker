@@ -92,6 +92,7 @@ class TestSkip(TestBase):
         log_file = (
             f"{self.BAZEL_TESTLOGS_DIR}/per_file_skipfile_both_files/test.log"
         )
+        # FIXME: Change to assertFalse after fix, should have been skipped.
         self.assertTrue(
             self.contains_regex_in_file(log_file, r"defect\(s\) in skip.cc")
         )

@@ -132,6 +132,7 @@ def _create_wrapper_script(ctx, options, compile_commands_json, config_file):
             "{codechecker_args}": options_str,
             "{compile_commands_json}": compile_commands_json.path,
             "{config_file}": config_file.path,
+            "[\"{skip_list}\"]": str(ctx.attr.skip)
         },
     )
 
@@ -222,6 +223,11 @@ per_file_test = rule(
                 compile_commands_aspect,
             ],
             doc = "List of compilable targets which should be checked.",
+        ),
+        "skip": attr.string_list(
+            default = [],
+            doc = "List of skip/ignore file rules. " +
+                  "See https://codechecker.readthedocs.io/en/latest/analyzer/user_guide/#skip-file",
         ),
         "_per_file_script_template": attr.label(
             default = ":per_file_script.py",

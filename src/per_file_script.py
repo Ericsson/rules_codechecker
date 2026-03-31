@@ -19,6 +19,7 @@ Codechecker wrapper script for per-file analysis
 """
 
 import os
+from pathlib import Path
 import re
 import shutil
 import subprocess
@@ -28,18 +29,26 @@ from typing import Optional
 # The output directory for CodeChecker
 DATA_DIR: Optional[str] = None
 # The file to be analyzed
-FILE_PATH: Optional[str] = None
+FILE_PATH: str = None  # pyright: ignore
 # List of pairs of analyzers and their plist files
-ANALYZER_PLIST_PATHS: Optional[list[list[str]]] = None
+ANALYZER_PLIST_PATHS: list[list[str]] = None  # pyright: ignore
 LOG_FILE: Optional[str] = None
 COMPILE_COMMANDS_JSON: str = "{compile_commands_json}"
 COMPILE_COMMANDS_ABSOLUTE: str = f"{COMPILE_COMMANDS_JSON}.abs"
 CODECHECKER_ARGS: str = "{codechecker_args}"
 CONFIG_FILE: str = "{config_file}"
+SKIP_LIST: list[str] = ["{skip_list}"]
 DATA_DIR = sys.argv[1]
 FILE_PATH = sys.argv[2]
 LOG_FILE = sys.argv[3]
 ANALYZER_PLIST_PATHS = [item.split(",") for item in sys.argv[4].split(";")]
+
+
+def skipped():
+    for pattern in SKIP_LIST:
+        if re.search(pattern, FILE_PATH):
+            return True
+    return False
 
 
 def log(msg: str) -> None:
@@ -151,7 +160,11 @@ def main():
         print("Wrong amount of arguments")
         sys.exit(1)
     _create_compile_commands_json_with_absolute_paths()
-    _run_codechecker()
+    if skipped():
+        for analyzer_list in ANALYZER_PLIST_PATHS:
+            Path(analyzer_list[1]).touch()
+    else:
+        _run_codechecker()
     _move_plist_files()
 
 

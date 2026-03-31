@@ -341,6 +341,7 @@ def codechecker_test(
             name = name,
             targets = targets,
             options = analyze,
+            skip = skip,
             config = config,
             tags = tags,
             **kwargs

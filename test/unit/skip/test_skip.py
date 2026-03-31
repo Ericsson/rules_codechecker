@@ -43,14 +43,15 @@ class TestSkip(TestBase):
 
     def test_per_file_skipfile_full_path(self):
         """
-        Test: bazel test //test/unit/skip:per_file_skipfile_full_path
+        Test: bazel test //test/unit/skip:per_file_skipfile_exact_file_path
         """
         ret, _, stderr = self.run_command(
-            "bazel test //test/unit/skip:per_file_skipfile_full_path"
+            "bazel test //test/unit/skip:per_file_skipfile_exact_file_path"
         )
         self.assertEqual(ret, 3, stderr)
         log_file = (
-            f"{self.BAZEL_TESTLOGS_DIR}/per_file_skipfile_full_path/test.log"
+            f"{self.BAZEL_TESTLOGS_DIR}/"
+            "per_file_skipfile_exact_file_path/test.log"
         )
         # FIXME: change to assertFalse, this file should be skipped
         self.assertTrue(

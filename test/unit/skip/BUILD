@@ -34,7 +34,7 @@ cc_library(
     tags = ["manual"],
 )
 
-# The monolithic rule uses codecheckers built in skipfile
+# The monolithic rule uses codechecker's built in skipfile
 # We expect that to be correct, further testing of it is unnecessary
 codechecker_test(
     name = "codechecker_skipfile",
@@ -46,10 +46,8 @@ codechecker_test(
     ],
 )
 
-# The per_file skip option must be implemented by us in starlark.
-# Testing with multiple skip patterns is necessary
 codechecker_test(
-    name = "per_file_skipfile_full_path",
+    name = "per_file_skipfile_exact_file_path",
     per_file = True,
     skip = [
         "-*test/unit/skip/skip.cc",

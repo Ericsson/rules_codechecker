@@ -97,6 +97,7 @@ class TestSkip(TestBase):
         self.assertTrue(
             self.contains_regex_in_file(log_file, r"defect\(s\) in skip.cc")
         )
+        # FIXME: Change to assertFalse after fix, should have been skipped.
         self.assertTrue(
             self.contains_regex_in_file(log_file, r"defect\(s\) in skip2.cc")
         )

@@ -24,7 +24,7 @@ load(
     "codechecker_test",
 )
 load(
-    "//test/common:unit_test.bzl",
+    "//test/unit:unit_test.bzl",
     "unit_test",
 )
 

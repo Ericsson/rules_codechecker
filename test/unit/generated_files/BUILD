@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# cc_binary for simple C++ tests
+load(
+    "@rules_cc//cc:defs.bzl",
+    "cc_binary",
+)
 load(
     "//src:codechecker.bzl",
     "codechecker_test",
@@ -19,12 +24,6 @@ load(
 load(
     "//src:compile_commands.bzl",
     "compile_commands",
-)
-
-# cc_binary for simple C++ tests
-load(
-    "@rules_cc//cc:defs.bzl",
-    "cc_binary",
 )
 
 # First, define the rule that generates our file.

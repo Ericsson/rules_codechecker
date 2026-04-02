@@ -1,3 +1,10 @@
+# cc_binary for simple C++ tests
+load(
+    "@rules_cc//cc:defs.bzl",
+    "cc_binary",
+    "cc_library",
+)
+
 # clang-tidy and clang -analyze rules
 load(
     "//src:clang.bzl",
@@ -24,13 +31,6 @@ load(
 load(
     "//src:compile_commands.bzl",
     "compile_commands",
-)
-
-# cc_binary for simple C++ tests
-load(
-    "@rules_cc//cc:defs.bzl",
-    "cc_binary",
-    "cc_library",
 )
 
 # Test for strip_include_prefix

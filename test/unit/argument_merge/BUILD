@@ -12,15 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load(
-    "//src:codechecker.bzl",
-    "codechecker_test",
-)
-
 # cc_binary for simple C++ tests
 load(
     "@rules_cc//cc:defs.bzl",
     "cc_library",
+)
+load(
+    "//src:codechecker.bzl",
+    "codechecker_test",
 )
 
 cc_library(

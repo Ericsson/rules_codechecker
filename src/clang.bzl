@@ -333,7 +333,7 @@ CompileInfo = provider(
 )
 
 # buildifier: disable=unused-variable
-# The headers variable is used: headers += dep[CompileInfo].headers.to_list()
+# The headers variable is used in the alternative implementation
 def _process_all_deps(ctx, arguments, headers):
     for attr in SOURCE_ATTR:
         if hasattr(ctx.rule.attr, attr):

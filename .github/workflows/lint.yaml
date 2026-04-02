@@ -29,6 +29,6 @@ jobs:
 
     - name: Analyzing the code with Buildifier
       run: |
-        bazel test //:buildifier --test_output=errors
+        bazel test //:format_test --test_output=errors
 
     # TODO: Add more linters here

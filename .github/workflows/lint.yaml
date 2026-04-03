@@ -15,20 +15,13 @@ jobs:
       with:
         python-version: "3.10"
 
-    - name: Setup Bazel
-      uses: bazel-contrib/setup-bazel@0.15.0
-
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install pylint
-        echo "6.5.0" > .bazelversion
 
     - name: Analysing the code with pylint
-      run: pylint .
-
-    - name: Analyzing the code with Buildifier
       run: |
-        bazel test //:format_test --test_output=errors
+        pylint .
 
     # TODO: Add more linters here

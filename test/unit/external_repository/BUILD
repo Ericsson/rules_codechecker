@@ -13,11 +13,6 @@
 # limitations under the License.
 
 load(
-    "@rules_cc//cc:defs.bzl",
-    "cc_binary",
-    "cc_library",
-)
-load(
     "@rules_codechecker//src:codechecker.bzl",
     "codechecker_test",
 )

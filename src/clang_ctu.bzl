@@ -413,6 +413,10 @@ def _clang_ctu_impl(ctx):
 clang_ctu_test = rule(
     implementation = _clang_ctu_impl,
     attrs = {
+        "options": attr.string_list(
+            default = [],
+            doc = "List of clang --analyze options",
+        ),
         "default_options": attr.string_list(
             default = [
                 "-fcolor-diagnostics",
@@ -420,10 +424,6 @@ clang_ctu_test = rule(
             ],
             # Use: clang -cc1 -analyzer-config-help
             doc = "List of default analyze options",
-        ),
-        "options": attr.string_list(
-            default = [],
-            doc = "List of clang --analyze options",
         ),
         "targets": attr.label_list(
             aspects = [

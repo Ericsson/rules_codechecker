@@ -7,14 +7,16 @@ buildifier_test(
     exclude_patterns = [
         "./.git/*",
     ],
-    mode = "diff",
     lint_mode = "warn",
+    mode = "diff",
     no_sandbox = True,
     workspace = "//:WORKSPACE",
 )
 
 format_test(
     name = "format_test",
+    # Temporary workaround for not being able to use -diff_command
+    env = ["BUILDIFIER_DIFF='diff -u'"],
     no_sandbox = True,
     # TODO: extend with pylint
     starlark = "@buildifier_prebuilt//:buildifier",
@@ -26,6 +28,4 @@ format_test(
         #"-diff_command=\"diff -u\"",
     ],
     workspace = "//:WORKSPACE",
-    # Temporary workaround for not being able to use -diff_command
-    env = ["BUILDIFIER_DIFF='diff -u'"],
 )

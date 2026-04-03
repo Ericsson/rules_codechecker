@@ -105,14 +105,14 @@ def _codechecker_impl(ctx):
         substitutions = {
             "{Mode}": "Run",
             "{Verbosity}": "DEBUG",
-            "{codechecker_bin}": CODECHECKER_BIN_PATH,
-            "{compile_commands}": ctx.outputs.codechecker_commands.path,
-            "{codechecker_skipfile}": ctx.outputs.codechecker_skipfile.path,
-            "{codechecker_config}": config_file.path,
             "{codechecker_analyze}": " ".join(ctx.attr.analyze),
+            "{codechecker_bin}": CODECHECKER_BIN_PATH,
+            "{codechecker_config}": config_file.path,
+            "{codechecker_env}": codechecker_env,
             "{codechecker_files}": codechecker_files.path,
             "{codechecker_log}": ctx.outputs.codechecker_log.path,
-            "{codechecker_env}": codechecker_env,
+            "{codechecker_skipfile}": ctx.outputs.codechecker_skipfile.path,
+            "{compile_commands}": ctx.outputs.codechecker_commands.path,
         },
     )
 
@@ -168,24 +168,28 @@ def _codechecker_impl(ctx):
 codechecker = rule(
     implementation = _codechecker_impl,
     attrs = {
-        "targets": attr.label_list(
-            aspects = [
-                compile_commands_aspect,
-            ],
-            doc = "List of compilable targets which should be checked.",
+        "analyze": attr.string_list(
+            default = [],
+            doc = "List of analyze command arguments, e.g.; --ctu.",
+        ),
+        "config": attr.label(
+            default = None,
+            doc = "CodeChecker configuration",
         ),
         "skip": attr.string_list(
             default = [],
             doc = "List of skip/ignore file rules. " +
                   "See https://codechecker.readthedocs.io/en/latest/analyzer/user_guide/#skip-file",
         ),
-        "config": attr.label(
-            default = None,
-            doc = "CodeChecker configuration",
+        "targets": attr.label_list(
+            aspects = [
+                compile_commands_aspect,
+            ],
+            doc = "List of compilable targets which should be checked.",
         ),
-        "analyze": attr.string_list(
-            default = [],
-            doc = "List of analyze command arguments, e.g.; --ctu.",
+        "_codechecker_script_template": attr.label(
+            default = ":codechecker_script.py",
+            allow_single_file = True,
         ),
         "_compile_commands_filter": attr.label(
             allow_files = True,
@@ -193,17 +197,13 @@ codechecker = rule(
             cfg = "exec",
             default = ":compile_commands_filter",
         ),
-        "_codechecker_script_template": attr.label(
-            default = ":codechecker_script.py",
-            allow_single_file = True,
-        ),
     },
     outputs = {
-        "compile_commands": "%{name}/compile_commands.json",
         "codechecker_commands": "%{name}/codechecker_commands.json",
-        "codechecker_skipfile": "%{name}/codechecker_skipfile.cfg",
-        "codechecker_script": "%{name}/codechecker_script.py",
         "codechecker_log": "%{name}/codechecker.log",
+        "codechecker_script": "%{name}/codechecker_script.py",
+        "codechecker_skipfile": "%{name}/codechecker_skipfile.cfg",
+        "compile_commands": "%{name}/compile_commands.json",
     },
     toolchains = [python_toolchain_type()],
 )
@@ -232,10 +232,10 @@ def _codechecker_test_impl(ctx):
         is_executable = True,
         substitutions = {
             "{Mode}": "Test",
+            "{Severities}": " ".join(ctx.attr.severities),
             "{Verbosity}": "INFO",
             "{codechecker_bin}": CODECHECKER_BIN_PATH,
             "{codechecker_files}": codechecker_files.short_path,
-            "{Severities}": " ".join(ctx.attr.severities),
         },
     )
 
@@ -252,26 +252,18 @@ def _codechecker_test_impl(ctx):
 _codechecker_test = rule(
     implementation = _codechecker_test_impl,
     attrs = {
+        "analyze": attr.string_list(
+            default = [],
+            doc = "List of analyze command arguments, e.g. --ctu",
+        ),
+        "config": attr.label(
+            default = None,
+            cfg = platforms_transition,
+            doc = "CodeChecker configuration",
+        ),
         "platform": attr.string(
             default = "",  #"@platforms//os:linux",
             doc = "Platform to build for",
-        ),
-        "targets": attr.label_list(
-            aspects = [
-                compile_commands_aspect,
-            ],
-            cfg = platforms_transition,
-            doc = "List of compilable targets which should be checked.",
-        ),
-        "_compile_commands_filter": attr.label(
-            allow_files = True,
-            executable = True,
-            cfg = "exec",
-            default = ":compile_commands_filter",
-        ),
-        "_codechecker_script_template": attr.label(
-            default = ":codechecker_script.py",
-            allow_single_file = True,
         ),
         "severities": attr.string_list(
             default = ["HIGH"],
@@ -282,23 +274,31 @@ _codechecker_test = rule(
             doc = "List of skip/ignore file rules. " +
                   "See https://codechecker.readthedocs.io/en/latest/analyzer/user_guide/#skip-file",
         ),
-        "config": attr.label(
-            default = None,
+        "targets": attr.label_list(
+            aspects = [
+                compile_commands_aspect,
+            ],
             cfg = platforms_transition,
-            doc = "CodeChecker configuration",
+            doc = "List of compilable targets which should be checked.",
         ),
-        "analyze": attr.string_list(
-            default = [],
-            doc = "List of analyze command arguments, e.g. --ctu",
+        "_codechecker_script_template": attr.label(
+            default = ":codechecker_script.py",
+            allow_single_file = True,
+        ),
+        "_compile_commands_filter": attr.label(
+            allow_files = True,
+            executable = True,
+            cfg = "exec",
+            default = ":compile_commands_filter",
         ),
     } | version_specific_attributes(),
     outputs = {
-        "compile_commands": "%{name}/compile_commands.json",
         "codechecker_commands": "%{name}/codechecker_commands.json",
-        "codechecker_skipfile": "%{name}/codechecker_skipfile.cfg",
-        "codechecker_script": "%{name}/codechecker_script.py",
         "codechecker_log": "%{name}/codechecker.log",
+        "codechecker_script": "%{name}/codechecker_script.py",
+        "codechecker_skipfile": "%{name}/codechecker_skipfile.cfg",
         "codechecker_test_script": "%{name}/codechecker_test_script.py",
+        "compile_commands": "%{name}/compile_commands.json",
     },
     toolchains = [python_toolchain_type()],
     test = True,

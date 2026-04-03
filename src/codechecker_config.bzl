@@ -108,9 +108,9 @@ CodeCheckerConfigInfo = provider(
     doc = "Defines CodeChecker configuration",
     fields = {
         "analyze": "List of arguments for CodeChecker analyze command",
-        "parse": "List of arguments for CodeChecker parse command",
         "config_file": "CodeChecker configuration file in JSON format",
         "env": "Environment variables for CodeChecker",
+        "parse": "List of arguments for CodeChecker parse command",
     },
 )
 
@@ -131,10 +131,6 @@ codechecker_config_internal = rule(
             default = [],
             doc = "List of arguments for CodeChecker analyze command",
         ),
-        "parse": attr.string_list(
-            default = [],
-            doc = "List of arguments for CodeChecker parse command",
-        ),
         "config_file": attr.label(
             default = None,
             allow_single_file = True,
@@ -142,6 +138,10 @@ codechecker_config_internal = rule(
         "env": attr.string_list(
             default = [],
             doc = "List of environment variables for CodeChecker",
+        ),
+        "parse": attr.string_list(
+            default = [],
+            doc = "List of arguments for CodeChecker parse command",
         ),
     },
 )

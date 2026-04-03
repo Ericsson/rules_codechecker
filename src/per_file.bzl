@@ -25,6 +25,7 @@ load(
     "compile_commands_impl",
 )
 
+# buildifier: disable=unused-variable
 def _run_code_checker(
         ctx,
         src,
@@ -128,8 +129,8 @@ def _create_wrapper_script(ctx, options, compile_commands_json, config_file):
         output = ctx.outputs.per_file_script,
         is_executable = True,
         substitutions = {
-            "{compile_commands_json}": compile_commands_json.path,
             "{codechecker_args}": options_str,
+            "{compile_commands_json}": compile_commands_json.path,
             "{config_file}": config_file.path,
         },
     )
@@ -201,9 +202,9 @@ def _per_file_impl(ctx):
 per_file_test = rule(
     implementation = _per_file_impl,
     attrs = {
-        "options": attr.string_list(
-            default = [],
-            doc = "List of CodeChecker options, e.g.: --ctu",
+        "config": attr.label(
+            default = None,
+            doc = "CodeChecker configuration",
         ),
         "default_options": attr.string_list(
             default = [
@@ -212,15 +213,15 @@ per_file_test = rule(
             ],
             doc = "List of default CodeChecker analyze options",
         ),
+        "options": attr.string_list(
+            default = [],
+            doc = "List of CodeChecker options, e.g.: --ctu",
+        ),
         "targets": attr.label_list(
             aspects = [
                 compile_commands_aspect,
             ],
             doc = "List of compilable targets which should be checked.",
-        ),
-        "config": attr.label(
-            default = None,
-            doc = "CodeChecker configuration",
         ),
         "_per_file_script_template": attr.label(
             default = ":per_file_script.py",
@@ -229,8 +230,8 @@ per_file_test = rule(
     },
     outputs = {
         "compile_commands": "%{name}/compile_commands.json",
-        "test_script": "%{name}/test_script.sh",
         "per_file_script": "%{name}/per_file_script.py",
+        "test_script": "%{name}/test_script.sh",
     },
     test = True,
 )

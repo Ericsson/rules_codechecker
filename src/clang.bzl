@@ -446,21 +446,10 @@ def _clang_tidy_test_impl(ctx):
 clang_tidy_test = rule(
     implementation = _clang_tidy_test_impl,
     attrs = {
-        "platform": attr.string(
-            default = "",  #"@platforms//os:linux",
-            doc = "Platform to build for",
-        ),
-        "targets": attr.label_list(
-            aspects = [
-                compile_info_aspect,
-            ],
-            cfg = platforms_transition,
-            doc = "List of compilable targets which should be checked.",
-        ),
-        "options": attr.string_list(
-            # Since clang-tidy-22 clang-tidy fails if no checkers are enabled
-            default = ["--checks=bugprone-*"],
-            doc = "List of clang-tidy options, e.g.: --checks=",
+        "config_file": attr.label(
+            default = None,
+            allow_single_file = True,
+            doc = "Clang-tidy config file (usually .clang-tidy)",
         ),
         "default_options": attr.string_list(
             default = [
@@ -472,17 +461,28 @@ clang_tidy_test = rule(
             ],
             doc = "List of default clang-tidy options",
         ),
-        "config_file": attr.label(
-            default = None,
-            allow_single_file = True,
-            doc = "Clang-tidy config file (usually .clang-tidy)",
-        ),
         "executable": attr.label(
             default = None,
             allow_single_file = True,
             executable = True,
             cfg = "exec",
             doc = "Clang-tidy executable",
+        ),
+        "options": attr.string_list(
+            # Since clang-tidy-22 clang-tidy fails if no checkers are enabled
+            default = ["--checks=bugprone-*"],
+            doc = "List of clang-tidy options, e.g.: --checks=",
+        ),
+        "platform": attr.string(
+            default = "",  #"@platforms//os:linux",
+            doc = "Platform to build for",
+        ),
+        "targets": attr.label_list(
+            aspects = [
+                compile_info_aspect,
+            ],
+            cfg = platforms_transition,
+            doc = "List of compilable targets which should be checked.",
         ),
     } | version_specific_attributes(),
     outputs = {
@@ -497,20 +497,10 @@ def _clang_analyze_test_impl(ctx):
 clang_analyze_test = rule(
     implementation = _clang_analyze_test_impl,
     attrs = {
-        "platform": attr.string(
-            default = "",  #"@platforms//os:linux",
-            doc = "Platform to build for",
-        ),
-        "targets": attr.label_list(
-            aspects = [
-                compile_info_aspect,
-            ],
-            cfg = platforms_transition,
-            doc = "List of compilable targets which should be checked.",
-        ),
-        "options": attr.string_list(
-            default = [],
-            doc = "List of clang options, e.g.: -fcolor-diagnostics",
+        "config_file": attr.label(
+            default = None,
+            allow_single_file = True,
+            doc = "?",  # FIXME: configuration file for clang -analyze?
         ),
         "default_options": attr.string_list(
             default = [
@@ -527,17 +517,27 @@ clang_analyze_test = rule(
             ],
             doc = "List of default clang options",
         ),
-        "config_file": attr.label(
-            default = None,
-            allow_single_file = True,
-            doc = "?",  # FIXME: configuration file for clang -analyze?
-        ),
         "executable": attr.label(
             default = None,
             allow_single_file = True,
             executable = True,
             cfg = "exec",
             doc = "Clang executable",
+        ),
+        "options": attr.string_list(
+            default = [],
+            doc = "List of clang options, e.g.: -fcolor-diagnostics",
+        ),
+        "platform": attr.string(
+            default = "",  #"@platforms//os:linux",
+            doc = "Platform to build for",
+        ),
+        "targets": attr.label_list(
+            aspects = [
+                compile_info_aspect,
+            ],
+            cfg = platforms_transition,
+            doc = "List of compilable targets which should be checked.",
         ),
     } | version_specific_attributes(),
     outputs = {

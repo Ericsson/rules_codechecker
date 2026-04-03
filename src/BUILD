@@ -13,6 +13,9 @@
 # limitations under the License.
 
 # Tool filter compile_commands.json file
+# In bazel 6 we use our own python toolchain,
+# therefore we cannot load from rules_python.
+# buildifier: disable=native-py
 py_binary(
     name = "compile_commands_filter",
     srcs = ["compile_commands_filter.py"],

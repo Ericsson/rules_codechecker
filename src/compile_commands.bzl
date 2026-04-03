@@ -48,9 +48,9 @@ load(
 SourceFilesInfo = provider(
     doc = "Source files and corresponding compilation database (or compile commands)",
     fields = {
-        "transitive_source_files": "list of transitive source files of a target",
         "compilation_db": "list of compile commands with parameters: file, command, directory",
         "headers": "list of required header files",
+        "transitive_source_files": "list of transitive source files of a target",
     },
 )
 

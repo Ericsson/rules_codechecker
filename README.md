@@ -228,6 +228,8 @@ bazel test ...
 > Filtering codechecker_tests with only `--test_tag_filters=-codechecker` is not enough.
 > To skip the actual analysis `--build_tag_filters=-codechecker` must also be specified.
 
+### Parsing results
+
 You can find the analysis results in the `bazel-bin/` folder, on which you
 can run [`CodeChecker store`](https://github.com/Ericsson/codechecker/blob/master/docs/web/user_guide.md#store)
 or [`CodeChecker parse`](https://github.com/Ericsson/codechecker/blob/master/docs/analyzer/user_guide.md#parse).
@@ -237,6 +239,26 @@ In simpler cases, something like the following:
 ```bash
 CodeChecker parse bazel-bin/your_codechecker_rule_name/codechecker-files/data
 CodeChecker store bazel-bin/your_codechecker_rule_name/codechecker-files/data -n "Run name"
+```
+
+Alternatively you can use the rule codechecker_store to store the results of the analysis on a CodeChecker server.
+For this you will have to load the rule codechecker_store_test from @rules_codechecker//src:codechecker_store.bzl
+
+```python
+load(
+    "@rules_codechecker//src:codechecker_store.bzl",
+    "codechecker_store_test",
+)
+```
+
+Then invoke it by creating a target like this:
+```python
+codechecker_test(
+    name = "your_codechecker_store_rule_name",
+    analysis_name = "optional_name_to_save_under",
+    target = ":your_target",
+    url = "https://127.0.0.1:8001/your-endpoint",
+)
 ```
 
 <!-- For now, we consider codechecker() to be an internal rule.

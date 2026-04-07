@@ -68,10 +68,6 @@ codechecker_store_test = rule(
             default = "",
             doc = "Name to store the run under the CodeChecker server. Defaults to the action name",
         ),
-        "url": attr.string(
-            default = "http://localhost:8001/Default",
-            doc = "Url to the CodeChecker server. Defaults to http://localhost:8001/Default",
-        ),
         "tag": attr.string(
             default = "",
             doc = "Tag to add to the analysis.",
@@ -79,6 +75,10 @@ codechecker_store_test = rule(
         "target": attr.label(
             allow_files = True,
             doc = "Analysis target to be stored.",
+        ),
+        "url": attr.string(
+            default = "http://localhost:8001/Default",
+            doc = "Url to the CodeChecker server. Defaults to http://localhost:8001/Default",
         ),
     },
     outputs = {

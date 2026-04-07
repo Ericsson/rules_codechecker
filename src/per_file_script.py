@@ -18,31 +18,24 @@
 Codechecker wrapper script for per-file analysis
 """
 
-import fnmatch
 import os
-from pathlib import Path
 import re
 import shutil
 import subprocess
 import sys
-from typing import Optional
 
-# The output directory for CodeChecker
-DATA_DIR: Optional[str] = None
-# The file to be analyzed
-FILE_PATH: str = None  # pyright: ignore
-# List of pairs of analyzers and their plist files
-ANALYZER_PLIST_PATHS: list[list[str]] = None  # pyright: ignore
-LOG_FILE: str = None  # pyright: ignore
 COMPILE_COMMANDS_JSON: str = "{compile_commands_json}"
 COMPILE_COMMANDS_ABSOLUTE: str = f"{COMPILE_COMMANDS_JSON}.abs"
 CODECHECKER_ARGS: str = "{codechecker_args}"
 CONFIG_FILE: str = "{config_file}"
-SKIP_LIST: list[str] = ["{skip_list}"]
+SKIP_FILE: str = sys.argv[4]
+# The output directory for CodeChecker
 DATA_DIR = sys.argv[1]
+# The file to be analyzed
 FILE_PATH = sys.argv[2]
 LOG_FILE = sys.argv[3]
-ANALYZER_PLIST_PATHS = [item.split(",") for item in sys.argv[4].split(";")]
+# List of pairs of analyzers and their plist files
+ANALYZER_PLIST_PATHS = [item.split(",") for item in sys.argv[5].split(";")]
 
 EMPTY_PLIST = """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -57,34 +50,11 @@ EMPTY_PLIST = """<?xml version="1.0" encoding="UTF-8"?>
 """
 
 
-def skipped():
-    """
-    Checks if this file should be skipped.
-    Return a boolean value.
-    """
-    skip_this = False
-    positive_patterns = []
-    negative_patterns = []
-
-    for pattern in SKIP_LIST:
-        if pattern[0] == "+":
-            positive_patterns.append(fnmatch.translate(pattern[1::]))
-        else:
-            negative_patterns.append(fnmatch.translate(pattern[1::]))
-    for pattern in negative_patterns:
-        if re.search(pattern, FILE_PATH):
-            skip_this = True
-    for pattern in positive_patterns:
-        if re.search(pattern, FILE_PATH):
-            skip_this = False
-    return skip_this
-
-
 def log(msg: str) -> None:
     """
     Append message to the log file
     """
-    with open(LOG_FILE, "a", encoding="utf-8") as log_file:  # type: ignore
+    with open(LOG_FILE, "a", encoding="utf-8") as log_file:
         log_file.write(msg)
 
 
@@ -114,8 +84,9 @@ def _run_codechecker() -> None:
     codechecker_cmd: list[str] = (
         ["CodeChecker", "analyze"]
         + CODECHECKER_ARGS.split()
-        + ["--output=" + DATA_DIR]  # type: ignore
-        + ["--file=*/" + FILE_PATH]  # type: ignore
+        + ["--output=" + DATA_DIR]
+        + ["--file=*/" + FILE_PATH]
+        + ["--skip", SKIP_FILE]
         + ["--config", CONFIG_FILE]
         + [COMPILE_COMMANDS_ABSOLUTE]
     )
@@ -135,7 +106,7 @@ def _run_codechecker() -> None:
     log(result.stdout)
 
     try:
-        with open(LOG_FILE, "a", encoding="utf-8") as log_file:  # type: ignore
+        with open(LOG_FILE, "a", encoding="utf-8") as log_file:
             subprocess.run(
                 codechecker_cmd,
                 env=os.environ,
@@ -156,7 +127,7 @@ def _display_error(ret_code: int) -> None:
     # Log and exit on error
     print("===-----------------------------------------------------===")
     print(f"[ERROR]: CodeChecker returned with {ret_code}!")
-    with open(LOG_FILE, "r", encoding="utf-8") as log_file:  # type: ignore
+    with open(LOG_FILE, "r", encoding="utf-8") as log_file:
         print(log_file.read())
     sys.exit(1)
 
@@ -164,38 +135,37 @@ def _display_error(ret_code: int) -> None:
 def _move_plist_files():
     """
     Move the plist files from the temporary directory to their final destination
+    If the files doesn't exists, write an empty plist file to the target.
     """
     # NOTE: the following we do to get rid of md5 hash in plist file names
     # Copy the plist files to the specified destinations
-    for file in os.listdir(DATA_DIR):
-        for analyzer_info in ANALYZER_PLIST_PATHS:  # type: ignore
-            if re.search(
-                rf"_{analyzer_info[0]}_.*\.plist$", file
-            ) and os.path.isfile(
-                os.path.join(DATA_DIR, file)  # type: ignore
-            ):
-                shutil.move(
-                    os.path.join(DATA_DIR, file),  # type: ignore
-                    analyzer_info[1],
-                )
+    compiled_analyzers = [
+        (re.compile(rf"_{analyzer[0]}_.*\.plist$"), analyzer[1])
+        for analyzer in ANALYZER_PLIST_PATHS
+    ]
+
+    for regex, target_file in compiled_analyzers:
+        for file_path in os.listdir(DATA_DIR):
+            if not os.path.isfile(os.path.join(DATA_DIR, file_path)):
+                continue
+            if regex.search(file_path):
+                shutil.move(os.path.join(DATA_DIR, file_path), target_file)
+                break
+        else:
+            with open(target_file, "w", encoding="utf-8") as file:
+                file.write(EMPTY_PLIST)
 
 
 def main():
     """
     Main function of CodeChecker wrapper
     """
-    if len(sys.argv) != 5:
+    if len(sys.argv) != 6:
         print("Wrong amount of arguments")
         sys.exit(1)
     _create_compile_commands_json_with_absolute_paths()
-    Path(LOG_FILE).touch()
-    if skipped():
-        for analyzer_list in ANALYZER_PLIST_PATHS:
-            with open(analyzer_list[1], "w", encoding="utf-8") as file:
-                file.write(EMPTY_PLIST)
-    else:
-        _run_codechecker()
-        _move_plist_files()
+    _run_codechecker()
+    _move_plist_files()
 
 
 if __name__ == "__main__":

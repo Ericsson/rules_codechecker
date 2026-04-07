@@ -40,6 +40,7 @@ cc_binary(
         "genrule_header_consumer.cc",
         ":genrule_header.h",
     ],
+    copts = ["-Wno-unused-variable"],
 )
 
 codechecker_test(

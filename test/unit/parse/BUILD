@@ -34,4 +34,5 @@ codechecker_test(
     targets = [
         "c_target",
     ],
+    visibility = ["//test/unit/parse:__subpackages__"],
 )

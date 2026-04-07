@@ -17,6 +17,7 @@ Test wether CodeChecker parse and CodeChecker store
 runs correctly on the produced report files
 """
 import os
+from tempfile import TemporaryDirectory
 import unittest
 from typing import final
 from common.base import TestBase
@@ -102,6 +103,30 @@ class TestTemplate(TestBase):
             f"{self.BAZEL_BIN_DIR}/codechecker/codechecker-files/data",
             "unit_test_bazel",
         )
+
+    def test_store_rule(self):
+        """Test: Storing to CodeChecker server with custom rule"""
+        port = getattr(self, 'port', 8001)
+        with TemporaryDirectory(dir=".") as temp_dir:
+            with open(f"{temp_dir}/BUILD", "w", encoding="utf-8") as build_file:
+                build_file.write(f"""
+load(
+    "//src:codechecker_store.bzl",
+    "codechecker_store_test"
+)
+                                 
+codechecker_store_test(
+    name = "store_codechecker",
+    tags = ["manual"],
+    target = "//test/unit/parse:codechecker",
+    url = "http://localhost:{port}/Default",
+)
+                                 """)
+            ret, _, stderr = self.run_command(
+                f"bazel test //test/unit/parse/{os.path.basename(temp_dir)}"
+                ":store_codechecker"
+            )
+            self.assertEqual(ret, 0, stderr)
 
 
 if __name__ == "__main__":

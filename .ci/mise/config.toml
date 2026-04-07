@@ -4,10 +4,10 @@ experimental = true
 
 [tools]
 # Environment tools:
-"bazel" = "6.5"
+"bazel" = "7.7"
 "python" = "3.11"
 "pipx" = "latest"
-"pipx:codechecker" = "6.26"
+"pipx:codechecker" = "6.27.3"
 
 # Clang tools:
 "conda:clang" = "latest"

@@ -34,6 +34,7 @@ cc_library(
 cc_library(
     name = "virtual_include",
     srcs = ["source.cc"],
+    copts = ["-Wno-return-type"],
     deps = ["test_inc"],
 )
 

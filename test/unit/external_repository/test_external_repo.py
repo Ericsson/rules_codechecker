@@ -17,6 +17,7 @@ Test external repositories with codechecker
 """
 import logging
 import os
+import re
 import shutil
 import unittest
 from typing import final
@@ -55,8 +56,12 @@ class TestImplDepExternalDep(TestBase):
         # This file is not needed
         except FileNotFoundError:
             logging.debug("No bazel version set, using system default")
-        _, stdout, _ = cls.run_command("bazel --version")
-        cls.BAZEL_VERSION = stdout.split(" ")[2].strip()
+        _, stdout, _ = cls.run_command("bazel version --gnu_format")
+        match = re.search(r'bazel\s+([\d\.]+)', stdout, re.MULTILINE)
+        if match:
+            cls.BAZEL_VERSION = match.group(1)
+        else:
+            raise RuntimeError(f"Bazel version not found: {stdout}")
         logging.debug("Using Bazel %s", cls.BAZEL_VERSION)
 
     @final

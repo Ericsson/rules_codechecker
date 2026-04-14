@@ -198,6 +198,8 @@ def analyze():
     # This can be removed once codechecker 6.16.0 is used.
     # command += " --keep-gcc-intrin"
     logging.info("Running CodeChecker analyze...")
+    output = execute(f"{CODECHECKER_PATH} analyzers", env=env)
+    logging.info("Output:\n\n%s\n", output)
     output = execute(command, env=env)
     logging.info("Output:\n\n%s\n", output)
     if output.find("- Failed to analyze") != -1:

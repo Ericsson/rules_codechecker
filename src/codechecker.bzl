@@ -40,6 +40,8 @@ load(
     "per_file.bzl",
     "per_file_test",
 )
+load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
+
 
 def get_platform_alias(platform):
     """
@@ -96,6 +98,16 @@ def _codechecker_impl(ctx):
     )
 
     config_file, codechecker_env = get_config_file(ctx)
+
+    cc_toolchain = find_cpp_toolchain(ctx)
+    clang_executable = cc_toolchain.compiler_executable
+    if hasattr(clang_executable, "dirname"):
+        wrapper_bin_dir = clang_executable.dirname
+    else:
+        wrapper_bin_dir = "/".join(clang_executable.split("/")[:-1])
+    real_llvm_bin_dir = wrapper_bin_dir.replace("llvm_toolchain", "llvm_toolchain_llvm")
+
+    codechecker_env += ";PATH={}:{}".format(real_llvm_bin_dir, wrapper_bin_dir)
 
     codechecker_files = ctx.actions.declare_directory(ctx.label.name + "/codechecker-files")
     ctx.actions.expand_template(
@@ -205,7 +217,7 @@ codechecker = rule(
         "codechecker_skipfile": "%{name}/codechecker_skipfile.cfg",
         "compile_commands": "%{name}/compile_commands.json",
     },
-    toolchains = [python_toolchain_type()],
+    toolchains = [python_toolchain_type(),"@bazel_tools//tools/cpp:toolchain_type"],
 )
 
 def _codechecker_test_impl(ctx):
@@ -300,7 +312,7 @@ _codechecker_test = rule(
         "codechecker_test_script": "%{name}/codechecker_test_script.py",
         "compile_commands": "%{name}/compile_commands.json",
     },
-    toolchains = [python_toolchain_type()],
+    toolchains = [python_toolchain_type(),"@bazel_tools//tools/cpp:toolchain_type"],
     test = True,
 )
 

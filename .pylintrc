@@ -1,6 +1,6 @@
 [MASTER]
 # To find common lib for tests
-init-hook='import sys; sys.path.append("test")'
+init-hook='import sys; import os; sys.path.append("test"); sys.path.append(os.getcwd())'
 ignore = test_template.py
 
 [FORMAT]

@@ -136,23 +136,32 @@ def _move_plist_files():
     """
     Move the plist files from the temporary directory to their final destination
     If the files doesn't exists, write an empty plist file to the target.
+    This can happen when an analysis was skipped
+    because of a CodeChecker skipfile.
+    For each analysis action we must have an output file, even if its skipped,
+    so we substitute it with an empty one.
     """
     # NOTE: the following we do to get rid of md5 hash in plist file names
     # Copy the plist files to the specified destinations
-    compiled_analyzers = [
-        (re.compile(rf"_{analyzer[0]}_.*\.plist$"), analyzer[1])
+    plist_search_mappings = [
+        (analyzer[1], re.compile(rf"_{analyzer[0]}_.*\.plist$"))
         for analyzer in ANALYZER_PLIST_PATHS
     ]
 
-    for regex, target_file in compiled_analyzers:
+    for (
+        destination_plist_path,
+        source_plist_search_pattern,
+    ) in plist_search_mappings:
         for file_path in os.listdir(DATA_DIR):
             if not os.path.isfile(os.path.join(DATA_DIR, file_path)):
                 continue
-            if regex.search(file_path):
-                shutil.move(os.path.join(DATA_DIR, file_path), target_file)
+            if source_plist_search_pattern.search(file_path):
+                shutil.move(
+                    os.path.join(DATA_DIR, file_path), destination_plist_path
+                )
                 break
         else:
-            with open(target_file, "w", encoding="utf-8") as file:
+            with open(destination_plist_path, "w", encoding="utf-8") as file:
                 file.write(EMPTY_PLIST)
 
 

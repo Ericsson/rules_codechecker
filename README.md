@@ -95,7 +95,7 @@ Install CodeChecker:
 
 ```bash
 python3 -m venv ./codechecker_venv && \
-source ./codechecker_venv && \
+source ./codechecker_venv/bin/activate && \
 pip3 install codechecker
 ```
 

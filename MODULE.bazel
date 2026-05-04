@@ -41,8 +41,8 @@ codechecker_extension = use_extension(
 )
 use_repo(codechecker_extension, "default_codechecker_tools")
 
-# Last version to support bazel 6
-bazel_dep(name = "toolchains_llvm", version = "0.10.3")
+
+bazel_dep(name = "toolchains_llvm", version = "1.7.0")
 
 # Configure and register the toolchain.
 llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm")

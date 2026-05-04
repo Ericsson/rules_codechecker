@@ -40,8 +40,6 @@ load(
     "per_file.bzl",
     "per_file_test",
 )
-load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
-
 
 def get_platform_alias(platform):
     """
@@ -99,16 +97,6 @@ def _codechecker_impl(ctx):
 
     config_file, codechecker_env = get_config_file(ctx)
 
-    cc_toolchain = find_cpp_toolchain(ctx)
-    clang_executable = cc_toolchain.compiler_executable
-    if hasattr(clang_executable, "dirname"):
-        wrapper_bin_dir = clang_executable.dirname
-    else:
-        wrapper_bin_dir = "/".join(clang_executable.split("/")[:-1])
-    real_llvm_bin_dir = wrapper_bin_dir.replace("llvm_toolchain", "llvm_toolchain_llvm")
-
-    codechecker_env += ";PATH={}:{}".format(real_llvm_bin_dir, wrapper_bin_dir)
-
     codechecker_files = ctx.actions.declare_directory(ctx.label.name + "/codechecker-files")
     ctx.actions.expand_template(
         template = ctx.file._codechecker_script_template,
@@ -128,6 +116,11 @@ def _codechecker_impl(ctx):
         },
     )
 
+    llvm_bin_dir = ""
+    if ctx.files.llvm_toolchain:
+        # @llvm_toolchain_llvm//:bin is a file-group
+        llvm_bin_dir = ctx.files.llvm_toolchain[0].dirname
+
     ctx.actions.run(
         inputs = depset(
             [
@@ -142,7 +135,7 @@ def _codechecker_impl(ctx):
             ctx.outputs.codechecker_log,
         ],
         executable = ctx.outputs.codechecker_script,
-        arguments = [],
+        arguments = [llvm_bin_dir],
         # executable = python_path(ctx),
         # arguments = [ctx.outputs.codechecker_script.path],
         mnemonic = "CodeChecker",
@@ -188,6 +181,10 @@ codechecker = rule(
             default = None,
             doc = "CodeChecker configuration",
         ),
+        "llvm_toolchain": attr.label(
+            default = None,
+            doc = "If the llvm_toolchain is obtained through bazel, provide the PATH to its bin directory here (e.g. @llvm_toolchain_llvm//:bin)",
+        ),
         "skip": attr.string_list(
             default = [],
             doc = "List of skip/ignore file rules. " +
@@ -217,7 +214,7 @@ codechecker = rule(
         "codechecker_skipfile": "%{name}/codechecker_skipfile.cfg",
         "compile_commands": "%{name}/compile_commands.json",
     },
-    toolchains = [python_toolchain_type(),"@bazel_tools//tools/cpp:toolchain_type"],
+    toolchains = [python_toolchain_type()],
 )
 
 def _codechecker_test_impl(ctx):
@@ -273,6 +270,10 @@ _codechecker_test = rule(
             cfg = platforms_transition,
             doc = "CodeChecker configuration",
         ),
+        "llvm_toolchain": attr.label(
+            default = None,
+            doc = "If the llvm_toolchain is obtained through bazel, provide the PATH to its bin directory here (e.g. @llvm_toolchain_llvm//:bin)",
+        ),
         "platform": attr.string(
             default = "",  #"@platforms//os:linux",
             doc = "Platform to build for",
@@ -312,7 +313,7 @@ _codechecker_test = rule(
         "codechecker_test_script": "%{name}/codechecker_test_script.py",
         "compile_commands": "%{name}/compile_commands.json",
     },
-    toolchains = [python_toolchain_type(),"@bazel_tools//tools/cpp:toolchain_type"],
+    toolchains = [python_toolchain_type()],
     test = True,
 )
 

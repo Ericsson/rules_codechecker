@@ -41,10 +41,14 @@ EMPTY_PLIST = """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>diagnostics</key>
-    <array/>
-    <key>files</key>
-    <array/>
+	<key>metadata</key>
+	<dict>
+		<key>generated_by</key>
+		<dict>
+			<key>name</key>
+			<string>CodeChecker</string>
+		</dict>
+	</dict>
 </dict>
 </plist>
 """
@@ -143,7 +147,7 @@ def _move_plist_files():
     """
     # NOTE: the following we do to get rid of md5 hash in plist file names
     # Copy the plist files to the specified destinations
-    plist_search_mappings = [
+    destination_and_source_pattern_pairs = [
         (analyzer[1], re.compile(rf"_{analyzer[0]}_.*\.plist$"))
         for analyzer in ANALYZER_PLIST_PATHS
     ]
@@ -151,7 +155,7 @@ def _move_plist_files():
     for (
         destination_plist_path,
         source_plist_search_pattern,
-    ) in plist_search_mappings:
+    ) in destination_and_source_pattern_pairs:
         for file_path in os.listdir(DATA_DIR):
             if not os.path.isfile(os.path.join(DATA_DIR, file_path)):
                 continue

@@ -152,7 +152,7 @@ In Bazel 6, to activate the MODULE system, add `--enable_bzlmod` to the `.bazelr
 git_override(
     module_name = "rules_codechecker",
     remote = "https://github.com/Ericsson/rules_codechecker.git",
-    commit = "a32e9d75df4fb453c8bbfdf0fdf6a767797ae53d", # Update to latest
+    commit = "5ec36cdb443a9aab8b2503653d1c7fbff512d39e", # Update to latest
 )
 bazel_dep(name = "rules_codechecker")
 

@@ -116,10 +116,7 @@ def _codechecker_impl(ctx):
         },
     )
 
-    llvm_bin_dir = ""
-    if ctx.files.llvm_toolchain:
-        # @llvm_toolchain_llvm//:bin is a file-group
-        llvm_bin_dir = ctx.files.llvm_toolchain[0].dirname
+    llvm_bin_dir = ctx.files._llvm_toolchain[0].dirname
 
     ctx.actions.run(
         inputs = depset(
@@ -128,7 +125,7 @@ def _codechecker_impl(ctx):
                 ctx.outputs.codechecker_commands,
                 ctx.outputs.codechecker_skipfile,
                 config_file,
-            ] + source_files,
+            ] + source_files + ctx.files._llvm_toolchain,
         ),
         outputs = [
             codechecker_files,
@@ -181,8 +178,8 @@ codechecker = rule(
             default = None,
             doc = "CodeChecker configuration",
         ),
-        "llvm_toolchain": attr.label(
-            default = None,
+        "_llvm_toolchain": attr.label(
+            default = "@llvm_toolchain_llvm//:bin",
             doc = "If the llvm_toolchain is obtained through bazel, provide the PATH to its bin directory here (e.g. @llvm_toolchain_llvm//:bin)",
         ),
         "skip": attr.string_list(
@@ -270,8 +267,8 @@ _codechecker_test = rule(
             cfg = platforms_transition,
             doc = "CodeChecker configuration",
         ),
-        "llvm_toolchain": attr.label(
-            default = None,
+        "_llvm_toolchain": attr.label(
+            default = "@llvm_toolchain_llvm//:bin",
             doc = "If the llvm_toolchain is obtained through bazel, provide the PATH to its bin directory here (e.g. @llvm_toolchain_llvm//:bin)",
         ),
         "platform": attr.string(

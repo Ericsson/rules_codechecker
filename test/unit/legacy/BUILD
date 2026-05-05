@@ -132,7 +132,6 @@ codechecker_test(
     targets = [
         "test_pass",
     ],
-    llvm_toolchain = "@llvm_toolchain_llvm//:bin",
 )
 
 # This codechecker_test example supposed to fail showing findings report

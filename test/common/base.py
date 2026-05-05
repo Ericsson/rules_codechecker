@@ -133,31 +133,3 @@ class TestBase(unittest.TestCase):
         Returns a boolean, whether the specified file contains the regex or not.
         """
         return bool(cls.grep_file(file_path, regex))
-
-    def check_store(self, path: str, name: str):
-        """
-        Tries to store the results on the codechecker server,
-        asserts for successful storing.
-
-        Args:
-            path - Path of the result files
-            name - name of the project to be saved under
-        """
-        port = getattr(self, 'port', 8001)
-        ret, stdout, stderr = self.run_command(
-            f"CodeChecker store {path} -n {name}"
-            f" --url=http://localhost:{port}/Default"
-        )
-        self.assertEqual(ret, 0, stdout + "\n" + stderr)
-
-    def check_parse(self, path: str, will_find_bug: bool = True):
-        """
-        Checks if the parse command finishes correctly on results.
-
-        Args:
-            path - Path of the result files
-            will_find_bug - Will there be a bug in the result files,
-            changes on what we assert
-        """
-        ret, _, _ = self.run_command(f"CodeChecker parse {path}")
-        self.assertEqual(ret, 2 if will_find_bug else 0)

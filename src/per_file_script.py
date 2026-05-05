@@ -28,14 +28,15 @@ COMPILE_COMMANDS_JSON: str = "{compile_commands_json}"
 COMPILE_COMMANDS_ABSOLUTE: str = f"{COMPILE_COMMANDS_JSON}.abs"
 CODECHECKER_ARGS: str = "{codechecker_args}"
 CONFIG_FILE: str = "{config_file}"
-SKIP_FILE: str = sys.argv[4]
+SKIP_FILE: str = sys.argv[5]
+CODECHECKER_BIN = sys.argv[1]
 # The output directory for CodeChecker
-DATA_DIR = sys.argv[1]
+DATA_DIR = sys.argv[2]
 # The file to be analyzed
-FILE_PATH = sys.argv[2]
-LOG_FILE = sys.argv[3]
+FILE_PATH = sys.argv[3]
+LOG_FILE = sys.argv[4]
 # List of pairs of analyzers and their plist files
-ANALYZER_PLIST_PATHS = [item.split(",") for item in sys.argv[5].split(";")]
+ANALYZER_PLIST_PATHS = [item.split(",") for item in sys.argv[6].split(";")]
 
 EMPTY_PLIST = """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -86,7 +87,7 @@ def _run_codechecker() -> None:
     Runs CodeChecker analyze
     """
     codechecker_cmd: list[str] = (
-        ["CodeChecker", "analyze"]
+        [CODECHECKER_BIN, "analyze"]
         + CODECHECKER_ARGS.split()
         + ["--output=" + DATA_DIR]
         + ["--file=*/" + FILE_PATH]
@@ -173,7 +174,7 @@ def main():
     """
     Main function of CodeChecker wrapper
     """
-    if len(sys.argv) != 6:
+    if len(sys.argv) != 7:
         print("Wrong amount of arguments")
         sys.exit(1)
     _create_compile_commands_json_with_absolute_paths()

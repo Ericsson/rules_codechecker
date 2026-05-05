@@ -59,6 +59,8 @@ def _run_code_checker(
         content = "\n".join(ctx.attr.skip),
     )
 
+    info = ctx.toolchains["//src:toolchain_type"].codecheckerinfo
+
     if "--ctu" in options:
         inputs = [
             compile_commands_json,
@@ -86,6 +88,7 @@ def _run_code_checker(
         outputs = outputs,
         executable = ctx.outputs.per_file_script,
         arguments = [
+            info.executable,
             data_dir,
             src.path,
             codechecker_log.path,
@@ -155,6 +158,8 @@ def _create_wrapper_script(ctx, options, compile_commands_json, config_file):
     )
 
 def _per_file_impl(ctx):
+    info = ctx.toolchains["//src:toolchain_type"].codecheckerinfo
+    print("CodeChecker path resolved:", info.executable)
     compile_commands = None
     for output in compile_commands_impl(ctx):
         if type(output) == "DefaultInfo":
@@ -258,4 +263,5 @@ per_file_test = rule(
         "test_script": "%{name}/test_script.sh",
     },
     test = True,
+    toolchains = ["//src:toolchain_type"],
 )

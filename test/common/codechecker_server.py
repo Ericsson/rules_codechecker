@@ -23,34 +23,41 @@ import socket
 import subprocess
 import tempfile
 import time
+import urllib
+import urllib.request
+import urllib.error
 
 
-# Based on:
-# https://dev.to/farcellier/wait-for-a-server-to-respond-in-python-488e
-def wait_port(
-    port: int,
+def _get_free_port():
+    """
+    Return a port number that is free
+    """
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("", 0))
+        return s.getsockname()[1]
+
+
+def wait_codechecker_server(
+    product: str = "Default",
     host: str = "localhost",
-    timeout: int = 3000,
+    port: int = 8001,
+    timeout: int = 10000,
     attempt_every: int = 100,
 ) -> bool:
     """
-    Wait until a port would be open,
-    for example the port 8001 for CodeChecker server
+    Wait until the product is available in the CodeChecker server
     """
     start = time.monotonic()
-    while True:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            try:
-                s.connect((host, port))
-                s.close()
-                return True
-            except ConnectionRefusedError:
-                if timeout is not None and time.monotonic() - start > (
-                    timeout / 1000
-                ):
-                    return False
-
+    url = f"http://{host}:{port}/{product}"
+    while time.monotonic() - start < timeout:
+        try:
+            with urllib.request.urlopen(url, timeout=timeout / 1000) as resp:
+                if resp.getcode() == 200:
+                    return True
+        except (urllib.error.URLError, urllib.error.HTTPError):
+            pass
         time.sleep(attempt_every / 1000)
+    return False
 
 
 class CodeCheckerServer:
@@ -58,9 +65,10 @@ class CodeCheckerServer:
     CodeCheckerServer object for testing.
     Cleans up after itself.
     """
-    def __init__(self, port="8001"):
+
+    def __init__(self, port=None):
         self.running = False
-        self.port = port
+        self.port = port if port else _get_free_port()
         self.temp_workspace = tempfile.mkdtemp()
         self.start_codechecker_server()
 
@@ -69,7 +77,7 @@ class CodeCheckerServer:
 
     def start_codechecker_server(self):
         """
-        Starts a CodeChecker server instance on port 8001
+        Starts a CodeChecker server instance on a free port 
         This server must be shutdown with stop_codechecker_sever
         """
         if self.running:
@@ -80,7 +88,7 @@ class CodeCheckerServer:
             "--workspace",
             self.temp_workspace,
             "--port",
-            self.port,
+            str(self.port),
         ]
         # These file/popen processes are closed when the object dies
         # pylint: disable=consider-using-with
@@ -89,8 +97,8 @@ class CodeCheckerServer:
         self.server_process: subprocess.Popen = subprocess.Popen(
             server_command, stdout=self.devnull
         )
-        assert wait_port(
-            port=8001, timeout=10000
+        assert wait_codechecker_server(
+            port=self.port, timeout=10000
         ), "Failed to start CodeChecker server"
         self.running = True
 

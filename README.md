@@ -51,20 +51,20 @@ Prerequisites
 
 We need the following tools:
 
-- Git 2 or newer (we use 2.36)
-- Bazel 6, 7 or 8 (we recommend version 8.5.0)
-- Clang 16 or newer (we use 16), we use clang-tidy
-- Python 3.8 or newer (we use 3.11)
-- CodeChecker 6.26 or newer (we use 6.26.0)
+- Git 2 or newer
+- Bazel 7.7
+- Clang and clang-tidy 21
+- Python 3.11 or newer
+- CodeChecker 6.27.3
 
 If, by chance, Environment Modules (https://modules.sourceforge.net/)
 are available in your system, you can just add the following modules:
 
     module add git
-    module add bazel/6
-    module add clang/16
+    module add bazel/7
+    module add clang/21
     module add python/3.11
-    module add codechecker/6.26
+    module add codechecker/6.27.3
 
 
 Getting Started

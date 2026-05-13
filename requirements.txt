@@ -1,4 +1,3 @@
 pytest
 pylint
-codechecker >= 6.26
-
+codechecker >= 6.27.3

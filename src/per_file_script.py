@@ -23,30 +23,42 @@ import re
 import shutil
 import subprocess
 import sys
-from typing import Optional
 
-# The output directory for CodeChecker
-DATA_DIR: Optional[str] = None
-# The file to be analyzed
-FILE_PATH: Optional[str] = None
-# List of pairs of analyzers and their plist files
-ANALYZER_PLIST_PATHS: Optional[list[list[str]]] = None
-LOG_FILE: Optional[str] = None
 COMPILE_COMMANDS_JSON: str = "{compile_commands_json}"
 COMPILE_COMMANDS_ABSOLUTE: str = f"{COMPILE_COMMANDS_JSON}.abs"
 CODECHECKER_ARGS: str = "{codechecker_args}"
 CONFIG_FILE: str = "{config_file}"
+SKIP_FILE: str = sys.argv[4]
+# The output directory for CodeChecker
 DATA_DIR = sys.argv[1]
+# The file to be analyzed
 FILE_PATH = sys.argv[2]
 LOG_FILE = sys.argv[3]
-ANALYZER_PLIST_PATHS = [item.split(",") for item in sys.argv[4].split(";")]
+# List of pairs of analyzers and their plist files
+ANALYZER_PLIST_PATHS = [item.split(",") for item in sys.argv[5].split(";")]
+
+EMPTY_PLIST = """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>metadata</key>
+	<dict>
+		<key>generated_by</key>
+		<dict>
+			<key>name</key>
+			<string>CodeChecker</string>
+		</dict>
+	</dict>
+</dict>
+</plist>
+"""
 
 
 def log(msg: str) -> None:
     """
     Append message to the log file
     """
-    with open(LOG_FILE, "a", encoding="utf-8") as log_file:  # type: ignore
+    with open(LOG_FILE, "a", encoding="utf-8") as log_file:
         log_file.write(msg)
 
 
@@ -76,8 +88,9 @@ def _run_codechecker() -> None:
     codechecker_cmd: list[str] = (
         ["CodeChecker", "analyze"]
         + CODECHECKER_ARGS.split()
-        + ["--output=" + DATA_DIR]  # type: ignore
-        + ["--file=*/" + FILE_PATH]  # type: ignore
+        + ["--output=" + DATA_DIR]
+        + ["--file=*/" + FILE_PATH]
+        + ["--skip", SKIP_FILE]
         + ["--config", CONFIG_FILE]
         + [COMPILE_COMMANDS_ABSOLUTE]
     )
@@ -97,7 +110,7 @@ def _run_codechecker() -> None:
     log(result.stdout)
 
     try:
-        with open(LOG_FILE, "a", encoding="utf-8") as log_file:  # type: ignore
+        with open(LOG_FILE, "a", encoding="utf-8") as log_file:
             subprocess.run(
                 codechecker_cmd,
                 env=os.environ,
@@ -118,7 +131,7 @@ def _display_error(ret_code: int) -> None:
     # Log and exit on error
     print("===-----------------------------------------------------===")
     print(f"[ERROR]: CodeChecker returned with {ret_code}!")
-    with open(LOG_FILE, "r", encoding="utf-8") as log_file:  # type: ignore
+    with open(LOG_FILE, "r", encoding="utf-8") as log_file:
         print(log_file.read())
     sys.exit(1)
 
@@ -126,28 +139,41 @@ def _display_error(ret_code: int) -> None:
 def _move_plist_files():
     """
     Move the plist files from the temporary directory to their final destination
+    If the files doesn't exists, write an empty plist file to the target.
+    This can happen when an analysis was skipped
+    because of a CodeChecker skipfile.
+    For each analysis action we must have an output file, even if its skipped,
+    so we substitute it with an empty one.
     """
     # NOTE: the following we do to get rid of md5 hash in plist file names
     # Copy the plist files to the specified destinations
-    for file in os.listdir(DATA_DIR):
-        for analyzer_info in ANALYZER_PLIST_PATHS:  # type: ignore
-            if re.search(
-                rf"_{analyzer_info[0]}_.*\.plist$", file
-            ) and os.path.isfile(
-                os.path.join(DATA_DIR, file)  # type: ignore
+    destination_and_source_pattern_pairs = [
+        (analyzer[1], re.compile(rf"_{analyzer[0]}_.*\.plist$"))
+        for analyzer in ANALYZER_PLIST_PATHS
+    ]
 
-            ):
+    for (
+        destination_plist_path,
+        source_plist_search_pattern,
+    ) in destination_and_source_pattern_pairs:
+        for file_path in os.listdir(DATA_DIR):
+            if not os.path.isfile(os.path.join(DATA_DIR, file_path)):
+                continue
+            if source_plist_search_pattern.search(file_path):
                 shutil.move(
-                    os.path.join(DATA_DIR, file),   # type: ignore
-                    analyzer_info[1],
-                    )
+                    os.path.join(DATA_DIR, file_path), destination_plist_path
+                )
+                break
+        else:
+            with open(destination_plist_path, "w", encoding="utf-8") as file:
+                file.write(EMPTY_PLIST)
 
 
 def main():
     """
     Main function of CodeChecker wrapper
     """
-    if len(sys.argv) != 5:
+    if len(sys.argv) != 6:
         print("Wrong amount of arguments")
         sys.exit(1)
     _create_compile_commands_json_with_absolute_paths()

@@ -50,12 +50,30 @@ def _run_code_checker(
     clangsa_plist = ctx.actions.declare_file(clangsa_plist_file_name)
     codechecker_log = ctx.actions.declare_file(codechecker_log_file_name)
 
+    # Create skipfile
+    config = ctx.actions.declare_file(
+        "{}/{}_skipfile".format(*file_name_params),
+    )
+    ctx.actions.write(
+        output = config,
+        content = "\n".join(ctx.attr.skip),
+    )
+
     if "--ctu" in options:
-        inputs = [compile_commands_json, config_file] + sources_and_headers
+        inputs = [
+            compile_commands_json,
+            config_file,
+            config,
+        ] + sources_and_headers
     else:
         # NOTE: we collect only headers, so CTU may not work!
         headers = depset(transitive = target[SourceFilesInfo].headers.to_list())
-        inputs = depset([compile_commands_json, config_file, src], transitive = [headers])
+        inputs = depset([
+            compile_commands_json,
+            config_file,
+            src,
+            config,
+        ], transitive = [headers])
 
     outputs = [clang_tidy_plist, clangsa_plist, codechecker_log]
 
@@ -71,6 +89,7 @@ def _run_code_checker(
             data_dir,
             src.path,
             codechecker_log.path,
+            config.path,
             analyzer_output_paths,
         ],
         mnemonic = "CodeChecker",
@@ -216,6 +235,11 @@ per_file_test = rule(
         "options": attr.string_list(
             default = [],
             doc = "List of CodeChecker options, e.g.: --ctu",
+        ),
+        "skip": attr.string_list(
+            default = [],
+            doc = "List of skip/ignore file rules. " +
+                  "See https://codechecker.readthedocs.io/en/latest/analyzer/user_guide/#skip-file",
         ),
         "targets": attr.label_list(
             aspects = [

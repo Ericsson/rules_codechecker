@@ -76,6 +76,18 @@ codechecker_test(
     skip = [
         "-*test/unit/skip/skip*",
     ],
+    targets = [
+        "simple_target",
+    ],
+)
+
+codechecker_test(
+    name = "per_file_skipfile_both_files_except_one",
+    per_file = True,
+    skip = [
+        "+*test/unit/skip/skip.cc",
+        "-*test/unit/skip/skip*",
+    ],
     tags = ["manual"],
     targets = [
         "simple_target",

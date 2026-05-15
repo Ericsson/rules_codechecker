@@ -1,5 +1,6 @@
 load("@aspect_rules_lint//format:defs.bzl", "format_test")
 load("@buildifier_prebuilt//:rules.bzl", "buildifier_test")
+load("@rules_python//python:defs.bzl", "py_test")
 
 buildifier_test(
     name = "buildifier_native",
@@ -30,4 +31,31 @@ format_test(
         #"-diff_command=\"diff -u\"",
     ],
     workspace = "//:WORKSPACE",
+)
+
+filegroup(
+    name = "all_py_files",
+    srcs = glob(
+        ["**/*.py"],
+        exclude = [
+            "bazel-*/**",
+            "venv/**",
+            ".ci/**",
+        ],
+    ),
+)
+
+py_test(
+    name = "pylint_test",
+    srcs = ["test/pylint_runner.py"],
+    args = [
+        "--rcfile=$(location .pylintrc)",
+        "$(locations :all_py_files)",
+    ],
+    data = [
+        ".pylintrc",
+        ":all_py_files",
+    ],
+    main = "test/pylint_runner.py",
+    #deps = ["@pypi//pylint"],
 )

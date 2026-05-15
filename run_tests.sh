@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
+echo "Clean up previous micromamba environment"
+chmod -R +w .ci/micromamba/micromamba/envs/dev
+rm -rf .ci/micromamba/micromamba/envs/dev
 
-cleanup() {
-    # Very important
-    # reactivation of the mamba environment is not possible if skipped
-    bazel clean
-    micromamba deactivate
-}
-
-trap cleanup EXIT
-
+echo "Initialize micromamba environment..."
 source ./.ci/micromamba/init.sh
 
+echo "Running pylint..."
 pylint .
+echo "Running bazel test //..."
 bazel test //...
+echo "Running pytest ..."
 pytest test
+
+echo "Exiting micromamba..."
+micromamba deactivate

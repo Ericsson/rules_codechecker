@@ -29,6 +29,10 @@ jobs:
 
     - name: Analyzing the code with Buildifier
       run: |
+        bazel test //:pylint_test --test_output=errors
+
+    - name: Analyzing the code with Buildifier
+      run: |
         bazel test //:format_test --test_output=errors
 
     # TODO: Add more linters here

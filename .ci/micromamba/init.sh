@@ -69,9 +69,13 @@ if [[ "$VERBOSE" -ge 2 ]]; then
     micromamba info
 fi
 
+# Clean up previous environment
+info "Cleaning up previous environment [$ENV_NAME]..."
+chmod -R +w $THIS_DIR/micromamba/envs/dev
+rm -rf $THIS_DIR/micromamba/envs/dev
+micromamba deactivate
 # Create environment
 info "Creating environment [$ENV_NAME]..."
-micromamba deactivate
 micromamba create --file $THIS_DIR/$ENV_NAME.yaml --name $ENV_NAME --yes $MAMBA_VERBOSITY
 # micromamba config set env_prompt "[{name}] "
 micromamba activate $ENV_NAME

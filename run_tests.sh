@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
-echo "Clean up previous micromamba environment"
-chmod -R +w .ci/micromamba/micromamba/envs/dev
-rm -rf .ci/micromamba/micromamba/envs/dev
-
 echo "Initialize micromamba environment..."
 source ./.ci/micromamba/init.sh
 

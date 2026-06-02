@@ -69,10 +69,10 @@ if [[ "$VERBOSE" -ge 2 ]]; then
     micromamba info
 fi
 
-# Clean up previous environment
-info "Cleaning up previous environment [$ENV_NAME]..."
-chmod -R +w $THIS_DIR/micromamba/envs/dev
-rm -rf $THIS_DIR/micromamba/envs/dev
+# Make previous environment modifiable to avoid bazel cache related micromamba errors
+info "Changing permissions for previous environment [$ENV_NAME]..."
+chmod -R +w $THIS_DIR/micromamba/envs/$ENV_NAME
+
 micromamba deactivate
 # Create environment
 info "Creating environment [$ENV_NAME]..."

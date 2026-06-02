@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+cd $SCRIPT_DIR
+
 echo "Initialize micromamba environment..."
-source ./.ci/micromamba/init.sh
+source ./init.sh
+
+# Change directory to project root 
+cd ../../
 
 echo "Running pylint..."
 pylint .

@@ -71,7 +71,9 @@ toolchain_type(name = "toolchain_type")
 
 codechecker_toolchain(
     name = "codechecker_local",
-    analyzer_binary = "CodeChecker",  # Find it in PATH ?
+    clang_tidy_binary = "clang-tidy",
+    clangsa_binary = "clang",
+    codechecker_binary = "CodeChecker",  # Find it in PATH ?
 )
 
 toolchain(

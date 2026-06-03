@@ -37,6 +37,7 @@ FILE_PATH = sys.argv[3]
 LOG_FILE = sys.argv[4]
 # List of pairs of analyzers and their plist files
 ANALYZER_PLIST_PATHS = [item.split(",") for item in sys.argv[6].split(";")]
+ANALYZER_EXECUTABLES_ENV_VAR = sys.argv[7]
 
 EMPTY_PLIST = """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -82,6 +83,15 @@ def _create_compile_commands_json_with_absolute_paths():
         new_file.write(new_content)
 
 
+def _get_codechecker_env() -> dict[str, str]:
+    """
+    Returns the environment for running CodeChecker
+    """
+    cc_env = os.environ.copy()
+    # Overwrite analyzer paths
+    cc_env["CC_ANALYZER_BIN"] = ANALYZER_EXECUTABLES_ENV_VAR
+    return cc_env
+
 def _run_codechecker() -> None:
     """
     Runs CodeChecker analyze
@@ -103,7 +113,7 @@ def _run_codechecker() -> None:
     result = subprocess.run(
         ["echo", "$PATH"],
         shell=True,
-        env=os.environ,
+        env=_get_codechecker_env(),
         capture_output=True,
         text=True,
         check=False,
@@ -114,7 +124,7 @@ def _run_codechecker() -> None:
         with open(LOG_FILE, "a", encoding="utf-8") as log_file:
             subprocess.run(
                 codechecker_cmd,
-                env=os.environ,
+                env=_get_codechecker_env(),
                 stdout=log_file,
                 stderr=log_file,
                 check=True,
@@ -174,7 +184,7 @@ def main():
     """
     Main function of CodeChecker wrapper
     """
-    if len(sys.argv) != 7:
+    if len(sys.argv) != 8:
         print("Wrong amount of arguments")
         sys.exit(1)
     _create_compile_commands_json_with_absolute_paths()

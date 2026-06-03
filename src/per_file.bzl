@@ -82,18 +82,22 @@ def _run_code_checker(
     analyzer_output_paths = "clangsa," + clangsa_plist.path + \
                             ";clang-tidy," + clang_tidy_plist.path
 
+    analyzer_executables = "clangsa:" + info.clangsa_bin + \
+                           ";clang-tidy:" + info.clang_tidy_bin
+
     # Action to run CodeChecker for a file
     ctx.actions.run(
         inputs = inputs,
         outputs = outputs,
         executable = ctx.outputs.per_file_script,
         arguments = [
-            info.executable,
+            info.codechecker_bin,
             data_dir,
             src.path,
             codechecker_log.path,
             config.path,
             analyzer_output_paths,
+            analyzer_executables,
         ],
         mnemonic = "CodeChecker",
         use_default_shell_env = True,
@@ -158,8 +162,6 @@ def _create_wrapper_script(ctx, options, compile_commands_json, config_file):
     )
 
 def _per_file_impl(ctx):
-    info = ctx.toolchains["//src:toolchain_type"].codecheckerinfo
-    print("CodeChecker path resolved:", info.executable)
     compile_commands = None
     for output in compile_commands_impl(ctx):
         if type(output) == "DefaultInfo":

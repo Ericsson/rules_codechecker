@@ -3,16 +3,20 @@ This file provides the toolchain rule for CodeChecker
 """
 
 CodeCheckerInfo = provider(
-    doc = "This provider provides the executable path for CodeChecker",
-    fields = [
-        "executable",
-    ],
+    doc = "This provider provides the executable path for CodeChecker and its related tools",
+    fields = {
+        "clang_tidy_bin": "clang-tidy executable",
+        "clangsa_bin": "Clang executable",
+        "codechecker_bin": "CodeChecker executable",
+    },
 )
 
 def _codechecker_toolchain_impl(ctx):
     toolchain_info = platform_common.ToolchainInfo(
         codecheckerinfo = CodeCheckerInfo(
-            executable = ctx.attr.analyzer_binary,
+            codechecker_bin = ctx.attr.codechecker_binary,
+            clang_tidy_bin = ctx.attr.clang_tidy_binary,
+            clangsa_bin = ctx.attr.clangsa_binary,
         ),
     )
     return [toolchain_info]
@@ -20,6 +24,8 @@ def _codechecker_toolchain_impl(ctx):
 codechecker_toolchain = rule(
     implementation = _codechecker_toolchain_impl,
     attrs = {
-        "analyzer_binary": attr.string(),
+        "clang_tidy_binary": attr.string(),
+        "clangsa_binary": attr.string(),
+        "codechecker_binary": attr.string(),
     },
 )

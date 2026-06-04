@@ -29,7 +29,7 @@ COMPILE_COMMANDS_ABSOLUTE: str = f"{COMPILE_COMMANDS_JSON}.abs"
 CODECHECKER_ARGS: str = "{codechecker_args}"
 CONFIG_FILE: str = "{config_file}"
 SKIP_FILE: str = sys.argv[5]
-CODECHECKER_BIN = sys.argv[1]
+CODECHECKER_BIN = os.path.realpath(sys.argv[1])
 # The output directory for CodeChecker
 DATA_DIR = sys.argv[2]
 # The file to be analyzed

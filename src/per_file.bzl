@@ -66,6 +66,7 @@ def _run_code_checker(
             compile_commands_json,
             config_file,
             config,
+            info.codechecker_bin,
         ] + sources_and_headers
     else:
         # NOTE: we collect only headers, so CTU may not work!
@@ -75,6 +76,7 @@ def _run_code_checker(
             config_file,
             src,
             config,
+            info.codechecker_bin,
         ], transitive = [headers])
 
     outputs = [clang_tidy_plist, clangsa_plist, codechecker_log]
@@ -91,7 +93,7 @@ def _run_code_checker(
         outputs = outputs,
         executable = ctx.outputs.per_file_script,
         arguments = [
-            info.codechecker_bin,
+            info.codechecker_bin.path,
             data_dir,
             src.path,
             codechecker_log.path,

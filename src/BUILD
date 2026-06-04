@@ -73,7 +73,7 @@ codechecker_toolchain(
     name = "codechecker_local",
     clang_tidy_binary = "clang-tidy",
     clangsa_binary = "clang",
-    codechecker_binary = "CodeChecker",  # Find it in PATH ?
+    codechecker_binary = "@default_codechecker_tools//:CodeChecker",
 )
 
 toolchain(

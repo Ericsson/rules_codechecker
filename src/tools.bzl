@@ -97,12 +97,6 @@ module_register_default_python_toolchain = module_extension(
 )
 
 def _codechecker_local_repository_impl(repository_ctx):
-    repository_ctx.file(
-        repository_ctx.path("BUILD"),
-        content = "",
-        executable = False,
-    )
-
     codechecker_bin_path = repository_ctx.which("CodeChecker")
     if not codechecker_bin_path:
         fail("ERROR! CodeChecker is not detected")
@@ -120,6 +114,20 @@ def _codechecker_local_repository_impl(repository_ctx):
     repository_ctx.file(
         repository_ctx.path("defs.bzl"),
         content = defs,
+        executable = False,
+    )
+
+    repository_ctx.symlink(codechecker_bin_path, "codechecker_bin")
+
+    repository_ctx.file(
+        repository_ctx.path("BUILD"),
+        content = """
+filegroup(
+    name = "CodeChecker",
+    srcs = ["codechecker_bin"],
+    visibility = ["//visibility:public"],
+)
+        """,
         executable = False,
     )
 

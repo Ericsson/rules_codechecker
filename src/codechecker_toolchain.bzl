@@ -14,7 +14,7 @@ CodeCheckerInfo = provider(
 def _codechecker_toolchain_impl(ctx):
     toolchain_info = platform_common.ToolchainInfo(
         codecheckerinfo = CodeCheckerInfo(
-            codechecker_bin = ctx.attr.codechecker_binary,
+            codechecker_bin = ctx.executable.codechecker_binary,
             clang_tidy_bin = ctx.attr.clang_tidy_binary,
             clangsa_bin = ctx.attr.clangsa_binary,
         ),
@@ -26,6 +26,11 @@ codechecker_toolchain = rule(
     attrs = {
         "clang_tidy_binary": attr.string(),
         "clangsa_binary": attr.string(),
-        "codechecker_binary": attr.string(),
+        "codechecker_binary": attr.label(
+            doc = "CodeChecker executable label",
+            allow_single_file = True,
+            executable = True,
+            cfg = "exec",
+        ),
     },
 )

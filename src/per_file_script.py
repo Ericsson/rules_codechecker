@@ -37,7 +37,13 @@ FILE_PATH = sys.argv[3]
 LOG_FILE = sys.argv[4]
 # List of pairs of analyzers and their plist files
 ANALYZER_PLIST_PATHS = [item.split(",") for item in sys.argv[6].split(";")]
-ANALYZER_EXECUTABLES_ENV_VAR = sys.argv[7]
+ANALYZER_EXECUTABLES_ENV_VAR = ";".join(
+    f"{name}:{os.path.realpath(path)}"
+    for name, path in [
+        pair.split(":", 1) for pair in sys.argv[7].split(";") if pair
+    ]
+)
+
 
 EMPTY_PLIST = """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -91,6 +97,7 @@ def _get_codechecker_env() -> dict[str, str]:
     # Overwrite analyzer paths
     cc_env["CC_ANALYZER_BIN"] = ANALYZER_EXECUTABLES_ENV_VAR
     return cc_env
+
 
 def _run_codechecker() -> None:
     """

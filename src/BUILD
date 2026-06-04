@@ -71,8 +71,8 @@ toolchain_type(name = "toolchain_type")
 
 codechecker_toolchain(
     name = "codechecker_local",
-    clang_tidy_binary = "clang-tidy",
-    clangsa_binary = "clang",
+    clang_tidy_binary = "@default_codechecker_tools//:clang_tidy",
+    clangsa_binary = "@default_codechecker_tools//:clang",
     codechecker_binary = "@default_codechecker_tools//:CodeChecker",
 )
 

@@ -69,7 +69,7 @@ if [[ "$VERBOSE" -ge 2 ]]; then
     micromamba info
 fi
 
-# Make previous environment modifiable to avoid bazel cache related micromamba errors
+# Make the leftover environment modifiable to allow micromamba to delete bazel cache folders during its setup
 info "Changing permissions for previous environment [$ENV_NAME]..."
 chmod -R +w $THIS_DIR/micromamba/envs/$ENV_NAME
 

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: codechecker-bazel-foss-tests
+name: rules-codechecker-tests
 
 # Triggers the workflow on push or pull request events.
 on:
@@ -27,6 +27,7 @@ on:
       - "README*"
       - "LICENSE"
 
+
 permissions: read-all
 
 concurrency:
@@ -34,9 +35,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # TODO: Parallelize the running of projects
   load_versions:
-    name: "Load bazel versions for FOSS tests"
+    name: "Load bazel versions for tests"
     runs-on: ubuntu-24.04
     outputs:
       bazel_version: ${{ steps.generate_matrix.outputs.matrix_json }}
@@ -50,8 +50,8 @@ jobs:
           JSON=$(jq -c . ./.github/bazel_version.json)
           echo "matrix_json=$JSON" >> $GITHUB_OUTPUT
 
-  foss_ubuntu_test:
-    name: "Test rules on FOSS projects Bazel: ${{ matrix.bazel_version }} (ubuntu)"
+  ubuntu_test:
+    name: "Tests: Bazel ${{ matrix.bazel_version }} (Ubuntu)"
     runs-on: ubuntu-24.04
     needs: load_versions
     strategy:
@@ -63,18 +63,39 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set bazel version to ${{ matrix.bazel_version }}
+        run: echo "${{ matrix.bazel_version }}" > .bazelversion
+        shell: bash
+
       - name: Setup environment
         uses: ./.github/platform_environment_setup/ubuntu
 
-      - name: Set Bazel version
-        run: echo ${{ matrix.bazel_version }} >> .bazelversion
+      - name: Print versions
+        run: |
+          bazel version
+          CodeChecker version
+          echo "[NOTE]: CodeChecker may find different analyzer binaries" \
+               "when invoking directly, or in bazel's sandbox environment!" \
+               "Be sure to double check during debugging."
+          CodeChecker analyzers
 
-      - name: Run Test On Opensource Projects
-        working-directory: test
-        run: python3 -m unittest foss/test_foss.py -vvv
+      - name: Run lint tests
+        run: |
+          pylint .
+          bazel test //:buildifier --test_output=all
 
-  foss_rhel_test:
-    name: "Test rules on FOSS projects Bazel ${{ matrix.bazel_version }} (RHEL)"
+      # Splitting unit and FOSS tests, since unit tests fail faster.
+      # Therefore: less wasted CI runtime.
+      - name: Run unit tests
+        run: |
+          bazel test //...
+          pytest test/unit
+
+      - name: Run Open Source tests
+        run: pytest test/foss
+
+  rhel9_test:
+    name: "Tests: Bazel ${{ matrix.bazel_version }} (RHEL9)"
     runs-on: ubuntu-24.04
     container:
       image: redhat/ubi9:latest
@@ -89,12 +110,34 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set bazel version to ${{ matrix.bazel_version }}
+        run: echo "${{ matrix.bazel_version }}" > .bazelversion
+        shell: bash
+
       - name: Setup environment
         uses: ./.github/platform_environment_setup/rhel9
 
-      - name: Set Bazel version
-        run: echo ${{ matrix.bazel_version }} >> .bazelversion
+      - name: Print versions
+        run: |
+          bazel version
+          CodeChecker version
+          echo "[NOTE]: CodeChecker may find different analyzer binaries" \
+               "when invoking directly, or in bazel's sandbox environment!" \
+               "Be sure to double check during debugging."
+          CodeChecker analyzers
 
-      - name: Run Test On Opensource Projects
-        working-directory: test
-        run: runuser -u test -- python3 -m unittest foss/test_foss.py -vvv
+      - name: Run lint tests
+        run: |
+          pylint .
+          bazel test //:buildifier --test_output=all
+
+      # Splitting unit and FOSS tests, since unit tests fail faster.
+      # Therefore: less wasted CI runtime.
+      - name: Run unit tests
+        run: |
+          bazel test //...
+          pytest test/unit
+
+      - name: Run Open Source tests
+        run: pytest test/foss
+

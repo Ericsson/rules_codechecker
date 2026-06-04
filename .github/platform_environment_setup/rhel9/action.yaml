@@ -33,7 +33,7 @@ runs:
         shell: bash
 
       - name: Install CodeChecker
-        run: pip3 install codechecker
+        run: pip3 install codechecker pylint pytest
         shell: bash
 
       - name: Setup Bazel

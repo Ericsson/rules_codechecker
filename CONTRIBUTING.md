@@ -49,13 +49,16 @@ test/test.sh                   | Functional and unit test runner
 Submitting a patch and testing
 -------
 
-Before submitting any changes please make sure all tests and checks are passed.
+Before submitting any changes please make sure all tests and checks have passed inside the micromamba environment.
 
+To enable the Micromamba testing environment run `source .ci/micromamba/init.sh`.
+For more information see `.ci/micromamba/README.md`.
 You must run the following tests locally:
 * `pylint .`
 * `bazel test //...`
 * `pytest test`
 
+To run all these test inside the micromamba environment automatically, run `.ci/micromamba/run_tests.sh`.
 
 On how to run or add a new test, please see [test/README.md](test/README.md).
 

@@ -20,6 +20,7 @@ import os
 import unittest
 from typing import final
 from common.base import TestBase
+from common.codechecker_server import CodeCheckerServer
 
 
 class TestTemplate(TestBase):
@@ -39,14 +40,42 @@ class TestTemplate(TestBase):
     def setUpClass(cls):
         """Start CodeChecker server"""
         super().setUpClass()
-        cls.start_codechecker_server()
+        cls.codechecker_server = CodeCheckerServer()
 
     @final
     @classmethod
     def tearDownClass(cls):
         """Stop CodeChecker server"""
-        cls.stop_codechecker_server()
+        del cls.codechecker_server
         super().tearDownClass()
+
+    def check_store(self, path: str, name: str):
+        """
+        Tries to store the results on the codechecker server,
+        asserts for successful storing.
+
+        Args:
+            path - Path of the result files
+            name - name of the project to be saved under
+        """
+        port = getattr(self.codechecker_server, 'port', 8001)
+        ret, stdout, stderr = self.run_command(
+            f"CodeChecker store {path} -n {name}"
+            f" --url=http://localhost:{port}/Default"
+        )
+        self.assertEqual(ret, 0, stdout + "\n" + stderr)
+
+    def check_parse(self, path: str, will_find_bug: bool = True):
+        """
+        Checks if the parse command finishes correctly on results.
+
+        Args:
+            path - Path of the result files
+            will_find_bug - Will there be a bug in the result files,
+            changes on what we assert
+        """
+        ret, _, _ = self.run_command(f"CodeChecker parse {path}")
+        self.assertEqual(ret, 2 if will_find_bug else 0)
 
     def test_parse_html(self):
         """Test: Parse results into html"""

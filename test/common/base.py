@@ -20,48 +20,11 @@ import logging
 import os
 import re
 import shlex
-import shutil
-import signal
-import socket
-import urllib.request
-import urllib.error
 import subprocess
-import tempfile
-import time
 import unittest
 import sys
 from typing import Optional
 
-
-def _get_free_port():
-    """
-    Return a port number that is free
-    """
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(("", 0))
-        return s.getsockname()[1]
-
-def wait_codechecker_server(
-    product: str = "Default",
-    host: str = "localhost",
-    port: int = 8001,
-    timeout: int = 10000,
-    attempt_every: int = 100,
-) -> bool:
-    """
-    Wait until the product is available in the CodeChecker server
-    """
-    start = time.monotonic()
-    url = f"http://{host}:{port}/{product}"
-    while time.monotonic() - start < timeout:
-        try:
-            with urllib.request.urlopen(url, timeout=timeout / 1000) as resp:
-                if resp.getcode() == 200:
-                    return True
-        except (urllib.error.URLError, urllib.error.HTTPError):
-            pass
-        time.sleep(attempt_every / 1000)
-    return False
 
 
 class TestBase(unittest.TestCase):
@@ -110,10 +73,6 @@ class TestBase(unittest.TestCase):
         """Restore environment"""
         os.chdir(cls.save_cwd)
         os.environ = cls.save_env
-        try:
-            assert cls.server_process.poll() is not None, "Server not stopped"
-        except AttributeError:
-            pass  # if server_process is not set, everything is fine
 
     def setUp(self):
         """Before every test"""
@@ -174,67 +133,3 @@ class TestBase(unittest.TestCase):
         Returns a boolean, whether the specified file contains the regex or not.
         """
         return bool(cls.grep_file(file_path, regex))
-
-    @classmethod
-    def start_codechecker_server(cls):
-        """
-        Starts a CodeChecker server instance on port 8001
-        This server must be shutdown with stop_codechecker_sever
-        """
-        cls.temp_workspace = tempfile.mkdtemp()
-        cls.port: int = _get_free_port()
-        server_command = [
-            "CodeChecker",
-            "server",
-            "--workspace",
-            cls.temp_workspace,
-            "--port",
-            str(cls.port),
-        ]
-        # pylint: disable=consider-using-with
-        cls.devnull = open(os.devnull, "w", encoding="utf-8")
-        # pylint: disable=consider-using-with
-        cls.server_process: subprocess.Popen = subprocess.Popen(
-            server_command, stdout=cls.devnull
-        )
-        assert wait_codechecker_server(
-            port=cls.port
-        ), "Failed to start CodeChecker server"
-
-    @classmethod
-    def stop_codechecker_server(cls):
-        """
-        Stops the CodeChecker server started by start_codechecker_server
-        """
-        os.kill(cls.server_process.pid, signal.SIGTERM)
-        cls.server_process.wait()
-        cls.devnull.close()
-        shutil.rmtree(cls.temp_workspace)
-
-    def check_store(self, path: str, name: str):
-        """
-        Tries to store the results on the codechecker server,
-        asserts for successful storing.
-
-        Args:
-            path - Path of the result files
-            name - name of the project to be saved under
-        """
-        port = getattr(self, 'port', 8001)
-        ret, stdout, stderr = self.run_command(
-            f"CodeChecker store {path} -n {name}"
-            f" --url=http://localhost:{port}/Default"
-        )
-        self.assertEqual(ret, 0, stdout + "\n" + stderr)
-
-    def check_parse(self, path: str, will_find_bug: bool = True):
-        """
-        Checks if the parse command finishes correctly on results.
-
-        Args:
-            path - Path of the result files
-            will_find_bug - Will there be a bug in the result files,
-            changes on what we assert
-        """
-        ret, _, _ = self.run_command(f"CodeChecker parse {path}")
-        self.assertEqual(ret, 2 if will_find_bug else 0)

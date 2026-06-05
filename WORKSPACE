@@ -37,10 +37,10 @@ http_archive(
         "//.ci/buildifier:prune.patch",
         "//.ci/buildifier:template.patch",
     ],
-    sha256 = "8ada9d88e51ebf5a1fdff37d75ed41d51f5e677cdbeafb0a22dda54747d6e07e",
-    strip_prefix = "buildifier-prebuilt-6.4.0",
+    sha256 = "7f85b688a4b558e2d9099340cfb510ba7179f829454fba842370bccffb67d6cc",
+    strip_prefix = "buildifier-prebuilt-7.3.1",
     urls = [
-        "http://github.com/keith/buildifier-prebuilt/archive/6.4.0.tar.gz",
+        "http://github.com/keith/buildifier-prebuilt/archive/7.3.1.tar.gz",
     ],
 )
 

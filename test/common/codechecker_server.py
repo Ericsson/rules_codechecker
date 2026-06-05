@@ -49,7 +49,7 @@ def wait_codechecker_server(
     """
     start = time.monotonic()
     url = f"http://{host}:{port}/{product}"
-    while time.monotonic() - start < timeout:
+    while time.monotonic() - start < timeout / 1000:
         try:
             with urllib.request.urlopen(url, timeout=timeout / 1000) as resp:
                 if resp.getcode() == 200:

@@ -68,7 +68,17 @@ jobs:
         shell: bash
 
       - name: Setup environment
-        uses: ./.github/platform_environment_setup/ubuntu
+        uses: mamba-org/setup-micromamba@v3
+        with:
+          environment-name: ci
+          environment-file: .ci/micromamba/ci.yaml
+          create-args: >-
+            bazel=${{ matrix.bazel_version }}
+          cache-environment: true
+          init-shell: bash
+          condarc: |
+            channels:
+              - conda-forge
 
       - name: Print versions
         run: |
@@ -78,11 +88,13 @@ jobs:
                "when invoking directly, or in bazel's sandbox environment!" \
                "Be sure to double check during debugging."
           CodeChecker analyzers
+        shell: bash -el {0}
 
       - name: Run lint tests
         run: |
           pylint .
           bazel test //:buildifier --test_output=all
+        shell: bash -el {0}
 
       # Splitting unit and FOSS tests, since unit tests fail faster.
       # Therefore: less wasted CI runtime.
@@ -90,9 +102,11 @@ jobs:
         run: |
           bazel test //...
           pytest test/unit
+        shell: bash -el {0}
 
       - name: Run Open Source tests
         run: pytest test/foss
+        shell: bash -el {0}
 
   rhel9_test:
     name: "Tests: Bazel ${{ matrix.bazel_version }} (RHEL9)"
@@ -115,29 +129,51 @@ jobs:
         shell: bash
 
       - name: Setup environment
-        uses: ./.github/platform_environment_setup/rhel9
+        uses: mamba-org/setup-micromamba@v3
+        with:
+          environment-name: ci
+          environment-file: .ci/micromamba/ci.yaml
+          create-args: >-
+            bazel=${{ matrix.bazel_version }}
+          cache-environment: true
+          init-shell: bash
+          condarc: |
+            channels:
+              - conda-forge
+
+      - name: Create a non-root user
+        run: |
+          useradd -m test
+          chown -R test:test $GITHUB_WORKSPACE
+          chown -R test:test $HOME
+          chown -R test:test $MAMBA_ROOT_PREFIX
+        shell: bash -el {0}
 
       - name: Print versions
         run: |
-          bazel version
+          runuser -u test -- bazel version
           CodeChecker version
           echo "[NOTE]: CodeChecker may find different analyzer binaries" \
                "when invoking directly, or in bazel's sandbox environment!" \
                "Be sure to double check during debugging."
           CodeChecker analyzers
+        shell: bash -el {0}
 
       - name: Run lint tests
         run: |
           pylint .
-          bazel test //:buildifier --test_output=all
+          runuser -u test -- bazel test //:buildifier --test_output=all
+        shell: bash -el {0}
 
       # Splitting unit and FOSS tests, since unit tests fail faster.
       # Therefore: less wasted CI runtime.
       - name: Run unit tests
         run: |
-          bazel test //...
-          pytest test/unit
+          runuser -u test -- bazel test //...
+          runuser -u test -- pytest test/unit
+        shell: bash -el {0}
 
       - name: Run Open Source tests
-        run: pytest test/foss
+        run: runuser -u test -- pytest test/foss
+        shell: bash -el {0}
 

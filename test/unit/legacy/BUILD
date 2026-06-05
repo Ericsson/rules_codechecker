@@ -46,6 +46,7 @@ cc_library(
 cc_library(
     name = "test_lib",
     srcs = ["src/lib.cc"],
+    copts = ["-Wno-unused-variable"],
 )
 
 # Test defect in CTU mode

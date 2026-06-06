@@ -50,7 +50,8 @@ jobs:
         run: |
           docker build \
             -t codechecker-bazel-ubuntu \
-            .ci/docker/ubuntu/
+            -f .ci/docker/ubuntu/Dockerfile \
+            .ci/docker/
 
       - name: Run tests in Ubuntu container
         run: |
@@ -76,7 +77,8 @@ jobs:
         run: |
           docker build \
             -t codechecker-bazel-rhel9 \
-            .ci/docker/rhel9/
+            -f .ci/docker/rhel9/Dockerfile \
+            .ci/docker
 
       - name: Run tests in RHEL9 container
         run: |

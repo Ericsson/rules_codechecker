@@ -46,12 +46,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
       - name: Build Ubuntu image
-        run: |
-          docker build \
-            -t rules-codechecker-ubuntu \
-            -f .ci/docker/ubuntu/Dockerfile \
-            .ci/docker/
+        uses: docker/build-push-action@v7
+        with:
+          context: .ci/docker/
+          file: .ci/docker/ubuntu/Dockerfile
+          tags: rules-codechecker-ubuntu
+          load: true
+          cache-from: type=gha,scope=ubuntu
+          cache-to: type=gha,mode=max,scope=ubuntu
 
       - name: Run tests in Ubuntu container
         run: |
@@ -73,12 +79,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
       - name: Build RHEL9 image
-        run: |
-          docker build \
-            -t rules-codechecker-rhel9 \
-            -f .ci/docker/rhel9/Dockerfile \
-            .ci/docker
+        uses: docker/build-push-action@v7
+        with:
+          context: .ci/docker/
+          file: .ci/docker/rhel9/Dockerfile
+          tags: rules-codechecker-rhel9
+          load: true
+          cache-from: type=gha,scope=rhel9
+          cache-to: type=gha,mode=max,scope=rhel9
 
       - name: Run tests in RHEL9 container
         run: |

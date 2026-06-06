@@ -21,7 +21,11 @@ if [ ! -f /workspace/WORKSPACE ] && [ ! -f /workspace/WORKSPACE.bazel ]; then
     exit 1
 fi
 
-cd /workspace
+# Copy every file into the sandbox to avoid permission errors
+mkdir /tmp/rules_codechecker_test
+# .git and files in .gitignore are not necessary for docker testing
+rsync -a --exclude-from=/workspace/.gitignore --exclude='.git' /workspace/ /tmp/rules_codechecker_test/
+cd /tmp/rules_codechecker_test
 
 # Pass BAZEL_VERSION env var to pin a specific version at runtime, e.g.:
 #   docker run --rm -e BAZEL_VERSION=7.7.0 -v "$(pwd):/workspace" ...

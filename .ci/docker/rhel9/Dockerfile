@@ -29,6 +29,7 @@ RUN dnf update -y \
     gcc \
     g++ \
     scl-utils \
+    rsync \
     && dnf clean all
 
 ARG BAZELISK_VERSION=1.26.0

@@ -34,6 +34,7 @@ RUN apt-get update --quiet \
         gcc \
         g++ \
         ca-certificates \
+        rsync \
     && rm -rf /var/lib/apt/lists/*
 
 # The versioned binary (e.g. clang-extdef-mapping-18) is installed by

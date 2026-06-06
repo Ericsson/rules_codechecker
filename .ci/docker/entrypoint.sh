@@ -24,7 +24,11 @@ fi
 # Copy every file into the sandbox to avoid permission errors
 mkdir /tmp/rules_codechecker_test
 # .git and files in .gitignore are not necessary for docker testing
-rsync -a --exclude-from=/workspace/.gitignore --exclude='.git' /workspace/ /tmp/rules_codechecker_test/
+rsync -a \
+    --filter='+ /.bazelversion' \
+    --exclude-from=/workspace/.gitignore \
+    --exclude='.git' \
+    /workspace/ /tmp/rules_codechecker_test/
 cd /tmp/rules_codechecker_test
 
 # Pass BAZEL_VERSION env var to pin a specific version at runtime, e.g.:

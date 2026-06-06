@@ -8,8 +8,8 @@ The `entrypoint.sh` script stores the commands for running tests, and wil be exe
 
 ```bash
 # Build
-docker build -t codechecker-bazel-ubuntu -f .ci/docker/ubuntu/Dockerfile .ci/docker
-docker build -t codechecker-bazel-rhel9  -f .ci/docker/rhel9/Dockerfile .ci/docker
+docker build -t rules-codechecker-ubuntu -f .ci/docker/ubuntu/Dockerfile .ci/docker
+docker build -t rules-codechecker-rhel9  -f .ci/docker/rhel9/Dockerfile .ci/docker
 ```
 If you encounter network related issues try passing the flag: `--network=host`.
 
@@ -18,9 +18,13 @@ If you encounter network related issues try passing the flag: `--network=host`.
 ```bash
 docker run --rm \
     -v "$(pwd):/workspace" \
-    codechecker-bazel-ubuntu
+    rules-codechecker-ubuntu
 
 docker run --rm \
     -v "$(pwd):/workspace" \
-    codechecker-bazel-rhel9
+    rules-codechecker-rhel9
+```
+
+### To remove artifacts created by docker run:
+
 ```

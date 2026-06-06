@@ -13,8 +13,8 @@
 # limitations under the License.
 
 # Usage:
-#   docker build -t codechecker-bazel-rhel9 .ci/docker/rhel9/
-#   docker run --rm -v "$(pwd):/workspace" codechecker-bazel-rhel9
+#   docker build -t rules-codechecker-rhel9 .ci/docker/rhel9/
+#   docker run --rm -v "$(pwd):/workspace" rules-codechecker-rhel9
 
 FROM redhat/ubi9:latest
 

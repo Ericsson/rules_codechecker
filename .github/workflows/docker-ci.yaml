@@ -49,7 +49,7 @@ jobs:
       - name: Build Ubuntu image
         run: |
           docker build \
-            -t codechecker-bazel-ubuntu \
+            -t rules-codechecker-ubuntu \
             -f .ci/docker/ubuntu/Dockerfile \
             .ci/docker/
 
@@ -58,7 +58,7 @@ jobs:
           docker run --rm \
             ${BAZEL_VERSION:+-e BAZEL_VERSION="${BAZEL_VERSION}"} \
             -v "${{ github.workspace }}:/workspace" \
-            codechecker-bazel-ubuntu
+            rules-codechecker-ubuntu
         env:
           BAZEL_VERSION: ${{ inputs.bazel_version }}
 
@@ -76,7 +76,7 @@ jobs:
       - name: Build RHEL9 image
         run: |
           docker build \
-            -t codechecker-bazel-rhel9 \
+            -t rules-codechecker-rhel9 \
             -f .ci/docker/rhel9/Dockerfile \
             .ci/docker
 
@@ -85,6 +85,6 @@ jobs:
           docker run --rm \
             ${BAZEL_VERSION:+-e BAZEL_VERSION="${BAZEL_VERSION}"} \
             -v "${{ github.workspace }}:/workspace" \
-            codechecker-bazel-rhel9
+            rules-codechecker-rhel9
         env:
           BAZEL_VERSION: ${{ inputs.bazel_version }}

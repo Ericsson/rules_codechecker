@@ -13,8 +13,8 @@
 # limitations under the License.
 
 # Usage:
-#   docker build -t codechecker-bazel-ubuntu .ci/docker/ubuntu/
-#   docker run --rm -v "$(pwd):/workspace" codechecker-bazel-ubuntu
+#   docker build -t rules-codechecker-ubuntu .ci/docker/ubuntu/
+#   docker run --rm -v "$(pwd):/workspace" rules-codechecker-ubuntu
 
 FROM ubuntu:24.04
 

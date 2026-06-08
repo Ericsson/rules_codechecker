@@ -82,6 +82,7 @@ def create_test_method(directory_name: str) -> FunctionType:
                 self.skipTest(
                     "This project is not compatible with this bazel version"
                 )
+            self.assertTrue(os.path.exists(os.path.join(test_dir,".git")))
             module_file = Path(os.path.join(test_dir, "MODULE.bazel"))
             if os.path.exists(module_file):
                 content = module_file.read_text("utf-8").replace(

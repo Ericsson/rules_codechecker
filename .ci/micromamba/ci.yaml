@@ -12,5 +12,6 @@ dependencies:
   - bazel
   - gcc
   - gxx
+  - git
   - pip:
     - codechecker==6.27.3

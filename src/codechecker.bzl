@@ -135,12 +135,17 @@ def _codechecker_impl(ctx):
         # arguments = [ctx.outputs.codechecker_script.path],
         mnemonic = "CodeChecker",
         progress_message = "CodeChecker %s" % str(ctx.label),
-        # While this is not an ideal solution
-        # until we have  better one (in the form of a toolchain)
-        # this is necessary to find binaries for analyzers
-        # installed in any place other than /bin. e.g.: micromamba
-        # /bin is an exception due to it being forcefully added
-        # in codechecker_script.py
+        # FIXME: Ideally, this action would run
+        # isolated of the invoking shell environment,
+        # using only the binaries bazel itself acquired.
+        # This would be best done by converting all tools
+        # (CodeChecker, clang, clang-tidy) into toolchains.
+        # Until then, we still need to allow
+        # the supply of these tools from PATH.
+        # For instance, micromamba (which we for testing)
+        # does not install to system folders like /bin,
+        # but uses PATH, making it impossible to configure binary version
+        # through it while use_default_shell_env is False.
         use_default_shell_env = True,
     )
 

@@ -33,9 +33,13 @@ cd /tmp/rules_codechecker_test
 
 # Pass BAZEL_VERSION env var to pin a specific version at runtime, e.g.:
 #   docker run --rm -e BAZEL_VERSION=7.7.0 -v "$(pwd):/workspace" ...
+# defaults to 7.7.0
 if [ -n "${BAZEL_VERSION:-}" ]; then
     echo "${BAZEL_VERSION}" > .bazelversion
     echo "[INFO] Pinned Bazel version to ${BAZEL_VERSION}"
+elif [ ! -f ".bazelversion" ]; then
+    echo "7.7.0" > .bazelversion
+    echo "[INFO] No .bazelversion found, defaulting to 7.7.0"
 fi
 
 echo "========================================"

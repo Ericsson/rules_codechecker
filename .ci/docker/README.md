@@ -17,6 +17,7 @@ If you encounter network related issues try passing the flag: `--network=host`.
 
 ### Note:
 To set the bazel version either create a `.bazelversion` file in the root of the project, or define the version with the `-e BAZEL_VERSION=x.x.x` parameter.
+Bazel version defaults to `7.7.0`.
 
 ```bash
 docker run --rm \

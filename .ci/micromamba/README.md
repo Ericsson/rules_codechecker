@@ -40,6 +40,8 @@ For verbose output, use the `-v` or `-vv` flags:
 source .ci/micromamba/init.sh -v
 ```
 
+Alternatively you can run the `run_test.sh` script to handle both the environment and running of the tests.
+
 ### After installation
 
 Once the environment is activated, all tools (Python, Bazel, CodeChecker, clang, etc.) 

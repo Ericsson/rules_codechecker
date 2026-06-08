@@ -38,6 +38,8 @@ git -C "$1" checkout yaml-cpp-0.7.0
 bazelversion="../../../.bazelversion"
 [ -f $bazelversion ] && cp $bazelversion "$1"
 
+patch $1/BUILD.bazel -p1 < yaml-cpp-070.patch
+
 # Add codechecker to the project
 cat <<EOF >> "$1/BUILD.bazel"
 #-------------------------------------------------------

@@ -1,0 +1,9 @@
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -10,5 +10,6 @@
+     visibility = ["//visibility:public"],
+     includes = ["include"],
+     hdrs = glob(["include/**/*.h"]),
++    copts = ["-include cstdint"],
+     srcs = glob(["src/**/*.cpp", "src/**/*.h"]),
+ )

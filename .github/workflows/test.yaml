@@ -101,11 +101,11 @@ jobs:
       - name: Run unit tests
         run: |
           bazel test //...
-          pytest test/unit
+          pytest test/unit ${{ runner.debug == '1' && '--log-cli-level=DEBUG' || '' }}
         shell: bash -el {0}
 
       - name: Run Open Source tests
-        run: pytest test/foss
+        run: pytest test/foss ${{ runner.debug == '1' && '--log-cli-level=DEBUG' || '' }}
         shell: bash -el {0}
 
   rhel9_test:
@@ -170,10 +170,10 @@ jobs:
       - name: Run unit tests
         run: |
           runuser -u test -- bazel test //...
-          runuser -u test -- pytest test/unit
+          runuser -u test -- pytest test/unit ${{ runner.debug == '1' && '--log-cli-level=DEBUG' || '' }}
         shell: bash -el {0}
 
       - name: Run Open Source tests
-        run: runuser -u test -- pytest test/foss
+        run: runuser -u test -- pytest test/foss ${{ runner.debug == '1' && '--log-cli-level=DEBUG' || '' }}
         shell: bash -el {0}
 

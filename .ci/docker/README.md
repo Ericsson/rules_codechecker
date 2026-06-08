@@ -15,6 +15,9 @@ If you encounter network related issues try passing the flag: `--network=host`.
 
 # Run tests against the project (mount project root to /workspace)
 
+### Note:
+To set the bazel version either create a `.bazelversion` file in the root of the project, or define the version with the `-e BAZEL_VERSION=x.x.x` parameter.
+
 ```bash
 docker run --rm \
     -v "$(pwd):/workspace" \
@@ -24,7 +27,26 @@ docker run --rm \
     -v "$(pwd):/workspace" \
     rules-codechecker-rhel9
 ```
+If you encounter network related issues try passing the flag: `--network=host`, as shown below.
+
+```
+docker run --rm \
+    --network=host \
+    -v "$(pwd):/workspace" \
+    rules-codechecker-ubuntu
+```
+
+Example for setting the bazel version using docker run parameters.
+```
+docker run --rm \
+    -e BAZEL_VERSION=7.7.0 \
+    -v "$(pwd):/workspace" \
+    rules-codechecker-ubuntu
+```
 
 ### To remove artifacts created by docker run:
 
+```
+docker -rmi rules-codechecker-ubuntu
+docker -rmi rules-codechecker-rhel9
 ```

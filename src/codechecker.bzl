@@ -142,7 +142,7 @@ def _codechecker_impl(ctx):
         # (CodeChecker, clang, clang-tidy) into toolchains.
         # Until then, we still need to allow
         # the supply of these tools from PATH.
-        # For instance, micromamba (which we for testing)
+        # For instance, micromamba (which we use for testing)
         # does not install to system folders like /bin,
         # but uses PATH, making it impossible to configure binary version
         # through it while use_default_shell_env is False.

@@ -135,7 +135,13 @@ def _codechecker_impl(ctx):
         # arguments = [ctx.outputs.codechecker_script.path],
         mnemonic = "CodeChecker",
         progress_message = "CodeChecker %s" % str(ctx.label),
-        # use_default_shell_env = True,
+        # While this is not an ideal solution
+        # until we have  better one (in the form of a toolchain)
+        # this is necessary to find binaries for analyzers
+        # installed in any place other than /bin. e.g.: micromamba
+        # /bin is an exception due to it being forcefully added
+        # in codechecker_script.py
+        use_default_shell_env = True,
     )
 
     # List all files required at build and run (test) time

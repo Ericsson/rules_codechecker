@@ -142,13 +142,16 @@ class FossTest(unittest.TestCase):
         )
 
         if self.bzlmod:
-            (self.project_dir / "MODULE.bazel").write_text(
-                MODULE_TEMPLATE.format(rules_path=self.rules_path)
-            )
+            with open(
+                self.project_dir / "MODULE.bazel", "a", encoding="utf-8"
+            ) as f:
+                f.write(MODULE_TEMPLATE.format(rules_path=self.rules_path))
         else:
-            (self.project_dir / "WORKSPACE").write_text(
-                WORKSPACE_TEMPLATE.format(rules_path=self.rules_path)
-            )
+            with open(
+                self.project_dir / "WORKSPACE", "a", encoding="utf-8"
+            ) as f:
+                f.write(WORKSPACE_TEMPLATE.format(rules_path=self.rules_path))
+
         # We do need the workspace file in either case for bazel 7
         (self.project_dir / "WORKSPACE").touch()
 
@@ -175,11 +178,11 @@ class FossTest(unittest.TestCase):
 
     def _bazel_bin(self):
         cmd = [
-                "bazel",
-                f"--output_base={self.work_dir / '.bazel_output'}",
-                "info",
-                "bazel-bin",
-            ]
+            "bazel",
+            f"--output_base={self.work_dir / '.bazel_output'}",
+            "info",
+            "bazel-bin",
+        ]
         # The bazel bin directory is different for the bzlmod system
         if self.bazel_version <= 6 and self.bzlmod:
             cmd.append("--enable_bzlmod")

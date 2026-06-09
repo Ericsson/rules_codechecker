@@ -120,7 +120,7 @@ class FossTest(unittest.TestCase):
     def _download_and_extract(self):
         archive = self.work_dir / "archive.tar.gz"
         subprocess.run(
-            ["wget", "-q", "-O", str(archive), self.url],
+            ["wget", "-q", "-O", str(archive), str(self.url)],
             check=True,
         )
         with tarfile.open(archive) as tar:

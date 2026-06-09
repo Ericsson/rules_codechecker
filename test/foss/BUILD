@@ -59,12 +59,13 @@ foss_test(
         ":compile_commands",
         ":codechecker_per_file",
     ],
+    bzlmod = False,
 )
 
 foss_test(
     name = "yaml-cpp_bzlmod",
-    target = ":yaml_cpp",
-    url = "https://github.com/jbeder/yaml-cpp/archive/refs/tags/0.8.0.tar.gz",
+    target = ":yaml-cpp",
+    url = "https://github.com/jbeder/yaml-cpp/archive/refs/tags/yaml-cpp-0.9.0.tar.gz",
     tests = [
         ":codechecker_test",
         ":compile_commands",

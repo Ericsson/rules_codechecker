@@ -70,7 +70,10 @@ def foss_test(
             "--tests"
         ] + tests,
         local = True,
-        tags = ["foss", "external"] + tags,
+        # We want each FOSS test to be exclusive since sharing resources
+        # on the same system while analyzing a project can extremely
+        # impact performance of each analysis causing jobs to time out.
+        tags = ["foss", "external", "exclusive"] + tags,
         size = size,
         **kwargs
     )

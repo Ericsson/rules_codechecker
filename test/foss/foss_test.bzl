@@ -28,6 +28,7 @@ Example:
         tests = [":codechecker_test", ":compile_commands"],
     )
 """
+
 load("@default_codechecker_tools//:defs.bzl", "BAZEL_VERSION")
 
 def foss_test(
@@ -54,20 +55,23 @@ def foss_test(
     if target == None:
         target = ":" + name
 
-    if bzlmod == False and int(BAZEL_VERSION.split('.')[0]) >= 8:
+    if bzlmod == False and int(BAZEL_VERSION.split(".")[0]) >= 8:
         return
 
+    # Since we use a custom python toolchain instead of rules_python in WORKSPACE
+    # we cannot include py_test
+    # buildifier: disable=native-py
     native.py_test(
         name = name,
         srcs = ["foss_test_runner.py"],
         main = "foss_test_runner.py",
         args = [
             "-vvv",
-            "--bazel_version=" + BAZEL_VERSION.split('.')[0],
+            "--bazel_version=" + BAZEL_VERSION.split(".")[0],
             "--bzlmod=" + str(bzlmod),
             "--url=" + url,
             "--target=" + target,
-            "--tests"
+            "--tests",
         ] + tests,
         local = True,
         # We want each FOSS test to be exclusive since sharing resources

@@ -89,7 +89,7 @@ class FossTest(unittest.TestCase):
     bazel_version = None
     bzlmod = None
     target = None
-    tests = None
+    tests = []
 
     def setUp(self):
         self.work_dir = Path(tempfile.mkdtemp())
@@ -110,10 +110,12 @@ class FossTest(unittest.TestCase):
                     "shutdown",
                 ],
                 capture_output=True,
+                check=False,
             )
             subprocess.run(
                 ["chmod", "-R", "u+w", str(self.work_dir)],
                 capture_output=True,
+                check=False,
             )
             shutil.rmtree(self.work_dir, ignore_errors=True)
 
@@ -165,6 +167,7 @@ class FossTest(unittest.TestCase):
             cwd=self.project_dir,
             capture_output=True,
             text=True,
+            check=False,
         )
         self.assertEqual(
             result.returncode, 0, f"bazel build failed:\n{result.stderr}"
@@ -185,6 +188,7 @@ class FossTest(unittest.TestCase):
             cwd=self.project_dir,
             capture_output=True,
             text=True,
+            check=True,
         )
         return Path(result.stdout.strip())
 

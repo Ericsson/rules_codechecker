@@ -29,48 +29,47 @@ load(":foss_test.bzl", "foss_test")
 
 foss_test(
     name = "zlib",
-    url = "https://github.com/madler/zlib/releases/download/v1.3.2/zlib-1.3.2.tar.gz",
+    bzlmod = False,
     tests = [
+        ":codechecker_per_file",
         ":codechecker_test",
         ":compile_commands",
-        ":codechecker_per_file",
     ],
-    bzlmod = False,
+    url = "https://github.com/madler/zlib/releases/download/v1.3.2/zlib-1.3.2.tar.gz",
 )
 
 foss_test(
     # FIXME: compile commands is not in expected path
     name = "zlib_bzlmod",
+    bzlmod = True,
     target = ":z",
-    url = "https://github.com/madler/zlib/releases/download/v1.3.2/zlib-1.3.2.tar.gz",
     tests = [
+        ":codechecker_per_file",
         ":codechecker_test",
         ":compile_commands",
-        ":codechecker_per_file",
     ],
-    bzlmod = True,
+    url = "https://github.com/madler/zlib/releases/download/v1.3.2/zlib-1.3.2.tar.gz",
 )
 
 foss_test(
     name = "yaml-cpp",
-    url = "https://github.com/jbeder/yaml-cpp/archive/refs/tags/0.8.0.tar.gz",
+    bzlmod = False,
     tests = [
+        ":codechecker_per_file",
         ":codechecker_test",
         ":compile_commands",
-        ":codechecker_per_file",
     ],
-    bzlmod = False,
+    url = "https://github.com/jbeder/yaml-cpp/archive/refs/tags/0.8.0.tar.gz",
 )
 
 foss_test(
     name = "yaml-cpp_bzlmod",
+    bzlmod = True,
     target = ":yaml-cpp",
-    url = "https://github.com/jbeder/yaml-cpp/archive/refs/tags/yaml-cpp-0.9.0.tar.gz",
     tests = [
+        ":codechecker_per_file",
         ":codechecker_test",
         ":compile_commands",
-        ":codechecker_per_file",
     ],
-    bzlmod = True,
+    url = "https://github.com/jbeder/yaml-cpp/archive/refs/tags/yaml-cpp-0.9.0.tar.gz",
 )
-

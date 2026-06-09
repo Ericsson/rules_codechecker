@@ -61,7 +61,7 @@ jobs:
 
       - name: Run Test On Opensource Projects
         # This also runs unittest that are run with bazel test //...
-        run: bazel test //...
+        run: bazel test //... --test_output=all
 
   foss_rhel_test:
     name: "Test rules on FOSS projects Bazel ${{ matrix.bazel_version }} (RHEL)"
@@ -87,4 +87,4 @@ jobs:
 
       - name: Run Test On Opensource Projects
         # This also runs unittests that are run with bazel test //...
-        run: bazel test //...
+        run: bazel test //... --test_output=all

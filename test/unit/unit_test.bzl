@@ -36,7 +36,7 @@ def unit_test(
         negative_patterns = None,
         regex_patterns = None,
         negative_regex_patterns = None,
-        any = False,
+        require_patterns_in_each_file = True,
         tags = [],
         size = "medium",
         **kwargs):
@@ -49,7 +49,7 @@ def unit_test(
         negative_patterns: Patterns that shouldn't be inside the files.
         regex_patterns: Regex patterns that should be inside the files.
         negative_regex_patterns: Regex patterns that shouldn't be inside the files.
-        any: If enabled its enough if every pattern is found in at least one file.
+        require_patterns_in_each_file: If False its enough if every pattern is found in at least one file.
         tags: Additional test tags.
         size: Test size (default: medium).
         **kwargs: Forwarded to py_test.
@@ -78,9 +78,12 @@ def unit_test(
     if negative_regex_patterns:
         python_args.append("--negative_regex_patterns")
         python_args.extend(negative_regex_patterns)
-    if any:
+    if not require_patterns_in_each_file:
         python_args.append("--any")
 
+    # Since we use a custom python toolchain instead of rules_python in WORKSPACE
+    # we cannot include py_test
+    # buildifier: disable=native-pys
     native.py_test(
         name = name,
         srcs = ["//test/unit:grep_check.py"],

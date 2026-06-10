@@ -28,12 +28,6 @@ load(
     "unit_test",
 )
 
-# codechecker rules
-load(
-    "//src:codechecker.bzl",
-    "codechecker_test",
-)
-
 # Test for strip_include_prefix
 cc_library(
     name = "test_inc",
@@ -107,10 +101,10 @@ unit_test(
 
 unit_test(
     name = "codechecker_plist_path_resolved_test",
-    any = True,
     data = [":codechecker_virtual_include"],
     files = "test/unit/virtual_include/codechecker_virtual_include/**/*.plist",
     # FIXME: In the postprocessed plists, all _virtual_include paths
     # should've been removed. Update to negative_patterns
     patterns = r"/_virtual_includes/",
+    require_patterns_in_each_file = False,
 )

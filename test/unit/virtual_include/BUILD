@@ -108,3 +108,18 @@ unit_test(
     patterns = r"/_virtual_includes/",
     require_patterns_in_each_file = False,
 )
+
+unit_test(
+    name = "per_file_impl_deps_include_test",
+    data = [":per_file_impl_deps_include"],
+    files = "test/unit/virtual_include/per_file_impl_deps_include/**/*.plist",
+    patterns = "Division by zero",
+    require_patterns_in_each_file = False,
+)
+
+unit_test(
+    name = "codechecker_impl_deps_include_test",
+    data = [":codechecker_impl_deps_include"],
+    files = "test/unit/virtual_include/codechecker_impl_deps_include/codechecker.log",
+    patterns = "core.DivideZero",
+)

@@ -84,7 +84,7 @@ def unit_test(
     native.py_test(
         name = name,
         srcs = ["//test/unit:grep_check.py"],
-        main = "grep_check.py",
+        main = "//test/unit:grep_check.py",
         args = python_args,
         local = True,
         tags = ["unit"] + tags,

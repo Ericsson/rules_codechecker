@@ -343,7 +343,7 @@ def codechecker_test(
             options = analyze,
             skip = skip,
             config = config,
-            tags = tags,
+            tags = codechecker_tags,
             **kwargs
         )
     else:

@@ -224,6 +224,10 @@ bazel test ://your_codechecker_rule_name
 bazel test ...
 ```
 
+> [!WARNING]
+> The option is still in prototype status and is subject to changes or removal without notice. See [#31](https://github.com/Ericsson/rules_codechecker/issues/31).
+> You are free to experiment and report issues however!
+
 You can find the analysis results in the `bazel-bin/` folder, on which you
 can run [`CodeChecker store`](https://github.com/Ericsson/codechecker/blob/master/docs/web/user_guide.md#store)
 or [`CodeChecker parse`](https://github.com/Ericsson/codechecker/blob/master/docs/analyzer/user_guide.md#parse).

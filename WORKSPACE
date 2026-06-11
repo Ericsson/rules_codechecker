@@ -16,7 +16,7 @@ workspace(name = "rules_codechecker")
 
 load(
     "@rules_codechecker//src:tools.bzl",
-    "register_default_codechecker",
+    "register_default_codechecker_tools",
     "register_default_python_toolchain",
 )
 
@@ -24,7 +24,7 @@ register_default_python_toolchain()
 
 register_toolchains("@default_python_tools//:python_toolchain")
 
-register_default_codechecker()
+register_default_codechecker_tools()
 
 # Dev dependencies
 

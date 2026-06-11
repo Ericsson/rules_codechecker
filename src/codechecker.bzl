@@ -18,6 +18,8 @@ Rulesets for running codechecker in a single Bazel job.
 
 load(
     "@default_codechecker_tools//:defs.bzl",
+    "CLANG_BIN_PATH",
+    "CLANG_TIDY_BIN_PATH",
     "CODECHECKER_BIN_PATH",
 )
 load(
@@ -105,6 +107,8 @@ def _codechecker_impl(ctx):
         substitutions = {
             "{Mode}": "Run",
             "{Verbosity}": "DEBUG",
+            "{clang_bin}": CLANG_BIN_PATH,
+            "{clang_tidy_bin}": CLANG_TIDY_BIN_PATH,
             "{codechecker_analyze}": " ".join(ctx.attr.analyze),
             "{codechecker_bin}": CODECHECKER_BIN_PATH,
             "{codechecker_config}": config_file.path,
@@ -245,6 +249,8 @@ def _codechecker_test_impl(ctx):
             "{Mode}": "Test",
             "{Severities}": " ".join(ctx.attr.severities),
             "{Verbosity}": "INFO",
+            "{clang_bin}": CLANG_BIN_PATH,
+            "{clang_tidy_bin}": CLANG_TIDY_BIN_PATH,
             "{codechecker_bin}": CODECHECKER_BIN_PATH,
             "{codechecker_files}": codechecker_files.short_path,
         },

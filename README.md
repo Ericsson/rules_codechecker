@@ -225,8 +225,8 @@ bazel test ...
 ```
 
 > [!WARNING]
-> The option is still in prototype status and is subject to changes or removal without notice. See [#31](https://github.com/Ericsson/rules_codechecker/issues/31).
-> You are free to experiment and report issues however!
+> Filtering codecheckerr_tests with only `--test_tag_filters=-codechecker` is not enough.
+> To skip the actual analysis `--build_tag_filters=-codechecker` must also be specified.
 
 You can find the analysis results in the `bazel-bin/` folder, on which you
 can run [`CodeChecker store`](https://github.com/Ericsson/codechecker/blob/master/docs/web/user_guide.md#store)

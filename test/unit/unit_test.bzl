@@ -68,16 +68,16 @@ def unit_test(
     python_args = ["--files"] + files
     if patterns:
         python_args.append("--patterns")
-        python_args.extend(patterns)
+        python_args.extend(["\"{}\"".format(pat) for pat in patterns])
     if negative_patterns:
         python_args.append("--negative_patterns")
-        python_args.extend(negative_patterns)
+        python_args.extend(["\"{}\"".format(pat) for pat in negative_patterns])
     if regex_patterns:
         python_args.append("--regex_patterns")
-        python_args.extend(regex_patterns)
+        python_args.extend(["\"{}\"".format(pat) for pat in regex_patterns])
     if negative_regex_patterns:
         python_args.append("--negative_regex_patterns")
-        python_args.extend(negative_regex_patterns)
+        python_args.extend(["\"{}\"".format(pat) for pat in negative_regex_patterns])
     if not require_patterns_in_each_file:
         python_args.append("--any")
 

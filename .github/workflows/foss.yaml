@@ -60,8 +60,8 @@ jobs:
         run: echo ${{ matrix.bazel_version }} >> .bazelversion
 
       - name: Run Test On Opensource Projects
-        working-directory: test
-        run: python3 -m unittest foss/test_foss.py -vvv
+        # This also runs unittest that are run with bazel test //...
+        run: bazel test //... --test_output=all
 
   foss_rhel_test:
     name: "Test rules on FOSS projects Bazel ${{ matrix.bazel_version }} (RHEL)"
@@ -86,5 +86,5 @@ jobs:
         run: echo ${{ matrix.bazel_version }} >> .bazelversion
 
       - name: Run Test On Opensource Projects
-        working-directory: test
-        run: runuser -u test -- python3 -m unittest foss/test_foss.py -vvv
+        # This also runs unittests that are run with bazel test //...
+        run: bazel test //... --test_output=all

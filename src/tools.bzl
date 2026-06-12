@@ -106,8 +106,16 @@ def _codechecker_local_repository_impl(repository_ctx):
     codechecker_bin_path = repository_ctx.which("CodeChecker")
     if not codechecker_bin_path:
         fail("ERROR! CodeChecker is not detected")
+    clang_bin_path = repository_ctx.which("clang")
+    if not clang_bin_path:
+        fail("ERROR! Clang is not detected")
+    clang_tidy_bin_path = repository_ctx.which("clang-tidy")
+    if not clang_tidy_bin_path:
+        fail("ERROR! Clang-tidy is not detected")
 
     defs = "CODECHECKER_BIN_PATH = '{}'\n".format(codechecker_bin_path)
+    defs += "CLANG_BIN_PATH = '{}'\n".format(clang_bin_path)
+    defs += "CLANG_TIDY_BIN_PATH = '{}'\n".format(clang_tidy_bin_path)
     defs += "BAZEL_VERSION = '{}'\n".format(native.bazel_version)
     repository_ctx.file(
         repository_ctx.path("defs.bzl"),
@@ -124,10 +132,10 @@ default_codechecker_tools = repository_rule(
 
 # buildifier: disable=unused-variable
 # This parameter is provided, regardless if we use it or not
-def register_default_codechecker(ctx = None):
+def register_default_codechecker_tools(ctx = None):
     default_codechecker_tools(name = "default_codechecker_tools")
 
 # Define the extension here
-module_register_default_codechecker = module_extension(
-    implementation = register_default_codechecker,
+module_register_default_codechecker_tools = module_extension(
+    implementation = register_default_codechecker_tools,
 )

@@ -35,6 +35,6 @@ single_version_override(
 
 codechecker_extension = use_extension(
     "//src:tools.bzl",
-    "module_register_default_codechecker",
+    "module_register_default_codechecker_tools",
 )
 use_repo(codechecker_extension, "default_codechecker_tools")

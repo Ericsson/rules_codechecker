@@ -27,10 +27,11 @@ import shlex
 import subprocess
 import sys
 
-
 EXECUTION_MODE = "{Mode}"
 VERBOSITY = "{Verbosity}"
 CODECHECKER_PATH = "{codechecker_bin}"
+CLANG_PATH = "{clang_bin}"
+CLANG_TIDY_PATH = "{clang_tidy_bin}"
 CODECHECKER_SKIPFILE = "{codechecker_skipfile}"
 CODECHECKER_CONFIG = "{codechecker_config}"
 CODECHECKER_ANALYZE = "{codechecker_analyze}"
@@ -49,7 +50,7 @@ BAZEL_PATHS = {
 
 
 def fail(message, exit_code=1):
-    """ Print error message and return exit code """
+    """Print error message and return exit code"""
     logging.error(message)
     print()
     print("*" * 50)
@@ -70,7 +71,7 @@ def fail(message, exit_code=1):
 
 
 def read_file(filename):
-    """ Read text file and return its contents """
+    """Read text file and return its contents"""
     if not os.path.isfile(filename):
         fail(f"File not found: {filename}")
     with open(filename, encoding="utf-8") as handle:
@@ -78,19 +79,19 @@ def read_file(filename):
 
 
 def separator(method="info"):
-    """ Print log separator line to logging.info() or other logging methods """
+    """Print log separator line to logging.info() or other logging methods"""
     getattr(logging, method)("#" * 23)
 
 
 def stage(title, method="info"):
-    """ Print stage title into log """
+    """Print stage title into log"""
     separator(method)
     getattr(logging, method)("### " + title)
     separator(method)
 
 
 def valid_parameter(parameter):
-    """ Check if external parameter is defined and valid """
+    """Check if external parameter is defined and valid"""
     if parameter is None:
         return False
     if parameter and parameter[0] == "{":
@@ -99,14 +100,14 @@ def valid_parameter(parameter):
 
 
 def log_file_name():
-    """ Check and return log file name """
+    """Check and return log file name"""
     if valid_parameter(CODECHECKER_LOG):
         return CODECHECKER_LOG
     return None
 
 
 def setup():
-    """ Setup logging parameters for execution session """
+    """Setup logging parameters for execution session"""
     if VERBOSITY == "INFO":
         log_level = logging.INFO
     elif VERBOSITY == "WARN":
@@ -124,7 +125,7 @@ def setup():
 
 
 def input_data():
-    """ Print out input (external) parameters """
+    """Print out input (external) parameters"""
     stage("CodeChecker input data:", "debug")
     logging.debug("EXECUTION_MODE       : %s", str(EXECUTION_MODE))
     logging.debug("VERBOSITY            : %s", str(VERBOSITY))
@@ -140,7 +141,7 @@ def input_data():
 
 
 def execute(cmd, env=None, codes=None):
-    """ Execute CodeChecker commands """
+    """Execute CodeChecker commands"""
     if codes is None:
         codes = [0]
     with subprocess.Popen(
@@ -162,20 +163,28 @@ def execute(cmd, env=None, codes=None):
 
 
 def create_folder(path):
-    """ Create folder structure for CodeChecker data files and reports """
+    """Create folder structure for CodeChecker data files and reports"""
     if not os.path.exists(path):
         os.makedirs(path)
 
 
 def prepare():
-    """ Prepare CodeChecker execution environment """
+    """Prepare CodeChecker execution environment"""
     stage("CodeChecker files:")
     logging.info("Creating folder: %s", CODECHECKER_FILES)
     create_folder(CODECHECKER_FILES)
 
 
+def generate_analyzer_executables():
+    """
+    Generates the value for the CC_ANALYZER_BIN environment variable
+    """
+    analyzer_executables = f"clangsa:{CLANG_PATH};clang-tidy:{CLANG_TIDY_PATH}"
+    return analyzer_executables
+
+
 def analyze():
-    """ Run CodeChecker analyze command """
+    """Run CodeChecker analyze command"""
     stage("CodeChecker analyze:")
 
     env = os.environ
@@ -186,14 +195,17 @@ def analyze():
             env.update(codechecker_env)
     if "PATH" not in env:
         env["PATH"] = "/bin"  # NOTE: this is workaround for CodeChecker 6.24.4
+    env["CC_ANALYZER_BIN"] = generate_analyzer_executables()
     logging.debug("env: %s", str(env))
 
     output = execute(f"{CODECHECKER_PATH} analyzers --details", env=env)
     logging.debug("Analyzers:\n\n%s", output)
 
-    command = f"{CODECHECKER_PATH} analyze --skip={CODECHECKER_SKIPFILE} " \
-              f"{COMPILE_COMMANDS} --output={CODECHECKER_FILES}/data " \
-              f"--config {CODECHECKER_CONFIG} {CODECHECKER_ANALYZE}"
+    command = (
+        f"{CODECHECKER_PATH} analyze --skip={CODECHECKER_SKIPFILE} "
+        f"{COMPILE_COMMANDS} --output={CODECHECKER_FILES}/data "
+        f"--config {CODECHECKER_CONFIG} {CODECHECKER_ANALYZE}"
+    )
     # FIXME: Workaround "CodeChecker simply remove compiler-rt include path".
     # This can be removed once codechecker 6.16.0 is used.
     # command += " --keep-gcc-intrin"
@@ -205,7 +217,7 @@ def analyze():
         fail("Make sure that the target can be built first")
 
 
-def fix_path_with_regex(data:str) -> str:
+def fix_path_with_regex(data: str) -> str:
     """
     The absolute paths of the analyzed source files found in the plist files
     do not point to their original location, but rather wherever bazel copied
@@ -218,8 +230,9 @@ def fix_path_with_regex(data:str) -> str:
         data = re.sub(pattern, replace, data)
     return data
 
+
 def fix_bazel_paths():
-    """ Remove Bazel leading paths in all files """
+    """Remove Bazel leading paths in all files"""
     stage("Fix CodeChecker output:")
     folder = CODECHECKER_FILES
     logging.info("Fixing Bazel paths in %s", folder)
@@ -236,7 +249,7 @@ def fix_bazel_paths():
 
 
 def realpath(filename):
-    """ Return real full absolute path for given filename """
+    """Return real full absolute path for given filename"""
     if os.path.exists(filename):
         real_file_name = os.path.abspath(os.path.realpath(filename))
         logging.debug("Updating %s -> %s", filename, real_file_name)
@@ -245,7 +258,7 @@ def realpath(filename):
 
 
 def resolve_plist_symlinks(filepath):
-    """ Resolve the symbolic links in plist files to real file paths """
+    """Resolve the symbolic links in plist files to real file paths"""
     # plistlib replaced readPlist/writePlist with load/dump in Python 3.9.
     # Since Pylint analyzes every line,
     # it flags the methods missing in the current environment.
@@ -269,7 +282,7 @@ def resolve_plist_symlinks(filepath):
 
 
 def resolve_yaml_symlinks(filepath):
-    """ Resolve the symbolic links in YAML files to real file paths """
+    """Resolve the symbolic links in YAML files to real file paths"""
     logging.info("Processing YAML file: %s", filepath)
     fields = [
         r"MainSourceFile:\s*",
@@ -300,7 +313,7 @@ def resolve_yaml_symlinks(filepath):
 
 
 def resolve_symlinks():
-    """ Change ".../execroot/apps" paths to absolute paths in data/* files """
+    """Change ".../execroot/apps" paths to absolute paths in data/* files"""
     stage("Resolve file paths in CodeChecker analyze output:")
     analyze_outdir = CODECHECKER_FILES + "/data"
     logging.info(
@@ -330,14 +343,18 @@ def update_file_paths():
 
 
 def parse():
-    """ Run CodeChecker parse commands """
+    """Run CodeChecker parse commands"""
     stage("CodeChecker parse:")
     logging.info("CodeChecker parse -e json")
-    codechecker_parse = f"{CODECHECKER_PATH} parse --config " \
-                        f"{CODECHECKER_CONFIG} {CODECHECKER_FILES}/data"
+    codechecker_parse = (
+        f"{CODECHECKER_PATH} parse --config "
+        f"{CODECHECKER_CONFIG} {CODECHECKER_FILES}/data"
+    )
     # Save results to JSON file
-    command = f"{codechecker_parse} --export=json > " \
-              f"{CODECHECKER_FILES}/result.json"
+    command = (
+        f"{codechecker_parse} --export=json > "
+        f"{CODECHECKER_FILES}/result.json"
+    )
     execute(command, codes=[0, 2])
     # logging.debug(
     #     "JSON:\n\n%s\n", read_file(CODECHECKER_FILES + "/result.json")
@@ -361,7 +378,7 @@ def parse():
 
 
 def run():
-    """ Perform all steps for "bazel build" phase """
+    """Perform all steps for "bazel build" phase"""
     prepare()
     analyze()
     parse()
@@ -369,7 +386,7 @@ def run():
 
 
 def check_results():
-    """ Check/verify CodeChecker results """
+    """Check/verify CodeChecker results"""
     stage("Checking result:")
     # Get results file and read it
     result_file = CODECHECKER_FILES + "/result.txt"
@@ -416,12 +433,12 @@ def check_results():
 
 
 def test():
-    """ Perform all steps for "bazel test" phase """
+    """Perform all steps for "bazel test" phase"""
     check_results()
 
 
 def main():
-    """ Main function """
+    """Main function"""
     setup()
     input_data()
     try:

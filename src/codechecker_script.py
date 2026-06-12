@@ -186,6 +186,8 @@ def analyze():
             env.update(codechecker_env)
     if "PATH" not in env:
         env["PATH"] = "/bin"  # NOTE: this is workaround for CodeChecker 6.24.4
+    if sys.argv[1] != "":
+        env["PATH"] = os.path.abspath(sys.argv[1]) + os.pathsep + env["PATH"]
     logging.debug("env: %s", str(env))
 
     output = execute(f"{CODECHECKER_PATH} analyzers --details", env=env)
@@ -198,6 +200,8 @@ def analyze():
     # This can be removed once codechecker 6.16.0 is used.
     # command += " --keep-gcc-intrin"
     logging.info("Running CodeChecker analyze...")
+    output = execute(f"{CODECHECKER_PATH} analyzers", env=env)
+    logging.info("Output:\n\n%s\n", output)
     output = execute(command, env=env)
     logging.info("Output:\n\n%s\n", output)
     if output.find("- Failed to analyze") != -1:

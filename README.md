@@ -225,7 +225,7 @@ bazel test ...
 ```
 
 > [!WARNING]
-> Filtering codecheckerr_tests with only `--test_tag_filters=-codechecker` is not enough.
+> Filtering codechecker_tests with only `--test_tag_filters=-codechecker` is not enough.
 > To skip the actual analysis `--build_tag_filters=-codechecker` must also be specified.
 
 You can find the analysis results in the `bazel-bin/` folder, on which you

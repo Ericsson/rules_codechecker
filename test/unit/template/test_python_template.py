@@ -15,6 +15,7 @@
 """
 TODO: Describe what this file does
 """
+
 import os
 import unittest
 from typing import final
@@ -23,13 +24,16 @@ from common.base import TestBase
 
 class TestTemplate(TestBase):
     """TODO: Add a description"""
+
     # Set working directory
     __test_path__ = os.path.dirname(os.path.abspath(__file__))
     # TODO: fix folder name
-    BAZEL_BIN_DIR = os.path.join("../../..", "bazel-bin", "test", 
-                                        "unit", "my_test_folder")
-    BAZEL_TESTLOGS_DIR = os.path.join("../../..", "bazel-testlogs", "test", 
-                                        "unit", "my_test_folder")
+    BAZEL_BIN_DIR = os.path.join(
+        "../../..", "bazel-bin", "test", "unit", "my_test_folder"
+    )
+    BAZEL_TESTLOGS_DIR = os.path.join(
+        "../../..", "bazel-testlogs", "test", "unit", "my_test_folder"
+    )
 
     @final
     @classmethod

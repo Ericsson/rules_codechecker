@@ -15,7 +15,17 @@
 name: codechecker-bazel-foss-tests
 
 # Triggers the workflow on push or pull request events.
-on: [push, pull_request]
+on:
+  push:
+    paths-ignore:
+      - "**/*.md"
+      - "README*"
+      - "LICENSE"
+  pull_request:
+    paths-ignore:
+      - "**/*.md"
+      - "README*"
+      - "LICENSE"
 
 permissions: read-all
 

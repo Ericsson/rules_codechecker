@@ -67,6 +67,8 @@ jobs:
         run: echo "${{ matrix.bazel_version }}" > .bazelversion
         shell: bash
 
+      # I did not use our setup script to leverage
+      # the power of caching provided by this action.
       - name: Setup environment
         uses: mamba-org/setup-micromamba@v3
         with:

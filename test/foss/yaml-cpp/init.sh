@@ -38,6 +38,9 @@ git -C "$1" checkout yaml-cpp-0.7.0
 bazelversion="../../../.bazelversion"
 [ -f $bazelversion ] && cp $bazelversion "$1"
 
+# Using very new c compilers (e.g. clang 21) cause the build to fail
+# also causing analysis to do so.
+# This patch applies a compile flag to ignore the warning causing this fail.
 patch $1/BUILD.bazel -p1 < yaml-cpp-070.patch
 
 # Add codechecker to the project

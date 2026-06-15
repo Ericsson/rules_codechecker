@@ -4,6 +4,7 @@
      visibility = ["//visibility:public"],
      includes = ["include"],
      hdrs = glob(["include/**/*.h"]),
++    # Newer compilers throw warnings without this.
 +    copts = ["-include cstdint"],
      srcs = glob(["src/**/*.cpp", "src/**/*.h"]),
  )

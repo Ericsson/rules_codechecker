@@ -1,4 +1,8 @@
-name: dev
+# This file exists to have a micromamba
+# environment without a fixed bazel version.
+# This way the bazel version can be modified
+# with commandline argument: bazel=<version_num>
+name: ci
 channels:
   - conda-forge
 dependencies:

@@ -147,6 +147,11 @@ class TestImplDepExternalDep(TestBase):
         --experimental_cc_implementation_deps --enable_bzlmod
         --features=external_include_paths
         """
+        if int(self.BAZEL_VERSION[0]) <= 6:  # pyright: ignore
+            self.skipTest(
+                "For Bazel 6 and older we do not support: "
+                "--features=external_include_paths"
+            )
         ret, _, stderr = self.run_command(
             "bazel test :codechecker_external_deps "
             "--experimental_cc_implementation_deps --enable_bzlmod "
@@ -163,6 +168,11 @@ class TestImplDepExternalDep(TestBase):
         --experimental_cc_implementation_deps
         --features=external_include_paths
         """
+        if int(self.BAZEL_VERSION[0]) <= 6:  # pyright: ignore
+            self.skipTest(
+                "For Bazel 6 and older we do not support: "
+                "--features=external_include_paths"
+            )
         ret, _, stderr = self.run_command(
             "bazel test :per_file_external_deps "
             "--experimental_cc_implementation_deps --enable_bzlmod "

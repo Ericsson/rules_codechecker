@@ -32,7 +32,7 @@ class TestImplDepExternalDep(TestBase):
     __test_path__ = os.path.dirname(os.path.abspath(__file__))
     BAZEL_BIN_DIR = os.path.join("bazel-bin")
     BAZEL_TESTLOGS_DIR = os.path.join("bazel-testlogs")
-    BAZEL_VERSION = None
+    BAZEL_VERSION: str = ""
 
     @final
     @classmethod
@@ -147,7 +147,7 @@ class TestImplDepExternalDep(TestBase):
         --experimental_cc_implementation_deps --enable_bzlmod
         --features=external_include_paths
         """
-        if int(self.BAZEL_VERSION[0]) <= 6:  # pyright: ignore
+        if int(self.BAZEL_VERSION[0]) <= 6:
             self.skipTest(
                 "For Bazel 6 and older we do not support: "
                 "--features=external_include_paths"
@@ -168,7 +168,7 @@ class TestImplDepExternalDep(TestBase):
         --experimental_cc_implementation_deps
         --features=external_include_paths
         """
-        if int(self.BAZEL_VERSION[0]) <= 6:  # pyright: ignore
+        if int(self.BAZEL_VERSION[0]) <= 6:
             self.skipTest(
                 "For Bazel 6 and older we do not support: "
                 "--features=external_include_paths"

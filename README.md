@@ -427,8 +427,3 @@ After that you can find all artifacts in `bazel-bin` directory:
     
     # compile_commands.json for compile_commands_pass
     cat bazel-bin/test/compile_commands_pass/compile_commands.json
-
-
-Limitations:
-------------
-In Bazel 6, we do not support using the `--features=external_include_paths` flag.

@@ -148,6 +148,8 @@ class TestImplDepExternalDep(TestBase):
 
     def test_codechecker_external_include_paths(self):
         """
+        Enabling external_include_paths will make bazel pass external  
+        include paths with -isystem.
         Test: bazel test :codechecker_external_deps
         --experimental_cc_implementation_deps --enable_bzlmod
         --features=external_include_paths
@@ -162,6 +164,8 @@ class TestImplDepExternalDep(TestBase):
 
     def test_per_file_external_include_paths(self):
         """
+        Enabling external_include_paths will make bazel pass external  
+        include paths with -isystem.
         Test: bazel test :per_file_external_deps
         --experimental_cc_implementation_deps
         --features=external_include_paths

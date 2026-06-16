@@ -14,7 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-module(name = "rules_codechecker")
+module(
+    name = "rules_codechecker",
+    bazel_compatibility = [">=7.0.0"],
+)
 
 bazel_dep(name = "rules_python", version = "0.32.0")
 bazel_dep(name = "rules_cc", version = "0.2.3")

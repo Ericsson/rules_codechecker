@@ -157,8 +157,7 @@ class TestImplDepExternalDep(TestBase):
             "--experimental_cc_implementation_deps --enable_bzlmod "
             "--features=external_include_paths"
         )
-        # FIXME: Should find nothing.h and finish with exit code 0
-        self.assertEqual(ret, 1, stderr)
+        self.assertEqual(ret, 0, stderr)
 
     def test_per_file_external_include_paths(self):
         """
@@ -178,8 +177,7 @@ class TestImplDepExternalDep(TestBase):
             "--experimental_cc_implementation_deps --enable_bzlmod "
             "--features=external_include_paths"
         )
-        # FIXME: Should find nothing.h and finish with exit code 0
-        self.assertEqual(ret, 3, stderr)
+        self.assertEqual(ret, 0, stderr)
 
 
 if __name__ == "__main__":

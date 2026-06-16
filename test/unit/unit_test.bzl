@@ -22,20 +22,18 @@ Example:
     unit_test(
         name = "my_unit_test",
         files = ["my_target_file.ext"],
-        patterns = ["my_pattern"],
-        negative_patterns = ["my_negative_pattern"],
+        contains = ["my_pattern"],
+        excludes = ["my_negative_pattern"],
         regex_patterns = ["my_.*regex.*_pattern"],
-        negative_regex_patterns = ["my_.*negative_regex.*_pattern"],
     )
 """
 
 def unit_test(
         name,
         files,
-        patterns = None,
-        negative_patterns = None,
+        contains = None,
+        excludes = None,
         regex_patterns = None,
-        negative_regex_patterns = None,
         require_patterns_in_each_file = True,
         tags = [],
         size = "medium",
@@ -45,10 +43,9 @@ def unit_test(
     Args:
         name: Test name.
         files: Path or glob to the files to be checked.
-        patterns: Patterns that should be inside the files.
-        negative_patterns: Patterns that shouldn't be inside the files.
-        regex_patterns: Regex patterns that should be inside the files.
-        negative_regex_patterns: Regex patterns that shouldn't be inside the files.
+        contains: Text that should be inside the files.
+        excludes: Text that shouldn't be inside the files.
+        regex_patterns: Regex patterns that should be found inside the files.
         require_patterns_in_each_file: If False its enough if every pattern is found in at least one file.
         tags: Additional test tags.
         size: Test size (default: medium).
@@ -56,28 +53,23 @@ def unit_test(
     """
     if type(files) == "string":
         files = [files]
-    if type(patterns) == "string":
-        patterns = [patterns]
-    if type(negative_patterns) == "string":
-        negative_patterns = [negative_patterns]
+    if type(contains) == "string":
+        contains = [contains]
+    if type(excludes) == "string":
+        excludes = [excludes]
     if type(regex_patterns) == "string":
         regex_patterns = [regex_patterns]
-    if type(negative_regex_patterns) == "string":
-        negative_regex_patterns = [negative_regex_patterns]
 
     python_args = ["--files"] + files
-    if patterns:
-        python_args.append("--patterns")
-        python_args.extend(["\"{}\"".format(pat) for pat in patterns])
-    if negative_patterns:
-        python_args.append("--negative_patterns")
-        python_args.extend(["\"{}\"".format(pat) for pat in negative_patterns])
+    if contains:
+        python_args.append("--contains")
+        python_args.extend(["\"{}\"".format(pat) for pat in contains])
+    if excludes:
+        python_args.append("--excludes")
+        python_args.extend(["\"{}\"".format(pat) for pat in excludes])
     if regex_patterns:
         python_args.append("--regex_patterns")
         python_args.extend(["\"{}\"".format(pat) for pat in regex_patterns])
-    if negative_regex_patterns:
-        python_args.append("--negative_regex_patterns")
-        python_args.extend(["\"{}\"".format(pat) for pat in negative_regex_patterns])
     if not require_patterns_in_each_file:
         python_args.append("--any")
 

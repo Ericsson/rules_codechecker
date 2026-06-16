@@ -50,21 +50,19 @@ codechecker_test(
 
 unit_test(
     name = "template_codechecker_test",
+    contains = ["core.DivideZero"],
     data = [":template_codechecker"],
+    excludes = ["Text not in file"],
     files = "test/unit/template/template_codechecker/codechecker.log",
-    negative_patterns = ["Text not in file"],
-    negative_regex_patterns = ["(This regex is not in the file)+"],
-    patterns = ["core.DivideZero"],
     regex_patterns = ["[a-z]"],
 )
 
 unit_test(
     name = "template_per_file_test",
+    contains = ["Division by zero"],
     data = [":template_per_file"],
+    excludes = ["Text not in file"],
     files = "test/unit/template/template_per_file/**/*.plist",
-    negative_patterns = ["Text not in file"],
-    negative_regex_patterns = ["(This regex is not in the file)+"],
-    patterns = ["Division by zero"],
     regex_patterns = ["[a-z]"],
     require_patterns_in_each_file = False,
 )

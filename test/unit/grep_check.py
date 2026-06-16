@@ -47,28 +47,22 @@ def parse_args() -> argparse.Namespace:
         help="Path or glob pattern to the file(s) to search within.",
     )
     parser.add_argument(
-        "--patterns",
+        "--contains",
         nargs="+",
         required=False,
-        help="One or more patterns to assert are present in the file(s).",
+        help="One or more string to assert are present in the file(s).",
     )
     parser.add_argument(
-        "--negative_patterns",
+        "--excludes",
         nargs="+",
         required=False,
-        help="One or more patterns to assert are not present in the file(s).",
+        help="One or more string to assert are not present in the file(s).",
     )
     parser.add_argument(
         "--regex_patterns",
         nargs="+",
         required=False,
         help="One or more patterns to assert are present in the file(s).",
-    )
-    parser.add_argument(
-        "--negative_regex_patterns",
-        nargs="+",
-        required=False,
-        help="One or more patterns to assert are not present in the file(s).",
     )
     parser.add_argument(
         "--any",
@@ -83,10 +77,9 @@ def parse_args() -> argparse.Namespace:
 def check_args(args):
     """Checks wether the arguments are correct, aborts if not"""
     if (
-        not args.patterns
-        and not args.negative_patterns
+        not args.contains
+        and not args.excludes
         and not args.regex_patterns
-        and not args.negative_regex_patterns
     ):
         print("  [ERROR] Must define at least one pattern or negative pattern.")
         sys.exit(1)
@@ -139,10 +132,9 @@ def check_file(content: str, args) -> tuple[bool, set[str], set[str]]:
     missing_patterns = set()
 
     groups = [
-        (args.patterns, exact_match, False),
-        (args.negative_patterns, exact_match, True),
+        (args.contains, exact_match, False),
+        (args.excludes, exact_match, True),
         (args.regex_patterns, re.search, False),
-        (args.negative_regex_patterns, re.search, True),
     ]
 
     for patterns, search, negative in groups:
@@ -187,10 +179,9 @@ def main() -> None:
     if args.any:
         all_passed = True
         for pattern in chain(
-            args.patterns or [],
-            args.negative_patterns or [],
+            args.contains or [],
+            args.excludes or [],
             args.regex_patterns or [],
-            args.negative_regex_patterns or [],
         ):
             if pattern not in found_patterns:
                 all_passed = False

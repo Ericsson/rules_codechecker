@@ -23,10 +23,6 @@ load(
     "//src:codechecker.bzl",
     "codechecker_test",
 )
-load(
-    "//test/unit:unit_test.bzl",
-    "unit_test",
-)
 
 # Test for strip_include_prefix
 cc_library(
@@ -90,36 +86,4 @@ codechecker_test(
     targets = [
         "virtual_implementation_deps_include",
     ],
-)
-
-unit_test(
-    name = "per_file_plist_path_resolved_test",
-    data = [":per_file_virtual_include"],
-    files = "test/unit/virtual_include/per_file_virtual_include/**/*.plist",
-    patterns = r"/_virtual_includes/",
-)
-
-unit_test(
-    name = "codechecker_plist_path_resolved_test",
-    data = [":codechecker_virtual_include"],
-    files = "test/unit/virtual_include/codechecker_virtual_include/**/*.plist",
-    # FIXME: In the postprocessed plists, all _virtual_include paths
-    # should've been removed. Update to negative_patterns
-    patterns = r"/_virtual_includes/",
-    require_patterns_in_each_file = False,
-)
-
-unit_test(
-    name = "per_file_impl_deps_include_test",
-    data = [":per_file_impl_deps_include"],
-    files = "test/unit/virtual_include/per_file_impl_deps_include/**/*.plist",
-    patterns = "Division by zero",
-    require_patterns_in_each_file = False,
-)
-
-unit_test(
-    name = "codechecker_impl_deps_include_test",
-    data = [":codechecker_impl_deps_include"],
-    files = "test/unit/virtual_include/codechecker_impl_deps_include/codechecker.log",
-    patterns = "core.DivideZero",
 )

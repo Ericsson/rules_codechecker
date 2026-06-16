@@ -15,6 +15,7 @@
 """
 Test external repositories with codechecker
 """
+
 import logging
 import os
 import re
@@ -57,7 +58,7 @@ class TestImplDepExternalDep(TestBase):
         except FileNotFoundError:
             logging.debug("No bazel version set, using system default")
         _, stdout, _ = cls.run_command("bazel version --gnu_format")
-        match = re.search(r'bazel\s+([\d\.]+)', stdout, re.MULTILINE)
+        match = re.search(r"bazel\s+([\d\.]+)", stdout, re.MULTILINE)
         if match:
             cls.BAZEL_VERSION = match.group(1)
         else:
@@ -109,7 +110,7 @@ class TestImplDepExternalDep(TestBase):
                 "-isystem bazel-out/k8-fastbuild/bin/external/"
                 "external_lib~override/include"
             )
-        elif self.BAZEL_VERSION.startswith("7"):  # type:ignore
+        elif self.BAZEL_VERSION.startswith("7"):  # type: ignore
             pattern1 = "-isystem external/external_lib~/include"
             pattern2 = (
                 "-isystem bazel-out/k8-fastbuild/bin/external/"
@@ -144,6 +145,38 @@ class TestImplDepExternalDep(TestBase):
             "--experimental_cc_implementation_deps --enable_bzlmod"
         )
         self.assertEqual(ret, 0, stderr)
+
+    def test_codechecker_external_include_paths(self):
+        """
+        Enabling external_include_paths will make bazel pass external  
+        include paths with -isystem.
+        Test: bazel test :codechecker_external_deps
+        --experimental_cc_implementation_deps --enable_bzlmod
+        --features=external_include_paths
+        """
+        ret, _, stderr = self.run_command(
+            "bazel test :codechecker_external_deps "
+            "--experimental_cc_implementation_deps --enable_bzlmod "
+            "--features=external_include_paths"
+        )
+        # FIXME: Should find nothing.h and finish with exit code 0
+        self.assertEqual(ret, 1, stderr)
+
+    def test_per_file_external_include_paths(self):
+        """
+        Enabling external_include_paths will make bazel pass external  
+        include paths with -isystem.
+        Test: bazel test :per_file_external_deps
+        --experimental_cc_implementation_deps
+        --features=external_include_paths
+        """
+        ret, _, stderr = self.run_command(
+            "bazel test :per_file_external_deps "
+            "--experimental_cc_implementation_deps --enable_bzlmod "
+            "--features=external_include_paths"
+        )
+        # FIXME: Should find nothing.h and finish with exit code 0
+        self.assertEqual(ret, 3, stderr)
 
 
 if __name__ == "__main__":

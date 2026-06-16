@@ -1,6 +1,6 @@
 --- a/BUILD.bazel
 +++ b/BUILD.bazel
-@@ -10,5 +10,6 @@
+@@ -10,5 +10,7 @@
      visibility = ["//visibility:public"],
      includes = ["include"],
      hdrs = glob(["include/**/*.h"]),

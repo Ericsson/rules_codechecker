@@ -14,6 +14,8 @@
 
 """
 TODO: Describe what this file does
+
+Do not write python tests, unless absolutely necessary!
 """
 
 import os

@@ -224,6 +224,10 @@ bazel test ://your_codechecker_rule_name
 bazel test ...
 ```
 
+> [!WARNING]
+> Filtering codechecker_tests with only `--test_tag_filters=-codechecker` is not enough.
+> To skip the actual analysis `--build_tag_filters=-codechecker` must also be specified.
+
 You can find the analysis results in the `bazel-bin/` folder, on which you
 can run [`CodeChecker store`](https://github.com/Ericsson/codechecker/blob/master/docs/web/user_guide.md#store)
 or [`CodeChecker parse`](https://github.com/Ericsson/codechecker/blob/master/docs/analyzer/user_guide.md#parse).

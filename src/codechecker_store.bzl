@@ -16,24 +16,7 @@
 Rulesets for storing the results of codechecker on a codechecker server.
 """
 
-def _get_plist_folder_path(ctx):
-    """
-    Determines the folder where the plist files of the analysis reside.
-    """
-    candidate = ctx.files.target[0]
-    for file in ctx.files.target:
-        # Only in monolithic rule
-        if file.is_directory:
-            return file.short_path
-            # Assume all plist files are in the same folder in per_file rule
-
-        elif file.basename.endswith(".plist"):
-            candidate = file
-    return "$(dirname {file})".format(file = candidate.short_path)
-
 def _codechecker_store_impl(ctx):
-    folder_path = _get_plist_folder_path(ctx)
-
     name = ctx.attr.analysis_name
     if name == "":
         name = ctx.attr.name
@@ -44,9 +27,8 @@ def _codechecker_store_impl(ctx):
         content = """
             # We must override home to avoid writing outside the sandbox
             export HOME=$TEST_TMPDIR
-            CodeChecker store {target_folder} --url {url} --name {name}
+            CodeChecker store . --url {url} --name {name}
         """.format(
-            target_folder = folder_path,
             url = ctx.attr.url,
             name = name,
         ),
@@ -72,7 +54,7 @@ codechecker_store_test = rule(
             default = "",
             doc = "Tag to add to the analysis.",
         ),
-        "target": attr.label(
+        "target": attr.label_list(
             allow_files = True,
             doc = "Analysis target to be stored.",
         ),

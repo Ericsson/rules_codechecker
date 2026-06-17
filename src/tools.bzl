@@ -117,9 +117,6 @@ def _codechecker_local_repository_impl(repository_ctx):
         executable = False,
     )
 
-    clang_bin_path = repository_ctx.which("clang")
-    clang_tidy_bin_path = repository_ctx.which("clang-tidy")
-
     repository_ctx.symlink(codechecker_bin_path, "codechecker_bin")
     repository_ctx.symlink(clang_bin_path, "clang_bin")
     repository_ctx.symlink(clang_tidy_bin_path, "clang_tidy_bin")

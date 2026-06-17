@@ -29,7 +29,7 @@ import sys
 
 EXECUTION_MODE = "{Mode}"
 VERBOSITY = "{Verbosity}"
-CODECHECKER_PATH = "{codechecker_bin}"
+CODECHECKER_PATH = os.path.realpath("{codechecker_bin}")
 CLANG_PATH = "{clang_bin}"
 CLANG_TIDY_PATH = "{clang_tidy_bin}"
 CODECHECKER_SKIPFILE = "{codechecker_skipfile}"

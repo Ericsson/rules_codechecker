@@ -25,6 +25,10 @@ load(
     "codechecker_config",
     "codechecker_test",
 )
+load(
+    "//test/unit:unit_test.bzl",
+    "unit_test",
+)
 
 # C++ binary containing a division by zero bug
 cc_binary(
@@ -106,4 +110,46 @@ codechecker_test(
     targets = [
         "test_zero",
     ],
+)
+
+unit_test(
+    name = "codechecker_json_test",
+    contains = r"disable=core.DivideZero\",",
+    data = [":codechecker_json"],
+    files = "test/unit/config/codechecker_json/config.json",
+)
+
+unit_test(
+    name = "codechecker_yaml_test",
+    contains = r"- \"--disable=core.DivideZero\"",
+    data = [":codechecker_yaml"],
+    files = "test/unit/config/codechecker_yaml/config.yaml",
+)
+
+unit_test(
+    name = "codechecker_test_json_test",
+    contains = r"disable=core.DivideZero\",",
+    data = [":codechecker_test_json"],
+    files = "test/unit/config/codechecker_test_json/config.json",
+)
+
+unit_test(
+    name = "codechecker_test_yaml_test",
+    contains = r"- \"--disable=core.DivideZero\"",
+    data = [":codechecker_test_yaml"],
+    files = "test/unit/config/codechecker_test_yaml/config.yaml",
+)
+
+unit_test(
+    name = "per_file_test_json_test",
+    contains = r"disable=core.DivideZero\",",
+    data = [":per_file_test_json"],
+    files = "test/unit/config/per_file_test_json/config.json",
+)
+
+unit_test(
+    name = "per_file_test_yaml_test",
+    contains = r"- \"--disable=core.DivideZero\"",
+    data = [":per_file_test_yaml"],
+    files = "test/unit/config/per_file_test_yaml/config.yaml",
 )

@@ -103,14 +103,7 @@ class TestImplDepExternalDep(TestBase):
             "compile_commands.json",
         )
 
-        # The ~override part is a consquence of using Bzlmod.
-        if self.BAZEL_VERSION.startswith("6"):  # type: ignore
-            pattern1 = "-isystem external/external_lib~override/include"
-            pattern2 = (
-                "-isystem bazel-out/k8-fastbuild/bin/external/"
-                "external_lib~override/include"
-            )
-        elif self.BAZEL_VERSION.startswith("7"):  # type: ignore
+        if self.BAZEL_VERSION.startswith("7"):  # type: ignore
             pattern1 = "-isystem external/external_lib~/include"
             pattern2 = (
                 "-isystem bazel-out/k8-fastbuild/bin/external/"

@@ -25,6 +25,10 @@ load(
     "//src:compile_commands.bzl",
     "compile_commands",
 )
+load(
+    "//test/unit:unit_test.bzl",
+    "unit_test",
+)
 
 # First, define the rule that generates our file.
 genrule(
@@ -113,4 +117,53 @@ compile_commands(
     targets = [
         ":genrule_source_cpp",
     ],
+)
+
+unit_test(
+    name = "codechecker_genrule_header_test",
+    contains = ["defect(s) in genrule_header.h"],
+    data = [":codechecker_genrule_header"],
+    files = "test/unit/generated_files/codechecker_genrule_header/codechecker.log",
+)
+
+unit_test(
+    name = "codechecker_genrule_source_test",
+    contains = ["defect(s) in genrule_source.cc"],
+    data = [":codechecker_genrule_source"],
+    files = "test/unit/generated_files/codechecker_genrule_source/codechecker.log",
+)
+
+unit_test(
+    name = "per_file_genrule_header_test",
+    contains = [
+        "genrule_header.h",
+        "core.DivideZero",
+    ],
+    data = [":per_file_genrule_header"],
+    excludes = "genrule_source.cc",
+    files = "test/unit/generated_files/per_file_genrule_header/data/test-unit-generated_files-genrule_header_consumer.cc_clangsa.plist",
+)
+
+unit_test(
+    name = "per_file_genrule_source_test",
+    contains = [
+        "genrule_source.cc",
+        "core.DivideZero",
+    ],
+    data = [":per_file_genrule_source"],
+    files = "test/unit/generated_files/per_file_genrule_source/data/bazel-out-k8-fastbuild-bin-test-unit-generated_files-genrule_source.cc_clangsa.plist",
+)
+
+unit_test(
+    name = "compile_commands_genrule_source_test",
+    data = [":compile_commands_genrule_source"],
+    files = "test/unit/generated_files/compile_commands_genrule_source/compile_commands.json",
+    regex_patterns = [r"\"file\":.*genrule_source\.cc"],
+)
+
+unit_test(
+    name = "compile_commands_genrule_header_test",
+    data = [":compile_commands_genrule_header"],
+    files = "test/unit/generated_files/compile_commands_genrule_header/compile_commands.json",
+    regex_patterns = [r"\"file\":.*genrule_header_consumer\.cc"],
 )

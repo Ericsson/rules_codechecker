@@ -165,8 +165,8 @@ def _per_file_impl(ctx):
         fail("Seems compile_commands.json file is incorrect!")
     sources_and_headers = _collect_all_sources_and_headers(ctx)
     options = ctx.attr.default_options + ctx.attr.options
-    all_files = [compile_commands]
     config_file, env_vars = get_config_file(ctx)
+    all_files = [compile_commands, config_file]
     _create_wrapper_script(ctx, options, compile_commands, config_file)
     for target in ctx.attr.targets:
         if not CcInfo in target:

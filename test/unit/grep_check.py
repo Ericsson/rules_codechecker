@@ -76,11 +76,7 @@ def parse_args() -> argparse.Namespace:
 
 def check_args(args):
     """Checks wether the arguments are correct, aborts if not"""
-    if (
-        not args.contains
-        and not args.excludes
-        and not args.regex_patterns
-    ):
+    if not args.contains and not args.excludes and not args.regex_patterns:
         print("  [ERROR] Must define at least one pattern or negative pattern.")
         sys.exit(1)
 
@@ -164,6 +160,10 @@ def main() -> None:
         if not matched_files:
             print(f"  [WARN] No files matched pattern/path: '{file_pattern}'")
         file_paths.extend(matched_files)
+
+    if not file_paths:
+        print("  [ERR] No file collected to be checked.")
+        sys.exit(1)
 
     for file in file_paths:
         with open(file, "r", encoding="utf-8") as f:

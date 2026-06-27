@@ -69,7 +69,7 @@ python3 -m unittest discover unit/my_test_dir -vvv
 > __test_path__ = os.path.dirname(os.path.abspath(__file__))
 > ```
 
-**For a test template look into unit/template**
+**For a test template look into unit/basic**
 
 ## Testing on open source projects
 

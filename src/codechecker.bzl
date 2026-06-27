@@ -103,10 +103,10 @@ def _codechecker_impl(ctx):
         substitutions = {
             "{Mode}": "Run",
             "{Verbosity}": "DEBUG",
-            "{clang_bin}": info.clangsa_bin.path,
-            "{clang_tidy_bin}": info.clang_tidy_bin.path,
+            "{clang_bin}": info.clangsa.path,
+            "{clang_tidy_bin}": info.clang_tidy.path,
             "{codechecker_analyze}": " ".join(ctx.attr.analyze),
-            "{codechecker_bin}": info.codechecker_bin.path,
+            "{codechecker_bin}": info.codechecker.path,
             "{codechecker_config}": config_file.path,
             "{codechecker_env}": codechecker_env,
             "{codechecker_files}": codechecker_files.path,
@@ -119,9 +119,9 @@ def _codechecker_impl(ctx):
     ctx.actions.run(
         inputs = depset(
             [
-                info.codechecker_bin,
-                info.clangsa_bin,
-                info.clang_tidy_bin,
+                info.codechecker,
+                info.clangsa,
+                info.clang_tidy,
                 ctx.outputs.codechecker_script,
                 ctx.outputs.codechecker_commands,
                 ctx.outputs.codechecker_skipfile,
@@ -242,9 +242,9 @@ def _codechecker_test_impl(ctx):
             "{Mode}": "Test",
             "{Severities}": " ".join(ctx.attr.severities),
             "{Verbosity}": "INFO",
-            "{clang_bin}": info.clangsa_bin.short_path,
-            "{clang_tidy_bin}": info.clang_tidy_bin.short_path,
-            "{codechecker_bin}": info.codechecker_bin.short_path,
+            "{clang_bin}": info.clangsa.short_path,
+            "{clang_tidy_bin}": info.clang_tidy.short_path,
+            "{codechecker_bin}": info.codechecker.short_path,
             "{codechecker_files}": codechecker_files.short_path,
         },
     )
@@ -252,9 +252,9 @@ def _codechecker_test_impl(ctx):
     # Return test script and all required files
     run_files = default_runfiles + [
         ctx.outputs.codechecker_test_script,
-        info.codechecker_bin,
-        info.clang_tidy_bin,
-        info.clangsa_bin,
+        info.codechecker,
+        info.clang_tidy,
+        info.clangsa,
     ]
     return [
         DefaultInfo(

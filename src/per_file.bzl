@@ -66,9 +66,9 @@ def _run_code_checker(
             compile_commands_json,
             config_file,
             config,
-            info.codechecker_bin,
-            info.clangsa_bin,
-            info.clang_tidy_bin,
+            info.codechecker,
+            info.clangsa,
+            info.clang_tidy,
         ] + sources_and_headers
     else:
         # NOTE: we collect only headers, so CTU may not work!
@@ -78,9 +78,9 @@ def _run_code_checker(
             config_file,
             src,
             config,
-            info.codechecker_bin,
-            info.clangsa_bin,
-            info.clang_tidy_bin,
+            info.codechecker,
+            info.clangsa,
+            info.clang_tidy,
         ], transitive = [headers])
 
     outputs = [clang_tidy_plist, clangsa_plist, codechecker_log]
@@ -88,8 +88,8 @@ def _run_code_checker(
     analyzer_output_paths = "clangsa," + clangsa_plist.path + \
                             ";clang-tidy," + clang_tidy_plist.path
 
-    analyzer_executables = "clangsa:" + info.clangsa_bin.path + \
-                           ";clang-tidy:" + info.clang_tidy_bin.path
+    analyzer_executables = "clangsa:" + info.clangsa.path + \
+                           ";clang-tidy:" + info.clang_tidy.path
 
     # Action to run CodeChecker for a file
     ctx.actions.run(
@@ -97,7 +97,7 @@ def _run_code_checker(
         outputs = outputs,
         executable = ctx.outputs.per_file_script,
         arguments = [
-            info.codechecker_bin.path,
+            info.codechecker.path,
             data_dir,
             src.path,
             codechecker_log.path,

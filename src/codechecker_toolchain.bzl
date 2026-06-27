@@ -5,18 +5,18 @@ This file provides the toolchain rule for CodeChecker
 CodeCheckerInfo = provider(
     doc = "This provider provides the executable path for CodeChecker and its related tools",
     fields = {
-        "clang_tidy_bin": "clang-tidy executable",
-        "clangsa_bin": "Clang executable",
-        "codechecker_bin": "CodeChecker executable",
+        "clang_tidy": "clang-tidy executable",
+        "clangsa": "Clang executable",
+        "codechecker": "CodeChecker executable",
     },
 )
 
 def _codechecker_toolchain_impl(ctx):
     toolchain_info = platform_common.ToolchainInfo(
         codecheckerinfo = CodeCheckerInfo(
-            codechecker_bin = ctx.executable.codechecker_binary,
-            clang_tidy_bin = ctx.executable.clang_tidy_binary,
-            clangsa_bin = ctx.executable.clangsa_binary,
+            codechecker = ctx.executable.codechecker,
+            clang_tidy = ctx.executable.clang_tidy,
+            clangsa = ctx.executable.clangsa,
         ),
     )
     return [toolchain_info]
@@ -24,19 +24,19 @@ def _codechecker_toolchain_impl(ctx):
 codechecker_toolchain = rule(
     implementation = _codechecker_toolchain_impl,
     attrs = {
-        "clang_tidy_binary": attr.label(
+        "clang_tidy": attr.label(
             doc = "clang-tidy executable",
             allow_single_file = True,
             executable = True,
             cfg = "exec",
         ),
-        "clangsa_binary": attr.label(
+        "clangsa": attr.label(
             doc = "clang executable",
             allow_single_file = True,
             executable = True,
             cfg = "exec",
         ),
-        "codechecker_binary": attr.label(
+        "codechecker": attr.label(
             doc = "CodeChecker executable",
             allow_single_file = True,
             executable = True,

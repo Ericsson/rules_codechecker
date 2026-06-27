@@ -23,10 +23,8 @@ Intended to be used as the main of a py_test Bazel target.
 
 import argparse
 import glob
-from itertools import chain
 import re
 import sys
-from typing import Callable
 
 
 def parse_args() -> argparse.Namespace:
@@ -89,7 +87,7 @@ def exact_match(pattern: str, content: str) -> bool:
 def check_patterns(
     content: str,
     patterns: list[str],
-    search: Callable[[str, str], bool] = exact_match,
+    search=exact_match,
     negative: bool = False,
 ) -> tuple[bool, set[str], set[str]]:
     """
@@ -177,15 +175,13 @@ def main() -> None:
                 missing_patterns.add((file, pattern))
 
     if args.any:
-        all_passed = True
-        for pattern in chain(
-            args.contains or [],
-            args.excludes or [],
-            args.regex_patterns or [],
-        ):
-            if pattern not in found_patterns:
-                all_passed = False
-                break
+        patterns = (
+            (args.contains or [])
+            + (args.excludes or [])
+            + (args.regex_patterns or [])
+        )
+
+        all_passed = all(pattern in found_patterns for pattern in patterns)
 
     if not all_passed:
         for file, pattern in missing_patterns:

@@ -25,22 +25,25 @@ codechecker_toolchain = rule(
     implementation = _codechecker_toolchain_impl,
     attrs = {
         "clang_tidy": attr.label(
-            doc = "clang-tidy executable",
+            doc = "Executable target for `clang-tidy`. Defaults to the `clang-tidy` binary discovered on `PATH`.",
             allow_single_file = True,
             executable = True,
             cfg = "exec",
+            default = Label("@default_codechecker_tools//:clang_tidy"),
         ),
         "clangsa": attr.label(
-            doc = "clang executable",
+            doc = "Executable target for `clang`, used for Clang Static Analyzer. Defaults to the `clang` binary discovered on `PATH`.",
             allow_single_file = True,
             executable = True,
             cfg = "exec",
+            default = Label("@default_codechecker_tools//:clang"),
         ),
         "codechecker": attr.label(
-            doc = "CodeChecker executable",
+            doc = "Executable target for `CodeChecker`. Defaults to the `CodeChecker` binary discovered on `PATH`.",
             allow_single_file = True,
             executable = True,
             cfg = "exec",
+            default = Label("@default_codechecker_tools//:CodeChecker"),
         ),
     },
 )

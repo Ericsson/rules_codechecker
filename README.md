@@ -477,7 +477,11 @@ register_toolchains(
 If you don't want the default system tools -- for example to pin a specific
 CodeChecker version or point at a custom build —- you can define and register your own toolchain.
 
-First, define an implementation in a BUILD file with `codechecker_toolchain()`:
+First, you will have to create or obtain labels for codechecker, clang and clang-tidy.
+In case you are unable to obtain a label for one, not defining the tool, will default to
+a target, pointing to the path given by `which <tool>`.
+
+Then define an implementation in a BUILD file with `codechecker_toolchain()`:
 
 ```python
 load(
@@ -487,9 +491,9 @@ load(
 
 codechecker_toolchain(
     name = "codechecker_custom",
-    clang_tidy_binary  = "@my_tools//:clang-tidy",
-    clangsa_binary     = "@my_tools//:clang",
-    codechecker_binary = "@my_tools//:CodeChecker",
+    clang_tidy  = "//example_target:clang-tidy",
+    clangsa     = "//example_target:clang",
+    codechecker = "//example_target:CodeChecker",
 )
 
 toolchain(

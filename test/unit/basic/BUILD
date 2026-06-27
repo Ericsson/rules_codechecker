@@ -26,43 +26,43 @@ load(
 )
 
 cc_library(
-    name = "template_target",
-    srcs = ["template.cpp"],
+    name = "basic_target",
+    srcs = ["basic_test.cpp"],
     tags = ["manual"],
 )
 
 codechecker_test(
-    name = "template_codechecker",
+    name = "basic_codechecker",
     tags = ["manual"],
     targets = [
-        "template_target",
+        "basic_target",
     ],
 )
 
 codechecker_test(
-    name = "template_per_file",
+    name = "basic_per_file",
     per_file = True,
     tags = ["manual"],
     targets = [
-        "template_target",
+        "basic_target",
     ],
 )
 
 unit_test(
-    name = "template_codechecker_test",
+    name = "basic_codechecker_test",
     contains = ["core.DivideZero"],
-    data = [":template_codechecker"],
+    data = [":basic_codechecker"],
     excludes = ["Text not in file"],
-    files = "test/unit/template/template_codechecker/codechecker.log",
+    files = "test/unit/basic/basic_codechecker/codechecker.log",
     regex_patterns = ["[a-z]"],
 )
 
 unit_test(
-    name = "template_per_file_test",
+    name = "basic_per_file_test",
     contains = ["Division by zero"],
-    data = [":template_per_file"],
+    data = [":basic_per_file"],
     excludes = ["Text not in file"],
-    files = "test/unit/template/template_per_file/**/*.plist",
+    files = "test/unit/basic/basic_per_file/**/*.plist",
     regex_patterns = ["[a-z]"],
     require_patterns_in_each_file = False,
 )

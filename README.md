@@ -478,8 +478,6 @@ If you don't want the default system tools -- for example to pin a specific
 CodeChecker version or point at a custom build —- you can define and register your own toolchain.
 
 First, you will have to create or obtain labels for codechecker, clang and clang-tidy.
-In case you are unable to obtain a label for one, not defining the tool, will default to
-a target, pointing to the path given by `which <tool>`.
 
 Then define an implementation in a BUILD file with `codechecker_toolchain()`:
 

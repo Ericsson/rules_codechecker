@@ -479,6 +479,15 @@ CodeChecker version or point at a custom build —- you can define and register 
 
 First, you will have to create or obtain labels for codechecker, clang and clang-tidy.
 
+You may create such a label like this:
+```python
+filegroup(
+    name = "clang",
+    srcs = ["/usr/bin/clang"],
+    visibility = ["//visibility:public"],
+)
+```
+
 Then define an implementation in a BUILD file with `codechecker_toolchain()`:
 
 ```python

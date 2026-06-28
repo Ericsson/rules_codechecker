@@ -29,7 +29,6 @@ load(
 )
 load(
     "common.bzl",
-    "python_toolchain_type",
     "version_specific_attributes",
 )
 load(
@@ -209,7 +208,6 @@ codechecker = rule(
         "codechecker_skipfile": "%{name}/codechecker_skipfile.cfg",
         "compile_commands": "%{name}/compile_commands.json",
     },
-    toolchains = [python_toolchain_type()],
 )
 
 def _codechecker_test_impl(ctx):
@@ -306,7 +304,6 @@ _codechecker_test = rule(
         "codechecker_test_script": "%{name}/codechecker_test_script.py",
         "compile_commands": "%{name}/compile_commands.json",
     },
-    toolchains = [python_toolchain_type()],
     test = True,
 )
 

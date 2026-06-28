@@ -16,7 +16,6 @@ limitations under the License.
 
 module(name = "rules_codechecker")
 
-bazel_dep(name = "rules_python", version = "0.32.0")
 bazel_dep(name = "rules_cc", version = "0.2.3")
 
 bazel_dep(

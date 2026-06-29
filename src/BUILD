@@ -23,11 +23,21 @@ py_binary(
     visibility = ["//visibility:public"],
 )
 
+# In bazel 6 we use our own python toolchain,
+# therefore we cannot load from rules_python.
+# buildifier: disable=native-py
+py_binary(
+    name = "per_file_script",
+    srcs = ["per_file_script.py"],
+    main = "per_file_script.py",
+    # Bazel 6 doesn't see this otherwise
+    visibility = ["//visibility:public"],
+)
+
 # Build & Test script template
 exports_files(
     [
         "codechecker_script.py",
-        "per_file_script.py",
     ],
 )
 

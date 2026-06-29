@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # Copyright 2023 Ericsson AB
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,24 +21,23 @@ import re
 import shutil
 import subprocess
 import sys
+import json
+from pathlib import Path
 
-COMPILE_COMMANDS_JSON: str = "{compile_commands_json}"
-COMPILE_COMMANDS_ABSOLUTE: str = f"{COMPILE_COMMANDS_JSON}.abs"
-CODECHECKER_ARGS: str = "{codechecker_args}"
-CONFIG_FILE: str = "{config_file}"
-SKIP_FILE: str = sys.argv[5]
-CODECHECKER_BIN = os.path.realpath(sys.argv[1])
+CONSTANTS = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+COMPILE_COMMANDS_ABSOLUTE: str = f'{CONSTANTS["compile_commands_json"]}.abs'
+CODECHECKER_BIN = os.path.realpath(CONSTANTS["codechecker_bin"])
 # The output directory for CodeChecker
 DATA_DIR = sys.argv[2]
 # The file to be analyzed
 FILE_PATH = sys.argv[3]
 LOG_FILE = sys.argv[4]
 # List of pairs of analyzers and their plist files
-ANALYZER_PLIST_PATHS = [item.split(",") for item in sys.argv[6].split(";")]
+ANALYZER_PLIST_PATHS = [item.split(",") for item in sys.argv[5].split(";")]
 ANALYZER_EXECUTABLES_ENV_VAR = ";".join(
     f"{name}:{os.path.realpath(path)}"
     for name, path in [
-        pair.split(":", 1) for pair in sys.argv[7].split(";") if pair
+        pair.split(":", 1) for pair in sys.argv[6].split(";") if pair
     ]
 )
 
@@ -76,7 +73,7 @@ def _create_compile_commands_json_with_absolute_paths():
     of the files.
     """
     with open(
-        COMPILE_COMMANDS_JSON, "r", encoding="utf-8"
+        CONSTANTS["compile_commands_json"], "r", encoding="utf-8"
     ) as original_file, open(
         COMPILE_COMMANDS_ABSOLUTE, "w", encoding="utf-8"
     ) as new_file:
@@ -105,11 +102,11 @@ def _run_codechecker() -> None:
     """
     codechecker_cmd: list[str] = (
         [CODECHECKER_BIN, "analyze"]
-        + CODECHECKER_ARGS.split()
+        + CONSTANTS["codechecker_args"].split()
         + ["--output=" + DATA_DIR]
         + ["--file=*/" + FILE_PATH]
-        + ["--skip", SKIP_FILE]
-        + ["--config", CONFIG_FILE]
+        + ["--skip", CONSTANTS["skipfile"]]
+        + ["--config", CONSTANTS["config_file"]]
         + [COMPILE_COMMANDS_ABSOLUTE]
     )
     log(f"CodeChecker command: {' '.join(codechecker_cmd)}\n")
@@ -191,7 +188,7 @@ def main():
     """
     Main function of CodeChecker wrapper
     """
-    if len(sys.argv) != 8:
+    if len(sys.argv) != 7:
         print("Wrong amount of arguments")
         sys.exit(1)
     _create_compile_commands_json_with_absolute_paths()

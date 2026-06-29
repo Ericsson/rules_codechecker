@@ -37,7 +37,9 @@ def _run_code_checker(
         env_vars,
         compile_commands_json,
         compilation_context,
-        sources_and_headers):
+        sources_and_headers,
+        skipfile,
+        bazel_constants):
     # Define Plist and log file names
     data_dir = ctx.attr.name + "/data"
     file_name_params = (data_dir, src.path.replace("/", "-"))
@@ -50,38 +52,23 @@ def _run_code_checker(
     clangsa_plist = ctx.actions.declare_file(clangsa_plist_file_name)
     codechecker_log = ctx.actions.declare_file(codechecker_log_file_name)
 
-    # Create skipfile
-    config = ctx.actions.declare_file(
-        "{}/{}_skipfile".format(*file_name_params),
-    )
-    ctx.actions.write(
-        output = config,
-        content = "\n".join(ctx.attr.skip),
-    )
-
     # TODO: Consider using aliases so we don't have to type //src: everywhere.
     info = ctx.toolchains["//src:toolchain_type"].codecheckerinfo
 
+    mutual_inputs = [
+        compile_commands_json,
+        config_file,
+        skipfile,
+        info.codechecker,
+        bazel_constants,
+    ]
     if "--ctu" in options:
-        inputs = [
-            compile_commands_json,
-            config_file,
-            config,
-            info.codechecker,
-            info.clangsa,
-            info.clang_tidy,
-        ] + sources_and_headers
+        inputs = mutual_inputs + sources_and_headers
     else:
         # NOTE: we collect only headers, so CTU may not work!
         headers = depset(transitive = target[SourceFilesInfo].headers.to_list())
-        inputs = depset([
-            compile_commands_json,
-            config_file,
+        inputs = depset(mutual_inputs + [
             src,
-            config,
-            info.codechecker,
-            info.clangsa,
-            info.clang_tidy,
         ], transitive = [headers])
 
     outputs = [clang_tidy_plist, clangsa_plist, codechecker_log]
@@ -96,13 +83,12 @@ def _run_code_checker(
     ctx.actions.run(
         inputs = inputs,
         outputs = outputs,
-        executable = ctx.outputs.per_file_script,
+        executable = ctx.executable._per_file_script,
         arguments = [
-            info.codechecker.path,
+            bazel_constants.path,
             data_dir,
             src.path,
             codechecker_log.path,
-            config.path,
             analyzer_output_paths,
             analyzer_executables,
         ],
@@ -153,20 +139,43 @@ def _collect_all_sources_and_headers(ctx):
                 all_files += headers
     return all_files
 
-def _create_wrapper_script(ctx, options, compile_commands_json, config_file):
+def _create_constants_file(
+        ctx,
+        options,
+        compile_commands_json,
+        config_file,
+        skipfile):
     options_str = ""
     for item in options:
         options_str += item + " "
-    ctx.actions.expand_template(
-        template = ctx.file._per_file_script_template,
-        output = ctx.outputs.per_file_script,
-        is_executable = True,
-        substitutions = {
-            "{codechecker_args}": options_str,
-            "{compile_commands_json}": compile_commands_json.path,
-            "{config_file}": config_file.path,
-        },
+
+    # Define variables to use in a file
+    bazel_constants = ctx.actions.declare_file(
+        "{}/bazel_constants.json".format(ctx.attr.name),
     )
+    info = ctx.toolchains["//src:toolchain_type"].codecheckerinfo
+    ctx.actions.write(
+        output = bazel_constants,
+        content = json.encode_indent({
+            "codechecker_bin": info.codechecker.path,
+            "codechecker_args": options_str,
+            "compile_commands_json": compile_commands_json.path,
+            "config_file": config_file.path,
+            "skipfile": skipfile.path,
+        }),
+    )
+    return bazel_constants
+
+def _create_skipfile(ctx):
+    # Create skipfile
+    skipfile = ctx.actions.declare_file(
+        "{}/skipfile".format(ctx.attr.name),
+    )
+    ctx.actions.write(
+        output = skipfile,
+        content = "\n".join(ctx.attr.skip),
+    )
+    return skipfile
 
 def _per_file_impl(ctx):
     compile_commands = None
@@ -181,7 +190,14 @@ def _per_file_impl(ctx):
     options = ctx.attr.default_options + ctx.attr.options
     all_files = [compile_commands]
     config_file, env_vars = get_config_file(ctx)
-    _create_wrapper_script(ctx, options, compile_commands, config_file)
+    skipfile = _create_skipfile(ctx)
+    bazel_constants = _create_constants_file(
+        ctx,
+        options,
+        compile_commands,
+        config_file,
+        skipfile,
+    )
     for target in ctx.attr.targets:
         if not CcInfo in target:
             continue
@@ -206,6 +222,8 @@ def _per_file_impl(ctx):
                         compile_commands,
                         compilation_context,
                         sources_and_headers,
+                        skipfile,
+                        bazel_constants,
                     )
                     all_files += outputs
     ctx.actions.write(
@@ -261,14 +279,14 @@ per_file_test = rule(
             ],
             doc = "List of compilable targets which should be checked.",
         ),
-        "_per_file_script_template": attr.label(
-            default = ":per_file_script.py",
-            allow_single_file = True,
+        "_per_file_script": attr.label(
+            default = ":per_file_script",
+            executable = True,
+            cfg = "exec",
         ),
     },
     outputs = {
         "compile_commands": "%{name}/compile_commands.json",
-        "per_file_script": "%{name}/per_file_script.py",
         "test_script": "%{name}/test_script.sh",
     },
     test = True,

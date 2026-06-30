@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+load(":codechecker_toolchain.bzl", "codechecker_toolchain")
 
 # Tool filter compile_commands.json file
 # In bazel 6 we use our own python toolchain,
@@ -62,4 +63,21 @@ label_flag(
     name = "clang_tidy_additional_deps",
     build_setting_default = ":clang_tidy_additional_deps_default",
     visibility = ["//visibility:public"],
+)
+
+# named this by convention
+# https://bazel.build/extending/toolchains#:~:text=%23%20By%20convention%2C%20toolchain%5Ftype%20targets%20are%20named%20%22toolchain%5Ftype%22%20and
+toolchain_type(name = "toolchain_type")
+
+codechecker_toolchain(
+    name = "codechecker_local",
+    clang_tidy = "@default_codechecker_tools//:clang_tidy",
+    clangsa = "@default_codechecker_tools//:clang",
+    codechecker = "@default_codechecker_tools//:CodeChecker",
+)
+
+toolchain(
+    name = "codechecker_local_toolchain",
+    toolchain = "codechecker_local",
+    toolchain_type = ":toolchain_type",
 )

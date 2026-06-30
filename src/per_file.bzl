@@ -59,11 +59,17 @@ def _run_code_checker(
         content = "\n".join(ctx.attr.skip),
     )
 
+    # TODO: Consider using aliases so we don't have to type //src: everywhere.
+    info = ctx.toolchains["//src:toolchain_type"].codecheckerinfo
+
     if "--ctu" in options:
         inputs = [
             compile_commands_json,
             config_file,
             config,
+            info.codechecker,
+            info.clangsa,
+            info.clang_tidy,
         ] + sources_and_headers
     else:
         # NOTE: we collect only headers, so CTU may not work!
@@ -73,6 +79,9 @@ def _run_code_checker(
             config_file,
             src,
             config,
+            info.codechecker,
+            info.clangsa,
+            info.clang_tidy,
         ], transitive = [headers])
 
     outputs = [clang_tidy_plist, clangsa_plist, codechecker_log]
@@ -80,17 +89,22 @@ def _run_code_checker(
     analyzer_output_paths = "clangsa," + clangsa_plist.path + \
                             ";clang-tidy," + clang_tidy_plist.path
 
+    analyzer_executables = "clangsa:" + info.clangsa.path + \
+                           ";clang-tidy:" + info.clang_tidy.path
+
     # Action to run CodeChecker for a file
     ctx.actions.run(
         inputs = inputs,
         outputs = outputs,
         executable = ctx.outputs.per_file_script,
         arguments = [
+            info.codechecker.path,
             data_dir,
             src.path,
             codechecker_log.path,
             config.path,
             analyzer_output_paths,
+            analyzer_executables,
         ],
         mnemonic = "CodeChecker",
         use_default_shell_env = True,
@@ -258,4 +272,5 @@ per_file_test = rule(
         "test_script": "%{name}/test_script.sh",
     },
     test = True,
+    toolchains = ["//src:toolchain_type"],
 )

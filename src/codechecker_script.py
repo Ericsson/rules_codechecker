@@ -29,9 +29,9 @@ import sys
 
 EXECUTION_MODE = "{Mode}"
 VERBOSITY = "{Verbosity}"
-CODECHECKER_PATH = "{codechecker_bin}"
-CLANG_PATH = "{clang_bin}"
-CLANG_TIDY_PATH = "{clang_tidy_bin}"
+CODECHECKER_PATH = os.path.realpath("{codechecker_bin}")
+CLANG_PATH = os.path.realpath("{clang_bin}")
+CLANG_TIDY_PATH = os.path.realpath("{clang_tidy_bin}")
 CODECHECKER_SKIPFILE = "{codechecker_skipfile}"
 CODECHECKER_CONFIG = "{codechecker_config}"
 CODECHECKER_ANALYZE = "{codechecker_analyze}"

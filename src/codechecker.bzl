@@ -17,12 +17,6 @@ Rulesets for running codechecker in a single Bazel job.
 """
 
 load(
-    "@default_codechecker_tools//:defs.bzl",
-    "CLANG_BIN_PATH",
-    "CLANG_TIDY_BIN_PATH",
-    "CODECHECKER_BIN_PATH",
-)
-load(
     "codechecker_config.bzl",
     "codechecker_config_internal",
     "get_config_file",
@@ -99,6 +93,8 @@ def _codechecker_impl(ctx):
 
     config_file, codechecker_env = get_config_file(ctx)
 
+    info = ctx.toolchains["//src:toolchain_type"].codecheckerinfo
+
     codechecker_files = ctx.actions.declare_directory(ctx.label.name + "/codechecker-files")
     ctx.actions.expand_template(
         template = ctx.file._codechecker_script_template,
@@ -107,10 +103,10 @@ def _codechecker_impl(ctx):
         substitutions = {
             "{Mode}": "Run",
             "{Verbosity}": "DEBUG",
-            "{clang_bin}": CLANG_BIN_PATH,
-            "{clang_tidy_bin}": CLANG_TIDY_BIN_PATH,
+            "{clang_bin}": info.clangsa.path,
+            "{clang_tidy_bin}": info.clang_tidy.path,
             "{codechecker_analyze}": " ".join(ctx.attr.analyze),
-            "{codechecker_bin}": CODECHECKER_BIN_PATH,
+            "{codechecker_bin}": info.codechecker.path,
             "{codechecker_config}": config_file.path,
             "{codechecker_env}": codechecker_env,
             "{codechecker_files}": codechecker_files.path,
@@ -123,6 +119,9 @@ def _codechecker_impl(ctx):
     ctx.actions.run(
         inputs = depset(
             [
+                info.codechecker,
+                info.clangsa,
+                info.clang_tidy,
                 ctx.outputs.codechecker_script,
                 ctx.outputs.codechecker_commands,
                 ctx.outputs.codechecker_skipfile,
@@ -209,7 +208,10 @@ codechecker = rule(
         "codechecker_skipfile": "%{name}/codechecker_skipfile.cfg",
         "compile_commands": "%{name}/compile_commands.json",
     },
-    toolchains = [python_toolchain_type()],
+    toolchains = [
+        python_toolchain_type(),
+        "//src:toolchain_type",
+    ],
 )
 
 def _codechecker_test_impl(ctx):
@@ -229,6 +231,8 @@ def _codechecker_test_impl(ctx):
     if not codechecker_files:
         fail("Execution results required for codechecker test are not available")
 
+    info = ctx.toolchains["//src:toolchain_type"].codecheckerinfo
+
     # Create test script from template
     ctx.actions.expand_template(
         template = ctx.file._codechecker_script_template,
@@ -238,15 +242,20 @@ def _codechecker_test_impl(ctx):
             "{Mode}": "Test",
             "{Severities}": " ".join(ctx.attr.severities),
             "{Verbosity}": "INFO",
-            "{clang_bin}": CLANG_BIN_PATH,
-            "{clang_tidy_bin}": CLANG_TIDY_BIN_PATH,
-            "{codechecker_bin}": CODECHECKER_BIN_PATH,
+            "{clang_bin}": info.clangsa.short_path,
+            "{clang_tidy_bin}": info.clang_tidy.short_path,
+            "{codechecker_bin}": info.codechecker.short_path,
             "{codechecker_files}": codechecker_files.short_path,
         },
     )
 
     # Return test script and all required files
-    run_files = default_runfiles + [ctx.outputs.codechecker_test_script]
+    run_files = default_runfiles + [
+        ctx.outputs.codechecker_test_script,
+        info.codechecker,
+        info.clang_tidy,
+        info.clangsa,
+    ]
     return [
         DefaultInfo(
             files = depset(all_files),
@@ -306,7 +315,10 @@ _codechecker_test = rule(
         "codechecker_test_script": "%{name}/codechecker_test_script.py",
         "compile_commands": "%{name}/compile_commands.json",
     },
-    toolchains = [python_toolchain_type()],
+    toolchains = [
+        python_toolchain_type(),
+        "//src:toolchain_type",
+    ],
     test = True,
 )
 

@@ -20,6 +20,10 @@ load(
     "//src:codechecker.bzl",
     "codechecker_test",
 )
+load(
+    "//test/unit:unit_test.bzl",
+    "unit_test",
+)
 
 cc_library(
     name = "multiple_source",
@@ -45,4 +49,20 @@ codechecker_test(
     targets = [
         ":multiple_source",
     ],
+)
+
+unit_test(
+    name = "codechecker_metadata_test",
+    contains = [r"\"action_num\": 2,"],
+    data = [":codechecker_multiple_source"],
+    files = "test/unit/metadata/codechecker_multiple_source/codechecker-files/data/metadata.json",
+)
+
+unit_test(
+    name = "per_file_metadata_test",
+    data = [":per_file_multiple_source"],
+    excludes = [r"\"action_num\": 2,"],
+    files = "test/unit/metadata/per_file_multiple_source/data/metadata.json",
+    # FIXME: remove when metadata is generated
+    tags = ["manual"],
 )

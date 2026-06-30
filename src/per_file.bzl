@@ -60,6 +60,8 @@ def _run_code_checker(
         config_file,
         skipfile,
         info.codechecker,
+        info.clang_tidy,
+        info.clangsa,
         bazel_constants,
     ]
     if "--ctu" in options:

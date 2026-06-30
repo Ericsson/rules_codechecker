@@ -93,6 +93,7 @@ def _get_codechecker_env() -> dict[str, str]:
     cc_env = os.environ.copy()
     # Overwrite analyzer paths
     cc_env["CC_ANALYZER_BIN"] = ANALYZER_EXECUTABLES_ENV_VAR
+    print(ANALYZER_EXECUTABLES_ENV_VAR)
     return cc_env
 
 

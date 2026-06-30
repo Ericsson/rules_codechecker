@@ -59,6 +59,7 @@ def _run_code_checker(
         content = "\n".join(ctx.attr.skip),
     )
 
+    # TODO: Consider using aliases so we don't have to type //src: everywhere.
     info = ctx.toolchains["//src:toolchain_type"].codecheckerinfo
 
     if "--ctu" in options:

@@ -96,24 +96,26 @@ def _codechecker_impl(ctx):
     info = ctx.toolchains["//src:toolchain_type"].codecheckerinfo
 
     codechecker_files = ctx.actions.declare_directory(ctx.label.name + "/codechecker-files")
-    ctx.actions.expand_template(
-        template = ctx.file._codechecker_script_template,
-        output = ctx.outputs.codechecker_script,
-        is_executable = True,
-        substitutions = {
-            "{Mode}": "Run",
-            "{Verbosity}": "DEBUG",
-            "{clang_bin}": info.clangsa.path,
-            "{clang_tidy_bin}": info.clang_tidy.path,
-            "{codechecker_analyze}": " ".join(ctx.attr.analyze),
-            "{codechecker_bin}": info.codechecker.path,
-            "{codechecker_config}": config_file.path,
-            "{codechecker_env}": codechecker_env,
-            "{codechecker_files}": codechecker_files.path,
-            "{codechecker_log}": ctx.outputs.codechecker_log.path,
-            "{codechecker_skipfile}": ctx.outputs.codechecker_skipfile.path,
-            "{compile_commands}": ctx.outputs.codechecker_commands.path,
-        },
+
+    bazel_constants_json = ctx.actions.declare_file(ctx.label.name + "_bazel_build_constants.json")
+    codechecker_data = {
+        "Mode": "Run",
+        "Verbosity": "DEBUG",
+        "clang_bin": info.clangsa.path,
+        "clang_tidy_bin": info.clang_tidy.path,
+        "codechecker_analyze": ctx.attr.analyze,  # this is a list
+        "codechecker_bin": info.codechecker.path,
+        "codechecker_config": config_file.path,
+        "codechecker_env": codechecker_env,
+        "codechecker_files": codechecker_files.path,
+        "codechecker_log": ctx.outputs.codechecker_log.path,
+        "codechecker_skipfile": ctx.outputs.codechecker_skipfile.path,
+        "compile_commands": ctx.outputs.codechecker_commands.path,
+    }
+
+    ctx.actions.write(
+        output = bazel_constants_json,
+        content = json.encode_indent(codechecker_data),
     )
 
     ctx.actions.run(
@@ -122,20 +124,18 @@ def _codechecker_impl(ctx):
                 info.codechecker,
                 info.clangsa,
                 info.clang_tidy,
-                ctx.outputs.codechecker_script,
                 ctx.outputs.codechecker_commands,
                 ctx.outputs.codechecker_skipfile,
                 config_file,
+                bazel_constants_json,
             ] + source_files,
         ),
         outputs = [
             codechecker_files,
             ctx.outputs.codechecker_log,
         ],
-        executable = ctx.outputs.codechecker_script,
-        arguments = [],
-        # executable = python_path(ctx),
-        # arguments = [ctx.outputs.codechecker_script.path],
+        executable = ctx.executable._codechecker_script,
+        arguments = [bazel_constants_json.path],
         mnemonic = "CodeChecker",
         progress_message = "CodeChecker %s" % str(ctx.label),
         # use_default_shell_env = True,
@@ -148,7 +148,6 @@ def _codechecker_impl(ctx):
         ctx.outputs.codechecker_skipfile,
         config_file,
         codechecker_files,
-        ctx.outputs.codechecker_script,
         ctx.outputs.codechecker_log,
     ] + source_files
 
@@ -190,9 +189,10 @@ codechecker = rule(
             ],
             doc = "List of compilable targets which should be checked.",
         ),
-        "_codechecker_script_template": attr.label(
-            default = ":codechecker_script.py",
-            allow_single_file = True,
+        "_codechecker_script": attr.label(
+            default = ":codechecker_script",
+            executable = True,
+            cfg = "exec",
         ),
         "_compile_commands_filter": attr.label(
             allow_files = True,
@@ -204,7 +204,6 @@ codechecker = rule(
     outputs = {
         "codechecker_commands": "%{name}/codechecker_commands.json",
         "codechecker_log": "%{name}/codechecker.log",
-        "codechecker_script": "%{name}/codechecker_script.py",
         "codechecker_skipfile": "%{name}/codechecker_skipfile.cfg",
         "compile_commands": "%{name}/compile_commands.json",
     },
@@ -233,34 +232,48 @@ def _codechecker_test_impl(ctx):
 
     info = ctx.toolchains["//src:toolchain_type"].codecheckerinfo
 
-    # Create test script from template
-    ctx.actions.expand_template(
-        template = ctx.file._codechecker_script_template,
-        output = ctx.outputs.codechecker_test_script,
+    bazel_constants_json = ctx.actions.declare_file(ctx.label.name + "_bazel_test_constants.json")
+    ctx.actions.write(
+        output = bazel_constants_json,
+        content = json.encode_indent({
+            "Mode": "Test",
+            "Severities": " ".join(ctx.attr.severities),
+            "Verbosity": "INFO",
+            "clang_bin": info.clangsa.short_path,
+            "clang_tidy_bin": info.clang_tidy.short_path,
+            "codechecker_bin": info.codechecker.short_path,
+            "codechecker_files": codechecker_files.short_path,
+        }, indent = "  ") + "\n",
+        is_executable = False,
+    )
+
+    launcher = ctx.actions.declare_file(ctx.label.name + "_launcher.sh")
+    ctx.actions.write(
+        output = launcher,
+        content = """#!/bin/bash
+            exec {tool} {constants}
+            """.format(
+            tool = ctx.executable._codechecker_script.short_path,
+            constants = bazel_constants_json.short_path,
+        ),
         is_executable = True,
-        substitutions = {
-            "{Mode}": "Test",
-            "{Severities}": " ".join(ctx.attr.severities),
-            "{Verbosity}": "INFO",
-            "{clang_bin}": info.clangsa.short_path,
-            "{clang_tidy_bin}": info.clang_tidy.short_path,
-            "{codechecker_bin}": info.codechecker.short_path,
-            "{codechecker_files}": codechecker_files.short_path,
-        },
     )
 
     # Return test script and all required files
     run_files = default_runfiles + [
-        ctx.outputs.codechecker_test_script,
+        ctx.executable._codechecker_script,
         info.codechecker,
         info.clang_tidy,
         info.clangsa,
+        bazel_constants_json,
     ]
+    run_files = ctx.runfiles(files = run_files)
+    run_files = run_files.merge(ctx.attr._codechecker_script[DefaultInfo].default_runfiles)
     return [
         DefaultInfo(
             files = depset(all_files),
-            runfiles = ctx.runfiles(files = run_files),
-            executable = ctx.outputs.codechecker_test_script,
+            runfiles = run_files,
+            executable = launcher,
         ),
     ]
 
@@ -296,9 +309,10 @@ _codechecker_test = rule(
             cfg = platforms_transition,
             doc = "List of compilable targets which should be checked.",
         ),
-        "_codechecker_script_template": attr.label(
-            default = ":codechecker_script.py",
-            allow_single_file = True,
+        "_codechecker_script": attr.label(
+            default = ":codechecker_script",
+            executable = True,
+            cfg = "exec",
         ),
         "_compile_commands_filter": attr.label(
             allow_files = True,
@@ -310,9 +324,7 @@ _codechecker_test = rule(
     outputs = {
         "codechecker_commands": "%{name}/codechecker_commands.json",
         "codechecker_log": "%{name}/codechecker.log",
-        "codechecker_script": "%{name}/codechecker_script.py",
         "codechecker_skipfile": "%{name}/codechecker_skipfile.cfg",
-        "codechecker_test_script": "%{name}/codechecker_test_script.py",
         "compile_commands": "%{name}/compile_commands.json",
     },
     toolchains = [

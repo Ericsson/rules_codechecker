@@ -34,11 +34,15 @@ py_binary(
     visibility = ["//visibility:public"],
 )
 
-# Build & Test script template
-exports_files(
-    [
-        "codechecker_script.py",
-    ],
+# In bazel 6 we use our own python toolchain,
+# therefore we cannot load from rules_python.
+# buildifier: disable=native-py
+py_binary(
+    name = "codechecker_script",
+    srcs = ["codechecker_script.py"],
+    main = "codechecker_script.py",
+    # Bazel 6 doesn't see this otherwise
+    visibility = ["//visibility:public"],
 )
 
 # The following are flags and default values for clang_tidy_aspect

@@ -35,12 +35,13 @@ DATA_DIR = sys.argv[2]
 # The file to be analyzed
 FILE_PATH = sys.argv[3]
 LOG_FILE = sys.argv[4]
+METADATA_FILE = sys.argv[6]
 # List of pairs of analyzers and their plist files
-ANALYZER_PLIST_PATHS = [item.split(",") for item in sys.argv[6].split(";")]
+ANALYZER_PLIST_PATHS = [item.split(",") for item in sys.argv[7].split(";")]
 ANALYZER_EXECUTABLES_ENV_VAR = ";".join(
     f"{name}:{os.path.realpath(path)}"
     for name, path in [
-        pair.split(":", 1) for pair in sys.argv[7].split(";") if pair
+        pair.split(":", 1) for pair in sys.argv[8].split(";") if pair
     ]
 )
 
@@ -157,7 +158,7 @@ def _display_error(ret_code: int) -> None:
 def _move_plist_files():
     """
     Move the plist files from the temporary directory to their final destination
-    If the files doesn't exists, write an empty plist file to the target.
+    If a file doesn't exists, write an empty plist file to the target.
     This can happen when an analysis was skipped
     because of a CodeChecker skipfile.
     For each analysis action we must have an output file, even if its skipped,
@@ -187,16 +188,31 @@ def _move_plist_files():
                 file.write(EMPTY_PLIST)
 
 
+def _move_misc_artifacts():
+    """
+    Move miscellaneous CodeChecker artifacts to their designated output.
+    """
+    if os.path.isfile(os.path.join(DATA_DIR, "metadata.json")):
+        shutil.move(os.path.join(DATA_DIR, "metadata.json"), METADATA_FILE)
+    # This happens when the file was skipped.
+    # CodeChecker does not create metadata
+    # if no analysis was performed.
+    else:
+        with open(METADATA_FILE, "w", encoding="utf-8") as file:
+            file.write("{}")
+
+
 def main():
     """
     Main function of CodeChecker wrapper
     """
-    if len(sys.argv) != 8:
+    if len(sys.argv) != 9:
         print("Wrong amount of arguments")
         sys.exit(1)
     _create_compile_commands_json_with_absolute_paths()
     _run_codechecker()
     _move_plist_files()
+    _move_misc_artifacts()
 
 
 if __name__ == "__main__":

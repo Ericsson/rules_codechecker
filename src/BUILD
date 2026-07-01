@@ -23,6 +23,16 @@ py_binary(
     visibility = ["//visibility:public"],
 )
 
+# In bazel 6 we use our own python toolchain,
+# therefore we cannot load from rules_python.
+# buildifier: disable=native-py
+py_binary(
+    name = "metadata_merge",
+    srcs = ["metadata_merge.py"],
+    # Bazel 6 won't see this otherwise
+    visibility = ["//visibility:public"],
+)
+
 # Build & Test script template
 exports_files(
     [

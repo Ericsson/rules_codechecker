@@ -44,6 +44,7 @@ def _run_code_checker(
     clang_tidy_plist_file_name = "{}/{}_clang-tidy.plist".format(*file_name_params)
     clangsa_plist_file_name = "{}/{}_clangsa.plist".format(*file_name_params)
     codechecker_log_file_name = "{}/{}_codechecker.log".format(*file_name_params)
+    codechecker_metadata_file_name = "{}/{}_metadata.json".format(*file_name_params)
 
     # Declare output files
     clang_tidy_plist = ctx.actions.declare_file(clang_tidy_plist_file_name)
@@ -58,6 +59,7 @@ def _run_code_checker(
         output = config,
         content = "\n".join(ctx.attr.skip),
     )
+    codechecker_metadata = ctx.actions.declare_file(codechecker_metadata_file_name)
 
     # TODO: Consider using aliases so we don't have to type //src: everywhere.
     info = ctx.toolchains["//src:toolchain_type"].codecheckerinfo
@@ -84,7 +86,12 @@ def _run_code_checker(
             info.clang_tidy,
         ], transitive = [headers])
 
-    outputs = [clang_tidy_plist, clangsa_plist, codechecker_log]
+    outputs = [
+        clang_tidy_plist,
+        clangsa_plist,
+        codechecker_log,
+        codechecker_metadata,
+    ]
 
     analyzer_output_paths = "clangsa," + clangsa_plist.path + \
                             ";clang-tidy," + clang_tidy_plist.path
@@ -103,6 +110,7 @@ def _run_code_checker(
             src.path,
             codechecker_log.path,
             config.path,
+            codechecker_metadata.path,
             analyzer_output_paths,
             analyzer_executables,
         ],
@@ -168,6 +176,24 @@ def _create_wrapper_script(ctx, options, compile_commands_json, config_file):
         },
     )
 
+def _merge_metadata(ctx, all_files):
+    """
+    Merges metadata files of individual CodeChecker runs into 1
+
+    Returns the metadata file objects
+    """
+    metadata = [file for file in all_files if file.path.endswith("metadata.json")]
+    metadata_json = ctx.actions.declare_file(ctx.attr.name + "/data/metadata.json")
+    ctx.actions.run(
+        inputs = metadata,
+        outputs = [metadata_json],
+        executable = ctx.executable._metadata_merge,
+        arguments = [metadata_json.path] + [file.path for file in metadata],
+        mnemonic = "Metadata",
+        progress_message = "Merging metadata.json",
+    )
+    return metadata_json
+
 def _per_file_impl(ctx):
     compile_commands = None
     for output in compile_commands_impl(ctx):
@@ -208,6 +234,8 @@ def _per_file_impl(ctx):
                         sources_and_headers,
                     )
                     all_files += outputs
+
+    all_files.append(_merge_metadata(ctx, all_files))
     ctx.actions.write(
         output = ctx.outputs.test_script,
         is_executable = True,
@@ -260,6 +288,11 @@ per_file_test = rule(
                 compile_commands_aspect,
             ],
             doc = "List of compilable targets which should be checked.",
+        ),
+        "_metadata_merge": attr.label(
+            default = ":metadata_merge",
+            executable = True,
+            cfg = "exec",
         ),
         "_per_file_script_template": attr.label(
             default = ":per_file_script.py",

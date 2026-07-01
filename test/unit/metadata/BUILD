@@ -35,7 +35,8 @@ cc_library(
 )
 
 codechecker_test(
-    name = "codechecker_multiple_source",
+    name = "monolithic_multiple_source",
+    per_file = False,
     tags = ["manual"],
     targets = [
         ":multiple_source",
@@ -52,16 +53,16 @@ codechecker_test(
 )
 
 unit_test(
-    name = "codechecker_metadata_test",
+    name = "monolithic_metadata_test",
     contains = [r"\"action_num\": 2,"],
-    data = [":codechecker_multiple_source"],
+    data = [":monolithic_multiple_source"],
     files = "test/unit/metadata/codechecker_multiple_source/codechecker-files/data/metadata.json",
 )
 
 unit_test(
     name = "per_file_metadata_test",
+    contains = [r"\"action_num\": 2,"],
     data = [":per_file_multiple_source"],
-    excludes = [r"\"action_num\": 2,"],
     files = "test/unit/metadata/per_file_multiple_source/data/metadata.json",
     # FIXME: remove when metadata is generated
     tags = ["manual"],

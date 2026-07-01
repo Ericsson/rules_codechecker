@@ -76,6 +76,7 @@ _cc_rules = [
 
 SYSTEM_INCLUDE = "-isystem "
 QUOTE_INCLUDE = "-iquote "
+EXTERNAL_INCLUDE = "-isystem "
 
 # Function copied from https://gist.github.com/oquenchil/7e2c2bd761aa1341b458cc25608da50c
 # NOTE: added local_defines
@@ -111,6 +112,11 @@ def get_compile_flags(ctx, dep):
         if len(quote_include) == 0:
             quote_include = "."
         options.append(QUOTE_INCLUDE + quote_include)
+    if hasattr(compilation_context, "external_includes"):
+        for external_include in compilation_context.external_includes.to_list():
+            if len(external_include) == 0:
+                external_include = "."
+            options.append(EXTERNAL_INCLUDE + external_include)
 
     for attr in SOURCE_ATTR:
         if not hasattr(ctx.rule.attr, attr):
@@ -134,6 +140,12 @@ def get_compile_flags(ctx, dep):
                 if len(system_include) == 0:
                     system_include = "."
                 options.append(SYSTEM_INCLUDE + system_include)
+
+            if hasattr(compilation_context, "external_includes"):
+                for external_include in compilation_context.external_includes.to_list():
+                    if len(external_include) == 0:
+                        external_include = "."
+                    options.append(EXTERNAL_INCLUDE + external_include)
 
     return options
 

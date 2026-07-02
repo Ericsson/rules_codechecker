@@ -136,6 +136,11 @@ def get_compile_flags(ctx, dep):
                     include = "."
                 options.append("-I{}".format(include))
 
+            for quote_include in compilation_context.quote_includes.to_list():
+                if len(quote_include) == 0:
+                    quote_include = "."
+                options.append(QUOTE_INCLUDE + quote_include)
+
             for system_include in compilation_context.system_includes.to_list():
                 if len(system_include) == 0:
                     system_include = "."

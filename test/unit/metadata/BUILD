@@ -56,7 +56,7 @@ unit_test(
     name = "monolithic_metadata_test",
     contains = [r"\"action_num\": 2,"],
     data = [":monolithic_multiple_source"],
-    files = "test/unit/metadata/codechecker_multiple_source/codechecker-files/data/metadata.json",
+    files = "test/unit/metadata/monolithic_multiple_source/codechecker-files/data/metadata.json",
 )
 
 unit_test(

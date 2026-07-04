@@ -67,7 +67,10 @@ label_flag(
 
 # named this by convention
 # https://bazel.build/extending/toolchains#:~:text=%23%20By%20convention%2C%20toolchain%5Ftype%20targets%20are%20named%20%22toolchain%5Ftype%22%20and
-toolchain_type(name = "toolchain_type")
+toolchain_type(
+    name = "toolchain_type",
+    visibility = ["//visibility:public"],
+)
 
 codechecker_toolchain(
     name = "codechecker_local",

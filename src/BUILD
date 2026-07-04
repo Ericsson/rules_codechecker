@@ -14,7 +14,7 @@
 load(":codechecker_toolchain.bzl", "codechecker_toolchain")
 
 # Tool filter compile_commands.json file
-# In bazel 6 we use our own python toolchain,
+# For targets using WORKSPACE files we use our own python toolchain,
 # therefore we cannot load from rules_python.
 # buildifier: disable=native-py
 py_binary(
@@ -23,7 +23,7 @@ py_binary(
     visibility = ["//visibility:public"],
 )
 
-# In bazel 6 we use our own python toolchain,
+# For targets using WORKSPACE files we use our own python toolchain,
 # therefore we cannot load from rules_python.
 # buildifier: disable=native-py
 py_binary(
@@ -34,7 +34,7 @@ py_binary(
     visibility = ["//visibility:public"],
 )
 
-# In bazel 6 we use our own python toolchain,
+# For targets using WORKSPACE files we use our own python toolchain,
 # therefore we cannot load from rules_python.
 # buildifier: disable=native-py
 py_binary(

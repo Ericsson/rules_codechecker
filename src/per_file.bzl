@@ -176,6 +176,24 @@ def _create_wrapper_script(ctx, options, compile_commands_json, config_file):
         },
     )
 
+def _merge_metadata(ctx, all_files):
+    """
+    Merges metadata files of individual CodeChecker runs into 1
+
+    Returns the metadata file objects
+    """
+    metadata = [file for file in all_files if file.path.endswith("metadata.json")]
+    metadata_json = ctx.actions.declare_file(ctx.attr.name + "/data/metadata.json")
+    ctx.actions.run(
+        inputs = metadata,
+        outputs = [metadata_json],
+        executable = ctx.executable._metadata_merge,
+        arguments = [metadata_json.path] + [file.path for file in metadata],
+        mnemonic = "Metadata",
+        progress_message = "Merging metadata.json",
+    )
+    return metadata_json
+
 def _per_file_impl(ctx):
     compile_commands = None
     for output in compile_commands_impl(ctx):
@@ -220,6 +238,7 @@ def _per_file_impl(ctx):
                         sources_and_headers,
                     )
                     all_files += outputs
+    all_files.append(_merge_metadata(ctx, all_files))
     ctx.actions.write(
         output = ctx.outputs.test_script,
         is_executable = True,
@@ -272,6 +291,11 @@ per_file_test = rule(
                 compile_commands_aspect,
             ],
             doc = "List of compilable targets which should be checked.",
+        ),
+        "_metadata_merge": attr.label(
+            default = ":metadata_merge",
+            executable = True,
+            cfg = "exec",
         ),
         "_per_file_script_template": attr.label(
             default = ":per_file_script.py",

@@ -27,7 +27,6 @@ on:
       - "README*"
       - "LICENSE"
 
-
 permissions: read-all
 
 concurrency:
@@ -36,14 +35,20 @@ concurrency:
 
 jobs:
   ubuntu_test:
-    name: "Tests: Bazel ${{ matrix.bazel_version }} (Ubuntu)"
+    name: "Tests: Bazel ${{ matrix.bazel_version }} ${{ matrix.bazel_mode }} (Ubuntu)"
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        bazel_version:
-          - "7.7.1"
-          - "8.5.1"
+        include:
+          - bazel_version: "7.7.1"
+            bazel_mode: "workspace"
+
+          - bazel_version: "7.7.1"
+            bazel_mode: "module"
+
+          - bazel_version: "8.5.1"
+            bazel_mode: "module"
 
     steps:
       - name: Checkout repository
@@ -51,6 +56,15 @@ jobs:
 
       - name: Set bazel version to ${{ matrix.bazel_version }}
         run: echo "${{ matrix.bazel_version }}" > .bazelversion
+        shell: bash
+
+      - name: Force Bazel WORKSPACE mode
+        if: ${{ matrix.bazel_mode == 'workspace' }}
+        run: |
+          cat >> .bazelrc <<'EOF'
+          # Force usage of WORKSPACE file
+          common --noenable_bzlmod
+          EOF
         shell: bash
 
       # I did not use our setup script to leverage
@@ -97,7 +111,7 @@ jobs:
         shell: bash -el {0}
 
   rhel9_test:
-    name: "Tests: Bazel ${{ matrix.bazel_version }} (RHEL9)"
+    name: "Tests: Bazel ${{ matrix.bazel_version }} ${{ matrix.bazel_mode }} (RHEL9)"
     runs-on: ubuntu-24.04
     container:
       image: redhat/ubi9:latest
@@ -105,9 +119,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        bazel_version:
-          - "7.7.1"
-          - "8.5.1"
+        include:
+          - bazel_version: "7.7.1"
+            bazel_mode: "workspace"
+
+          - bazel_version: "7.7.1"
+            bazel_mode: "module"
+
+          - bazel_version: "8.5.1"
+            bazel_mode: "module"
 
     steps:
       - name: Checkout repository
@@ -115,6 +135,15 @@ jobs:
 
       - name: Set bazel version to ${{ matrix.bazel_version }}
         run: echo "${{ matrix.bazel_version }}" > .bazelversion
+        shell: bash
+
+      - name: Force Bazel WORKSPACE mode
+        if: ${{ matrix.bazel_mode == 'workspace' }}
+        run: |
+          cat >> .bazelrc <<'EOF'
+          # Force usage of WORKSPACE file
+          common --noenable_bzlmod
+          EOF
         shell: bash
 
       - name: Setup environment
@@ -165,4 +194,3 @@ jobs:
       - name: Run Open Source tests
         run: runuser -u test -- pytest test/foss ${{ runner.debug == '1' && '--log-cli-level=DEBUG' || '' }}
         shell: bash -el {0}
-

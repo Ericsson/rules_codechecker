@@ -166,6 +166,22 @@ def fail(msg: str, exit_code: int = 1):
     print(msg)
     sys.exit(exit_code)
 
+
+def collect_file_paths(glob_list: list[str]) -> list[str]:
+    """Convert the glob patterns into a list of file paths"""
+    file_paths = []
+    for file_pattern in glob_list:
+        matched_files = glob.glob(file_pattern, recursive=True)
+        if not matched_files:
+            # Each file pattern must match at least a file
+            fail(f"  [WARN] No files matched pattern/path: '{file_pattern}'")
+        file_paths.extend(matched_files)
+
+    if not file_paths:
+        fail("  [ERR] No file collected to be checked.")
+    return file_paths
+
+
 def main() -> None:
     """Entry point for the pattern-matching test."""
     args = parse_args()
@@ -181,20 +197,11 @@ def main() -> None:
         )
         sys.exit(0)
 
+    file_paths = collect_file_paths(files_to_check)
+
     all_passed = True
     found_patterns = set()
     missing_patterns = set()
-
-    file_paths = []
-    for file_pattern in files_to_check:
-        matched_files = glob.glob(file_pattern, recursive=True)
-        if not matched_files:
-            # Each file pattern must match at least a file
-            fail(f"  [WARN] No files matched pattern/path: '{file_pattern}'")
-        file_paths.extend(matched_files)
-
-    if not file_paths:
-        fail("  [ERR] No file collected to be checked.")
 
     for file in file_paths:
         with open(file, "r", encoding="utf-8") as f:

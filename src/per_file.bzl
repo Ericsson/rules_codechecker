@@ -90,7 +90,6 @@ def _run_code_checker(
         clang_tidy_plist,
         clangsa_plist,
         codechecker_log,
-        codechecker_metadata,
     ]
 
     analyzer_output_paths = "clangsa," + clangsa_plist.path + \
@@ -105,7 +104,9 @@ def _run_code_checker(
     # TODO: use env for environment variables, instead of passing it as argument
     ctx.actions.run(
         inputs = inputs,
-        outputs = outputs,
+        # We do not want all individual metadata files
+        # cluttering the data folder
+        outputs = outputs + [codechecker_metadata],
         executable = per_file_script,
         tools = [
             info.runfiles,
@@ -137,7 +138,7 @@ def _run_code_checker(
         mnemonic = "CodeChecker",
         progress_message = "CodeChecker analyze {}".format(src.short_path),
     )
-    return outputs
+    return outputs, codechecker_metadata
 
 def check_valid_file_type(src):
     """
@@ -180,13 +181,12 @@ def _collect_all_sources_and_headers(ctx):
                 all_files += headers
     return all_files
 
-def _merge_metadata(ctx, all_files):
+def _merge_metadata(ctx, metadata):
     """
     Merges metadata files of individual CodeChecker runs into 1
 
     Returns the metadata file objects
     """
-    metadata = [file for file in all_files if file.path.endswith("metadata.json")]
     metadata_json = ctx.actions.declare_file(ctx.attr.name + "/data/metadata.json")
     ctx.actions.run(
         inputs = metadata,
@@ -210,6 +210,7 @@ def _per_file_impl(ctx):
         fail("Seems compile_commands.json file is incorrect!")
     sources_and_headers = _collect_all_sources_and_headers(ctx)
     options = ctx.attr.default_options + ctx.attr.options
+    all_metadata = []
     config_file, env_vars = get_config_file(ctx)
     all_files = [compile_commands, config_file]
 
@@ -231,7 +232,7 @@ def _per_file_impl(ctx):
                     if not check_valid_file_type(src):
                         continue
                     args = target[SourceFilesInfo].compilation_db.to_list()
-                    outputs = _run_code_checker(
+                    outputs, metadata = _run_code_checker(
                         ctx,
                         per_file_script,
                         src,
@@ -247,7 +248,8 @@ def _per_file_impl(ctx):
                         sources_and_headers,
                     )
                     all_files += outputs
-    all_files.append(_merge_metadata(ctx, all_files))
+                    all_metadata.append(metadata)
+    all_files.append(_merge_metadata(ctx, all_metadata))
     ctx.actions.write(
         output = ctx.outputs.test_script,
         is_executable = True,

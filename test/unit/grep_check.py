@@ -150,7 +150,7 @@ def check_file(content: str, args) -> tuple[bool, set[str], set[str]]:
 
 def assert_files_missing(files):
     """
-    Asserts that the list of file paths given as parameter, doesn't exists.
+    Asserts that none of the files exist in `files`.
     """
     for file_pattern in files:
         matched_files = glob.glob(file_pattern, recursive=True)

@@ -155,7 +155,7 @@ def assert_files_missing(files):
     for file_pattern in files:
         matched_files = glob.glob(file_pattern, recursive=True)
         if matched_files:
-            print(f"\n{file_pattern} exists, however it shouldn't.")
+            print(f"\n{file_pattern} unexpectedly exists.")
             sys.exit(1)
 
 

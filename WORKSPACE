@@ -14,24 +14,32 @@
 
 workspace(name = "rules_codechecker")
 
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load(
     "@rules_codechecker//src:tools.bzl",
     "register_default_codechecker_tools",
-    "register_default_python_toolchain",
 )
 
-register_default_python_toolchain()
-
 register_toolchains(
-    "@default_python_tools//:python_toolchain",
     "//src:codechecker_local_toolchain",
 )
 
 register_default_codechecker_tools()
 
-# Dev dependencies
+# rules_python
 
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+http_archive(
+    name = "rules_python",
+    sha256 = "4f7e2aa1eb9aa722d96498f5ef514f426c1f55161c3c9ae628c857a7128ceb07",
+    strip_prefix = "rules_python-1.0.0",
+    url = "https://github.com/bazelbuild/rules_python/releases/download/1.0.0/rules_python-1.0.0.tar.gz",
+)
+
+load("@rules_python//python:repositories.bzl", "py_repositories")
+
+py_repositories()
+
+# Dev dependencies
 
 http_archive(
     name = "buildifier_prebuilt",

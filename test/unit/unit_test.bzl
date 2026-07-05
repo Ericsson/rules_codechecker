@@ -28,6 +28,8 @@ Example:
     )
 """
 
+load("@rules_python//python:defs.bzl", "py_test")
+
 def unit_test(
         name,
         files,
@@ -73,10 +75,7 @@ def unit_test(
     if not require_patterns_in_each_file:
         python_args.append("--any")
 
-    # Since we use a custom python toolchain instead of rules_python in WORKSPACE
-    # we cannot include py_test
-    # buildifier: disable=native-pys
-    native.py_test(
+    py_test(
         name = name,
         srcs = ["//test/unit:grep_check.py"],
         main = "//test/unit:grep_check.py",

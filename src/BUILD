@@ -11,12 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+load("@rules_python//python:defs.bzl", "py_binary")
 load(":codechecker_toolchain.bzl", "codechecker_toolchain")
 
 # Tool filter compile_commands.json file
-# In bazel 6 we use our own python toolchain,
-# therefore we cannot load from rules_python.
-# buildifier: disable=native-py
 py_binary(
     name = "compile_commands_filter",
     srcs = ["compile_commands_filter.py"],

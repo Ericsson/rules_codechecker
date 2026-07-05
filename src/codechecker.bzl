@@ -23,7 +23,6 @@ load(
 )
 load(
     "common.bzl",
-    "python_toolchain_type",
     "version_specific_attributes",
 )
 load(
@@ -209,7 +208,6 @@ codechecker = rule(
         "compile_commands": "%{name}/compile_commands.json",
     },
     toolchains = [
-        python_toolchain_type(),
         "//src:toolchain_type",
     ],
 )
@@ -316,7 +314,6 @@ _codechecker_test = rule(
         "compile_commands": "%{name}/compile_commands.json",
     },
     toolchains = [
-        python_toolchain_type(),
         "//src:toolchain_type",
     ],
     test = True,

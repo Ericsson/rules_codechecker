@@ -42,14 +42,6 @@ def version_specific_attributes():
         )})
     return {}
 
-def python_toolchain_type():
-    """
-    Returns version specific Python toolchain type
-    """
-    if BAZEL_VERSION.split(".")[0] in "01234567":
-        return "@bazel_tools//tools/python:toolchain_type"
-    return "@rules_python//python:toolchain_type"
-
 def warning(ctx, msg):
     """
     Prints message if the debug tag is enabled.

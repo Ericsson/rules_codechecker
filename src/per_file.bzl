@@ -180,6 +180,24 @@ def _collect_all_sources_and_headers(ctx):
                 all_files += headers
     return all_files
 
+def _merge_metadata(ctx, all_files):
+    """
+    Merges metadata files of individual CodeChecker runs into 1
+
+    Returns the metadata file objects
+    """
+    metadata = [file for file in all_files if file.path.endswith("metadata.json")]
+    metadata_json = ctx.actions.declare_file(ctx.attr.name + "/data/metadata.json")
+    ctx.actions.run(
+        inputs = metadata,
+        outputs = [metadata_json],
+        executable = ctx.executable._metadata_merge,
+        arguments = [metadata_json.path] + [file.path for file in metadata],
+        mnemonic = "Metadata",
+        progress_message = "Merging metadata.json",
+    )
+    return metadata_json
+
 def _per_file_impl(ctx):
     info = ctx.toolchains["//:toolchain_type"].codecheckerinfo
     compile_commands = None
@@ -229,6 +247,7 @@ def _per_file_impl(ctx):
                         sources_and_headers,
                     )
                     all_files += outputs
+    all_files.append(_merge_metadata(ctx, all_files))
     ctx.actions.write(
         output = ctx.outputs.test_script,
         is_executable = True,
@@ -295,6 +314,11 @@ per_file_test = rule(
             doc = "Optional toolchain() target. " +
                   "When set, tools from this target are used instead of " +
                   "Bazel's toolchain resolution.",
+        ),
+        "_metadata_merge": attr.label(
+            default = ":metadata_merge",
+            executable = True,
+            cfg = "exec",
         ),
         "_per_file_script": attr.label(
             executable = True,

@@ -194,7 +194,8 @@ def _move_output_files():
     elif plist_exists:
         # We do not create the "empty" metadata file, to make bazel fail
         print(
-            "[WARNING] metadata.json doesn't exists despite successful analysis..."
+            "[WARNING] metadata.json doesn't exists "
+            "despite successful analysis..."
         )
     # This happens when the file was skipped.
     # CodeChecker does not create metadata

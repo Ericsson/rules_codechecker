@@ -155,12 +155,11 @@ def _display_error(ret_code: int) -> None:
     sys.exit(1)
 
 
-def _move_plist_files():
+def _move_output_files():
     """
-    Move the plist files from the temporary directory to their final destination
-    If a file doesn't exists, write an empty plist file to the target.
-    This can happen when an analysis was skipped
-    because of a CodeChecker skipfile.
+    Move output files from the temporary directory to their final destination
+    If a file doesn't exists, write an empty output file to the target.
+    This can happen when an analysis was skipped due to a CodeChecker skipfile.
     For each analysis action we must have an output file, even if its skipped,
     so we substitute it with an empty one.
     """
@@ -170,6 +169,8 @@ def _move_plist_files():
         (analyzer[1], re.compile(rf"_{analyzer[0]}_.*\.plist$"))
         for analyzer in ANALYZER_PLIST_PATHS
     ]
+
+    plist_exists: bool = False
 
     for (
         destination_plist_path,
@@ -182,18 +183,19 @@ def _move_plist_files():
                 shutil.move(
                     os.path.join(DATA_DIR, file_path), destination_plist_path
                 )
+                plist_exists = True
                 break
         else:
             with open(destination_plist_path, "w", encoding="utf-8") as file:
                 file.write(EMPTY_PLIST)
 
-
-def _move_misc_artifacts():
-    """
-    Move miscellaneous CodeChecker artifacts to their designated output.
-    """
     if os.path.isfile(os.path.join(DATA_DIR, "metadata.json")):
         shutil.move(os.path.join(DATA_DIR, "metadata.json"), METADATA_FILE)
+    elif plist_exists:
+        # We do not create the "empty" metadata file, to make bazel fail
+        print(
+            "[WARNING] metadata.json doesn't exists despite successful analysis..."
+        )
     # This happens when the file was skipped.
     # CodeChecker does not create metadata
     # if no analysis was performed.
@@ -211,8 +213,7 @@ def main():
         sys.exit(1)
     _create_compile_commands_json_with_absolute_paths()
     _run_codechecker()
-    _move_plist_files()
-    _move_misc_artifacts()
+    _move_output_files()
 
 
 if __name__ == "__main__":

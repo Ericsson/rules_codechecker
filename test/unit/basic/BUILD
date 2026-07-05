@@ -50,6 +50,7 @@ codechecker_test(
 
 unit_test(
     name = "basic_codechecker_test",
+    absent_files = "this/file/definitely/does/not.exists",
     contains = ["core.DivideZero"],
     data = [":basic_codechecker"],
     excludes = ["Text not in file"],
@@ -59,6 +60,7 @@ unit_test(
 
 unit_test(
     name = "basic_per_file_test",
+    absent_files = "this/file/definitely/does/not.exists",
     contains = ["Division by zero"],
     data = [":basic_per_file"],
     excludes = ["Text not in file"],

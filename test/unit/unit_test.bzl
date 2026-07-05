@@ -31,6 +31,7 @@ Example:
 def unit_test(
         name,
         files,
+        absent_files = [],
         contains = None,
         excludes = None,
         regex_patterns = None,
@@ -43,6 +44,9 @@ def unit_test(
     Args:
         name: Test name.
         files: Path or glob to the files to be checked.
+        absent_files: Path or glob that should not exists.
+                      If these are in the `files` list too,
+                      disregard the missing file error.
         contains: Text that should be inside the files.
         excludes: Text that shouldn't be inside the files.
         regex_patterns: Regex patterns that should be found inside the files.
@@ -53,6 +57,8 @@ def unit_test(
     """
     if type(files) == "string":
         files = [files]
+    if type(absent_files) == "string":
+        absent_files = [absent_files]
     if type(contains) == "string":
         contains = [contains]
     if type(excludes) == "string":
@@ -61,6 +67,9 @@ def unit_test(
         regex_patterns = [regex_patterns]
 
     python_args = ["--files"] + files
+    if absent_files:
+        python_args.append("--no_files")
+        python_args.extend(absent_files)
     if contains:
         python_args.append("--contains")
         python_args.extend(["\"{}\"".format(pat) for pat in contains])

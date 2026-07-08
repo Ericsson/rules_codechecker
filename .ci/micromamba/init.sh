@@ -38,7 +38,13 @@ ENV_NAME="${1:-dev}"
 log "Environment: $ENV_NAME"
 
 # Get the location of this script
-THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+if [ -n "$ZSH_VERSION" ]; then
+    RAW_SOURCE="${(%):-%x}"
+else
+    RAW_SOURCE="${BASH_SOURCE[0]}"
+fi
+
+THIS_DIR="$( cd "$( dirname "$RAW_SOURCE" )" &> /dev/null && pwd )"
 log "Location: $THIS_DIR"
 
 # Check if we have environment file

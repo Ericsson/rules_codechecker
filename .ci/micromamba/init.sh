@@ -1,3 +1,4 @@
+#!/bin/bash
 # Make sure we source the script
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     echo "ERROR: This script must be 'sourced':"

@@ -466,9 +466,17 @@ First, you will have to create or obtain labels for codechecker, clang and clang
 
 You may create such a label like this:
 ```python
-filegroup(
+genrule(
     name = "clang",
-    srcs = ["/usr/bin/clang"],
+    outs = ["clang_wrapper.sh"],
+    cmd_bash = """
+cat > "$@" <<'EOF'
+#!/usr/bin/env bash
+exec /usr/bin/clang "$$@"
+EOF
+chmod +x "$@"
+""",
+    executable = True,
     visibility = ["//visibility:public"],
 )
 ```

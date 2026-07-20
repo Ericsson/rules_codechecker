@@ -27,20 +27,22 @@ import sys
 import json
 from pathlib import Path
 
-CONSTANTS: dict = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-EXECUTION_MODE = CONSTANTS.get("Mode", "Run")
-VERBOSITY = CONSTANTS.get("Verbosity", "INFO")
-CODECHECKER_PATH = os.path.realpath(CONSTANTS["codechecker_bin"])
-CLANG_PATH = os.path.realpath(CONSTANTS["clang_bin"])
-CLANG_TIDY_PATH = os.path.realpath(CONSTANTS["clang_tidy_bin"])
-CODECHECKER_SKIPFILE = CONSTANTS.get("codechecker_skipfile")
-CODECHECKER_CONFIG = CONSTANTS.get("codechecker_config")
-CODECHECKER_ANALYZE: list[str] = CONSTANTS.get("codechecker_analyze", [])
-CODECHECKER_FILES = CONSTANTS["codechecker_files"]
-CODECHECKER_LOG = CONSTANTS.get("codechecker_log")
-CODECHECKER_SEVERITIES = CONSTANTS.get("Severities", [])
-CODECHECKER_ENV = CONSTANTS.get("codechecker_env")
-COMPILE_COMMANDS = CONSTANTS.get("compile_commands")
+if __name__ == "__main__":
+    # Arguments should only be parsed, if this script is the entry point
+    CONSTANTS: dict = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+    EXECUTION_MODE = CONSTANTS.get("Mode", "Run")
+    VERBOSITY = CONSTANTS.get("Verbosity", "INFO")
+    CODECHECKER_PATH = os.path.realpath(CONSTANTS["codechecker_bin"])
+    CLANG_PATH = os.path.realpath(CONSTANTS["clang_bin"])
+    CLANG_TIDY_PATH = os.path.realpath(CONSTANTS["clang_tidy_bin"])
+    CODECHECKER_SKIPFILE = CONSTANTS.get("codechecker_skipfile")
+    CODECHECKER_CONFIG = CONSTANTS.get("codechecker_config")
+    CODECHECKER_ANALYZE: list[str] = CONSTANTS.get("codechecker_analyze", [])
+    CODECHECKER_FILES = CONSTANTS["codechecker_files"]
+    CODECHECKER_LOG = CONSTANTS.get("codechecker_log")
+    CODECHECKER_SEVERITIES = CONSTANTS.get("Severities", [])
+    CODECHECKER_ENV = CONSTANTS.get("codechecker_env")
+    COMPILE_COMMANDS = CONSTANTS.get("compile_commands")
 
 START_PATH = r"\/(?:(?!\.\s+)\S)+"
 BAZEL_PATHS = {

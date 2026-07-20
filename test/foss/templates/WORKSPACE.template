@@ -12,6 +12,10 @@ load(
     "register_default_codechecker_tools",
 )
 
+register_toolchains(
+    "@rules_codechecker//src:codechecker_local_toolchain",
+)
+
 register_default_codechecker_tools()
 
 #----------------------------------------------------

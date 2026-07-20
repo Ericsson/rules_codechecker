@@ -195,7 +195,7 @@ codechecker_test(
 Then invoke bazel:
 
 ```bash
-bazel test ://your_codechecker_rule_name
+bazel test //:your_codechecker_rule_name
 # Or, as a part of the rest of the testsuite
 bazel test ...
 ```

@@ -14,7 +14,7 @@
 load(":codechecker_toolchain.bzl", "codechecker_toolchain")
 
 # Tool filter compile_commands.json file
-# In bazel 6 we use the built in python toolchain,
+# We use the built in python toolchain,
 # therefore we cannot load from rules_python.
 # buildifier: disable=native-py
 py_binary(

@@ -189,6 +189,29 @@ codechecker_test(
 )
 ```
 
+#### Skipping files
+
+The `skip` argument accepts a list of patterns using the
+[CodeChecker skip-file syntax](https://codechecker.readthedocs.io/en/latest/analyzer/user_guide/#skip-file).
+Because CodeChecker runs inside the Bazel sandbox, skip patterns cannot use
+absolute paths from the host system. Use workspace-relative patterns instead,
+with a leading wildcard when the sandbox path prefix can vary:
+
+```python
+codechecker_test(
+    name = "your_codechecker_rule_name",
+    skip = [
+        "-*path/to/skipped/files/*",
+    ],
+    targets = [
+        "your_target",
+    ],
+)
+```
+
+The `skip` argument is supported by both the standard analysis and the
+experimental per-file analysis enabled with `per_file = True`.
+
 #### Per-file CodeChecker analysis:
 > [!IMPORTANT]
 > The option is still in prototype status and is subject to changes or removal without notice. See [#31](https://github.com/Ericsson/rules_codechecker/issues/31).

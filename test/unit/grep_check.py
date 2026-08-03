@@ -46,6 +46,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--missing_files",
+        default=[],
         nargs="+",
         required=False,
         help="Path or glob pattern to the file(s) that shouldn't exists.",

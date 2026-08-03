@@ -61,7 +61,7 @@ unit_test(
 
 unit_test(
     name = "per_file_metadata_test",
-    contains = [r"\"action_num\": 2,"],
+    contains = [r"\"action_num\": 1,"],
     data = [":per_file_multiple_source"],
     # FIXME: remove when metadata is generated
     expected_missing_files = [

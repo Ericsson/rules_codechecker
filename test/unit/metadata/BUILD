@@ -63,7 +63,13 @@ unit_test(
     name = "per_file_metadata_test",
     contains = [r"\"action_num\": 2,"],
     data = [":per_file_multiple_source"],
-    files = "test/unit/metadata/per_file_multiple_source/data/metadata.json",
     # FIXME: remove when metadata is generated
-    tags = ["manual"],
+    expected_missing_files = [
+        "test/unit/metadata/per_file_multiple_source/data/test-unit-metadata-main.cc_metadata.json",
+        "test/unit/metadata/per_file_multiple_source/data/test-unit-metadata-other.cc_metadata.json",
+    ],
+    files = [
+        "test/unit/metadata/per_file_multiple_source/data/test-unit-metadata-main.cc_metadata.json",
+        "test/unit/metadata/per_file_multiple_source/data/test-unit-metadata-other.cc_metadata.json",
+    ],
 )

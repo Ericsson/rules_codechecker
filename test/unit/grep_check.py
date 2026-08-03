@@ -45,6 +45,12 @@ def parse_args() -> argparse.Namespace:
         help="Path or glob pattern to the file(s) to search within.",
     )
     parser.add_argument(
+        "--missing_files",
+        nargs="+",
+        required=False,
+        help="Path or glob pattern to the file(s) that shouldn't exists.",
+    )
+    parser.add_argument(
         "--contains",
         nargs="+",
         required=False,
@@ -75,8 +81,7 @@ def parse_args() -> argparse.Namespace:
 def check_args(args):
     """Checks wether the arguments are correct, aborts if not"""
     if not args.contains and not args.excludes and not args.regex_patterns:
-        print("  [ERROR] Must define at least one pattern or negative pattern.")
-        sys.exit(1)
+        fail("  [ERROR] Must define at least one pattern or negative pattern.")
 
 
 def exact_match(pattern: str, content: str) -> bool:
@@ -143,25 +148,60 @@ def check_file(content: str, args) -> tuple[bool, set[str], set[str]]:
     return all_passed, found_patterns, missing_patterns
 
 
+def assert_expectedly_missing_files(files):
+    """
+    Asserts that none of the files exist in `files`.
+    """
+    for file_pattern in files:
+        matched_files = glob.glob(file_pattern, recursive=True)
+        if matched_files:
+            print(f"\n{file_pattern} unexpectedly exists.")
+            sys.exit(1)
+
+
+def fail(msg: str, exit_code: int = 1):
+    """
+    Exits the program, with a message
+    """
+    print(msg)
+    sys.exit(exit_code)
+
+
+def collect_file_paths(glob_list: list[str]) -> list[str]:
+    """Convert the glob patterns into a list of file paths"""
+    file_paths = []
+    for file_pattern in glob_list:
+        matched_files = glob.glob(file_pattern, recursive=True)
+        if not matched_files:
+            # Each file pattern must match at least a file
+            fail(f"  [WARN] No files matched pattern/path: '{file_pattern}'")
+        file_paths.extend(matched_files)
+
+    if not file_paths:
+        fail("  [ERR] No file collected to be checked.")
+    return file_paths
+
+
 def main() -> None:
     """Entry point for the pattern-matching test."""
     args = parse_args()
     check_args(args)
 
+    assert_expectedly_missing_files(args.missing_files)
+
+    files_to_check = [x for x in args.files if x not in args.missing_files]
+    if not files_to_check:
+        print(
+            "There is no files to check, "
+            "since all files are expected to not exits"
+        )
+        sys.exit(0)
+
+    file_paths = collect_file_paths(files_to_check)
+
     all_passed = True
     found_patterns = set()
     missing_patterns = set()
-
-    file_paths = []
-    for file_pattern in args.files:
-        matched_files = glob.glob(file_pattern, recursive=True)
-        if not matched_files:
-            print(f"  [WARN] No files matched pattern/path: '{file_pattern}'")
-        file_paths.extend(matched_files)
-
-    if not file_paths:
-        print("  [ERR] No file collected to be checked.")
-        sys.exit(1)
 
     for file in file_paths:
         with open(file, "r", encoding="utf-8") as f:
@@ -186,8 +226,7 @@ def main() -> None:
     if not all_passed:
         for file, pattern in missing_patterns:
             print(f"Missing pattern {pattern} in file {file}")
-        print("\nOne or more patterns missing. Test FAILED.")
-        sys.exit(1)
+        fail("\nOne or more patterns missing. Test FAILED.")
 
 
 if __name__ == "__main__":

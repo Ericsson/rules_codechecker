@@ -53,6 +53,7 @@ unit_test(
     contains = ["core.DivideZero"],
     data = [":basic_codechecker"],
     excludes = ["Text not in file"],
+    expected_missing_files = "this/file/definitely/does/not.exists",
     files = "test/unit/basic/basic_codechecker/codechecker.log",
     regex_patterns = ["[a-z]"],
 )
@@ -62,6 +63,7 @@ unit_test(
     contains = ["Division by zero"],
     data = [":basic_per_file"],
     excludes = ["Text not in file"],
+    expected_missing_files = "this/file/definitely/does/not.exists",
     files = "test/unit/basic/basic_per_file/**/*.plist",
     regex_patterns = ["[a-z]"],
     require_patterns_in_each_file = False,

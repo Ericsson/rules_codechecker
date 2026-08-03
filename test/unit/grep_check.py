@@ -45,7 +45,7 @@ def parse_args() -> argparse.Namespace:
         help="Path or glob pattern to the file(s) to search within.",
     )
     parser.add_argument(
-        "--no_files",
+        "--missing_files",
         nargs="+",
         required=False,
         help="Path or glob pattern to the file(s) that shouldn't exists.",
@@ -187,9 +187,9 @@ def main() -> None:
     args = parse_args()
     check_args(args)
 
-    assert_files_missing(args.no_files)
+    assert_expectedly_missing_files(args.missing_files)
 
-    files_to_check = [x for x in args.files if x not in args.no_files]
+    files_to_check = [x for x in args.files if x not in args.missing_files]
     if not files_to_check:
         print(
             "There is no files to check, "

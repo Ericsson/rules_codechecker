@@ -68,7 +68,7 @@ def unit_test(
 
     python_args = ["--files"] + files
     if expected_missing_files:
-        python_args.append("--no_files")
+        python_args.append("--missing_files")
         python_args.extend(expected_missing_files)
     if contains:
         python_args.append("--contains")

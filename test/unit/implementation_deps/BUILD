@@ -24,6 +24,10 @@ load(
     "//src:compile_commands.bzl",
     "compile_commands",
 )
+load(
+    "//test/unit:unit_test.bzl",
+    "unit_test",
+)
 
 cc_library(
     name = "dep_lib",
@@ -66,4 +70,35 @@ codechecker_test(
     targets = [
         ":main_lib",
     ],
+)
+
+unit_test(
+    name = "codechecker_implementation_deps_test",
+    contains = [
+        "core.DivideZero",
+        "cplusplus.NewDeleteLeaks",
+    ],
+    data = [":codechecker_implementation_deps"],
+    files = "test/unit/implementation_deps/codechecker_implementation_deps/codechecker.log",
+)
+
+unit_test(
+    name = "per_file_implementation_deps_test",
+    contains = [
+        "core.DivideZero",
+        "cplusplus.NewDeleteLeaks",
+    ],
+    data = [":per_file_implementation_deps"],
+    files = "test/unit/implementation_deps/per_file_implementation_deps/**/*.plist",
+    require_patterns_in_each_file = False,
+)
+
+unit_test(
+    name = "compile_commands_implementation_deps_test",
+    contains = [
+        "main.cpp",
+        "dep.cpp",
+    ],
+    data = [":compile_commands_implementation_deps"],
+    files = "test/unit/implementation_deps/compile_commands_implementation_deps/compile_commands.json",
 )

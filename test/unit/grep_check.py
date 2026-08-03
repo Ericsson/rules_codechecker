@@ -148,7 +148,7 @@ def check_file(content: str, args) -> tuple[bool, set[str], set[str]]:
     return all_passed, found_patterns, missing_patterns
 
 
-def assert_files_missing(files):
+def assert_expectedly_missing_files(files):
     """
     Asserts that none of the files exist in `files`.
     """

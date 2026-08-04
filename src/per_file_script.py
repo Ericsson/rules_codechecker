@@ -202,7 +202,8 @@ def _move_output_files():
     if os.path.isfile(os.path.join(DATA_DIR, "metadata.json")):
         shutil.move(os.path.join(DATA_DIR, "metadata.json"), METADATA_FILE)
     elif plist_exists:
-        # We do not create the "empty" metadata file, to make bazel fail
+        # We do not create the "empty" metadata file
+        # this will cause bazel to crash due to a missing output file.
         print(
             "[WARNING] metadata.json doesn't exists "
             "despite successful analysis..."

@@ -189,6 +189,16 @@ def _move_output_files():
             with open(destination_plist_path, "w", encoding="utf-8") as file:
                 file.write(EMPTY_PLIST)
 
+    # A CodeChecker-compliant result directory for the entire analysis may
+    # have any number of plist files, but exactly one metadata.json file,
+    # as described in
+    # https://github.com/Ericsson/codechecker/blob/master/docs/report_directory.md.
+    # The problem is that in per-file mode, each translation unit is analyzed
+    # as a standalone analysis, each will have its own result directory and
+    # metadata.json file. To remain complaint, we will eventually merge all
+    # metadata files into a single one, but for now, we create a unique
+    # metadata file name before copying it over.
+
     if os.path.isfile(os.path.join(DATA_DIR, "metadata.json")):
         shutil.move(os.path.join(DATA_DIR, "metadata.json"), METADATA_FILE)
     elif plist_exists:

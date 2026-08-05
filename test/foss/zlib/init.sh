@@ -25,7 +25,7 @@ if [ -z "$1" ]; then
 fi
 
 # Skip this test on bazel 8
-MAJOR_VERSION=$(bazel --version | cut -d' ' -f2 | cut -d'.' -f1)
+MAJOR_VERSION=$(bazel version | grep 'Build label' | cut -d' ' -f3 | cut -d'.' -f1)
 if [ "$MAJOR_VERSION" -ge 8 ]; then
     echo "" >> $1/.skipfosstest
     exit 0

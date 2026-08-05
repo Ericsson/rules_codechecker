@@ -229,7 +229,7 @@ def _per_file_impl(ctx):
             # cat $DATA_DIR/data/test-src-lib.cc_clangsa.plist
             echo "Running: CodeChecker parse $DATA_DIR/data"
             $(realpath {codechecker}) parse $DATA_DIR/data
-        """.format(dirname = ctx.outputs.test_script.short_path, codechecker = info.codechecker.path),
+        """.format(dirname = ctx.outputs.test_script.short_path, codechecker = info.codechecker.short_path),
     )
     files = depset(
         direct = all_files,

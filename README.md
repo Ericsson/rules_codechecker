@@ -119,32 +119,10 @@ Alternatively follow the official guide at: https://bazel.build/install
 How to use
 ----------
 
-To use these rules you should first add `rules_codechecker` as an
-[external dependency](https://bazel.build/versions/6.5.0/external/overview#workspace-system)
-
-Using the legacy `WORKSPACE` system:
-
-```python
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
-
-git_repository(
-    name = "rules_codechecker",
-    remote = "https://github.com/Ericsson/rules_codechecker.git",
-    branch = "main",
-)
-
-load(
-    "@rules_codechecker//src:tools.bzl",
-    "register_default_codechecker",
-)
-
-register_default_codechecker()
-```
-
-Using the MODULE system:
+To use these rules you should first add `rules_codechecker` as a
+[Bazel module](https://bazel.build/external/module) in your `MODULE.bazel`:
 <!--The git override part should not be needed after the project have been uploaded to a central registry
 TODO: update this part when we have an actual release-->
-In Bazel 6, to activate the MODULE system, add `--enable_bzlmod` to the `.bazelrc` file
 ```
 git_override(
     module_name = "rules_codechecker",
@@ -154,6 +132,7 @@ git_override(
 bazel_dep(name = "rules_codechecker")
 
 ```
+
 ## CodeChecker
 
 ### Standard CodeChecker invocation: `codechecker_test()`
@@ -455,20 +434,6 @@ use_repo(codechecker_extension, "default_codechecker_tools")
 register_toolchains("@rules_codechecker//src:codechecker_local_toolchain")
 ```
 
-Or the following to your `WORKSPACE`:
-
-```python
-load(
-    "@rules_codechecker//src:tools.bzl",
-    "register_default_codechecker_tools",
-)
-
-register_default_codechecker_tools()
-register_toolchains(
-    "//src:codechecker_local_toolchain",
-)
-```
-
 ### Providing your own tools
 
 If you don't want the default system tools -- for example to pin a specific
@@ -508,7 +473,7 @@ toolchain(
     # exec_compatible_with = ["@platforms//os:linux"],
 )
 ```
-Finally register it in your `MODULE.bazel` (or `WORKSPACE`):
+Finally register it in your `MODULE.bazel`:
 ```python
 register_toolchains("//path/to:codechecker_custom_toolchain")
 ```

@@ -24,15 +24,8 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-# Skip this test on bazel 8
-MAJOR_VERSION=$(bazel version --gnu_format | grep 'bazel' | cut -d' ' -f2 | cut -d'.' -f1)
-if [ "$MAJOR_VERSION" -ge 8 ]; then
-    echo "" >> $1/.skipfosstest
-    exit 0
-fi
-
 git clone https://github.com/jbeder/yaml-cpp.git "$1"
-git -C "$1" checkout yaml-cpp-0.8.0
+git -C "$1" checkout yaml-cpp-0.9.0
 
 # This file must be in the root of the project to be analyzed for bazelisk to work
 bazelversion="../../../.bazelversion"
@@ -67,5 +60,5 @@ codechecker_test(
 #-------------------------------------------------------
 EOF
 
-# Add rules_codechecker repo to WORKSPACE
-cat ../templates/WORKSPACE.template >> "$1/WORKSPACE"
+# Add rules_codechecker repo MODULE.bazel
+cat ../templates/MODULE.template >> "$1/MODULE.bazel"

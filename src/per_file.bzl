@@ -44,6 +44,7 @@ def _run_code_checker(
     clang_tidy_plist_file_name = "{}/{}_clang-tidy.plist".format(*file_name_params)
     clangsa_plist_file_name = "{}/{}_clangsa.plist".format(*file_name_params)
     codechecker_log_file_name = "{}/{}_codechecker.log".format(*file_name_params)
+    codechecker_metadata_file_name = "{}/{}_metadata.json".format(*file_name_params)
 
     # Declare output files
     clang_tidy_plist = ctx.actions.declare_file(clang_tidy_plist_file_name)
@@ -58,6 +59,8 @@ def _run_code_checker(
         output = config,
         content = "\n".join(ctx.attr.skip),
     )
+
+    codechecker_metadata = ctx.actions.declare_file(codechecker_metadata_file_name)
 
     # TODO: Consider using aliases so we don't have to type //src: everywhere.
     info = ctx.toolchains["//src:toolchain_type"].codecheckerinfo
@@ -84,7 +87,12 @@ def _run_code_checker(
             info.clang_tidy,
         ], transitive = [headers])
 
-    outputs = [clang_tidy_plist, clangsa_plist, codechecker_log]
+    outputs = [
+        clang_tidy_plist,
+        clangsa_plist,
+        codechecker_log,
+        codechecker_metadata,
+    ]
 
     analyzer_output_paths = "clangsa," + clangsa_plist.path + \
                             ";clang-tidy," + clang_tidy_plist.path
@@ -103,6 +111,7 @@ def _run_code_checker(
             src.path,
             codechecker_log.path,
             config.path,
+            codechecker_metadata.path,
             analyzer_output_paths,
             analyzer_executables,
         ],

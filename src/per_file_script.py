@@ -35,12 +35,13 @@ DATA_DIR = sys.argv[2]
 # The file to be analyzed
 FILE_PATH = sys.argv[3]
 LOG_FILE = sys.argv[4]
+METADATA_FILE = sys.argv[6]
 # List of pairs of analyzers and their plist files
-ANALYZER_PLIST_PATHS = [item.split(",") for item in sys.argv[6].split(";")]
+ANALYZER_PLIST_PATHS = [item.split(",") for item in sys.argv[7].split(";")]
 ANALYZER_EXECUTABLES_ENV_VAR = ";".join(
     f"{name}:{os.path.realpath(path)}"
     for name, path in [
-        pair.split(":", 1) for pair in sys.argv[7].split(";") if pair
+        pair.split(":", 1) for pair in sys.argv[8].split(";") if pair
     ]
 )
 
@@ -154,12 +155,11 @@ def _display_error(ret_code: int) -> None:
     sys.exit(1)
 
 
-def _move_plist_files():
+def _move_output_files():
     """
-    Move the plist files from the temporary directory to their final destination
-    If the files doesn't exists, write an empty plist file to the target.
-    This can happen when an analysis was skipped
-    because of a CodeChecker skipfile.
+    Move output files from the temporary directory to their final destination
+    If a file doesn't exists, write an empty output file to the target.
+    This can happen when an analysis was skipped due to a CodeChecker skipfile.
     For each analysis action we must have an output file, even if its skipped,
     so we substitute it with an empty one.
     """
@@ -169,6 +169,8 @@ def _move_plist_files():
         (analyzer[1], re.compile(rf"_{analyzer[0]}_.*\.plist$"))
         for analyzer in ANALYZER_PLIST_PATHS
     ]
+
+    plist_exists: bool = False
 
     for (
         destination_plist_path,
@@ -181,22 +183,46 @@ def _move_plist_files():
                 shutil.move(
                     os.path.join(DATA_DIR, file_path), destination_plist_path
                 )
+                plist_exists = True
                 break
         else:
             with open(destination_plist_path, "w", encoding="utf-8") as file:
                 file.write(EMPTY_PLIST)
+
+    # A CodeChecker-compliant result directory for the entire analysis may
+    # have any number of plist files, but exactly one metadata.json file,
+    # as described in
+    # https://github.com/Ericsson/codechecker/blob/master/docs/report_directory.md.
+    # The problem is that in per-file mode, each translation unit is analyzed
+    # as a standalone analysis, each will have its own result directory and
+    # metadata.json file. To remain complaint, we will eventually merge all
+    # metadata files into a single one, but for now, we create a unique
+    # metadata file name before copying it over.
+
+    if os.path.isfile(os.path.join(DATA_DIR, "metadata.json")):
+        shutil.move(os.path.join(DATA_DIR, "metadata.json"), METADATA_FILE)
+    elif plist_exists:
+        raise RuntimeError(
+            "[ERROR] metadata.json doesn't exist despite successful analysis."
+        )
+    # This happens when the file was skipped.
+    # CodeChecker does not create metadata
+    # if no analysis was performed.
+    else:
+        with open(METADATA_FILE, "w", encoding="utf-8") as file:
+            file.write("{}")
 
 
 def main():
     """
     Main function of CodeChecker wrapper
     """
-    if len(sys.argv) != 8:
+    if len(sys.argv) != 9:
         print("Wrong amount of arguments")
         sys.exit(1)
     _create_compile_commands_json_with_absolute_paths()
     _run_codechecker()
-    _move_plist_files()
+    _move_output_files()
 
 
 if __name__ == "__main__":

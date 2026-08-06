@@ -5,32 +5,27 @@ load(
     "cc_library",
 )
 
-# clang-tidy and clang -analyze rules
+# user facing rules
 load(
-    "//src:clang.bzl",
+    "//:defs.bzl",
     "clang_analyze_test",
     "clang_tidy_test",
+    "codechecker_config",
+    "codechecker_suite",
+    "codechecker_test",
+    "compile_commands",
 )
 
-# clang -analyze + CTU rule
+# clang -analyze + CTU rule, not user facing yet
 load(
     "//src:clang_ctu.bzl",
     "clang_ctu_test",
 )
 
-# codechecker rules
+# build only codechecker rule, internal
 load(
     "//src:codechecker.bzl",
     "codechecker",
-    "codechecker_config",
-    "codechecker_suite",
-    "codechecker_test",
-)
-
-# compile_commands rule
-load(
-    "//src:compile_commands.bzl",
-    "compile_commands",
 )
 
 # Test for strip_include_prefix

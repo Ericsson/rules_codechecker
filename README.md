@@ -151,7 +151,7 @@ To use `codechecker_test()` include it to your BUILD file:
 
 ```python
 load(
-    "@rules_codechecker//src:codechecker.bzl",
+    "@rules_codechecker//:defs.bzl",
     "codechecker_test",
 )
 ```
@@ -239,7 +239,7 @@ You can include and use it similarly as well:
 
 ```python
 load(
-    "@rules_codechecker//src:codechecker.bzl",
+    "@rules_codechecker//:defs.bzl",
     "codechecker_suite"
 )
 ```
@@ -252,7 +252,7 @@ First, include the rule in your BUILD file:
 
 ```python
 load(
-    "@rules_codechecker//src:codechecker.bzl",
+    "@rules_codechecker//:defs.bzl",
     "codechecker_config"
 )
 ```
@@ -303,7 +303,7 @@ To use it, add the following to your BUILD file:
 
 ```python
 load(
-    "@rules_codechecker//src:clang.bzl",
+    "@rules_codechecker//:defs.bzl",
     "clang_tidy_test",
 )
 
@@ -323,7 +323,7 @@ To use it, add the following to your BUILD file:
 
 ```python
 load(
-    "@rules_codechecker//src:clang.bzl",
+    "@rules_codechecker//:defs.bzl",
     "clang_analyze_test",
 )
 
@@ -344,7 +344,7 @@ As generating a compilation database for C/C++ is a known pain point for bazel, 
 
 ```python
 load(
-    "@rules_codechecker//src:compile_commands.bzl",
+    "@rules_codechecker//:defs.bzl",
     "compile_commands",
 )
 ```
@@ -454,7 +454,7 @@ Then define an implementation in a BUILD file with `codechecker_toolchain()`:
 
 ```python
 load(
-    "@rules_codechecker//src:codechecker_toolchain.bzl",
+    "@rules_codechecker//:defs.bzl",
     "codechecker_toolchain",
 )
 

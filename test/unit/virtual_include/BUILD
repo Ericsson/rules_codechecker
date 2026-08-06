@@ -20,7 +20,7 @@ load(
 
 # codechecker rules
 load(
-    "//src:codechecker.bzl",
+    "//:defs.bzl",
     "codechecker_test",
 )
 load(

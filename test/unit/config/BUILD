@@ -20,10 +20,15 @@ load(
 
 # codechecker rules
 load(
-    "//src:codechecker.bzl",
-    "codechecker",
+    "//:defs.bzl",
     "codechecker_config",
     "codechecker_test",
+)
+
+# build only codechecker rule, internal
+load(
+    "//src:codechecker.bzl",
+    "codechecker",
 )
 load(
     "//test/unit:unit_test.bzl",

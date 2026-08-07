@@ -1,19 +1,27 @@
 #!/usr/bin/env bash
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-cd $SCRIPT_DIR
+ARGUMENTS="$@"
 
-echo "Initialize micromamba environment..."
-source ./init.sh
+function log {
+    echo "===================================================================="
+    echo "=== $@"
+    echo "===================================================================="
+}
 
-# Change directory to project root 
-cd ../../
+function run {
+    local command="$@"
+    log "Running: ${command}"
+    eval ${command}
+}
 
-echo "Running pylint..."
-pylint .
-echo "Running bazel test //..."
-bazel test //...
-echo "Running pytest ..."
-pytest test
+log "Initializing micromamba: ${ARGUMENTS}"
+source $SCRIPT_DIR/init.sh ${ARGUMENTS}
+cd $SCRIPT_DIR/../..
 
-echo "Exiting micromamba..."
-micromamba deactivate
+run "bazel version"
+run "bazel clean"
+run "CodeChecker version"
+run "pylint ."
+run "bazel test ..."
+run "pytest test"
+run "micromamba deactivate"

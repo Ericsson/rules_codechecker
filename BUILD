@@ -11,5 +11,5 @@ buildifier_test(
     mode = "diff",
     no_sandbox = True,
     verbose = True,
-    workspace = "//:WORKSPACE",
+    workspace = "//:MODULE.bazel",
 )

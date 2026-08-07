@@ -89,15 +89,6 @@ def create_test_method(directory_name: str) -> FunctionType:
                     f"{os.path.dirname(os.path.abspath(__file__))}/../../",
                 )
                 module_file.write_text(content, "utf-8")
-            workspace_file = Path(
-                os.path.join(test_dir, "WORKSPACE")
-            )
-            if os.path.exists(workspace_file):
-                content = workspace_file.read_text("utf-8").replace(
-                    "{rule_path}",
-                    f"{os.path.dirname(os.path.abspath(__file__))}/../../",
-                )
-                workspace_file.write_text(content, "utf-8")
             logging.info("Running monolithic rule...")
             ret, _, stderr = self.run_command(
                 "bazel build :codechecker_test", test_dir

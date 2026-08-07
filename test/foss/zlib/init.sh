@@ -24,14 +24,7 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-# Skip this test on bazel 8
-MAJOR_VERSION=$(bazel version --gnu_format | grep 'bazel' | cut -d' ' -f2 | cut -d'.' -f1)
-if [ "$MAJOR_VERSION" -ge 8 ]; then
-    echo "" >> $1/.skipfosstest
-    exit 0
-fi
-
-git clone https://github.com/madler/zlib.git "$1"
+git clone --recurse https://github.com/madler/zlib.git "$1"
 git -C "$1" checkout 5a82f71ed1dfc0bec044d9702463dbdf84ea3b71
 
 # This file must be in the root of the project to be analyzed for bazelisk to work
@@ -47,8 +40,6 @@ load(
     "@rules_codechecker//src:codechecker.bzl",
     "codechecker_test",
 )
-
-
 codechecker_test(
     name = "codechecker_test",
     targets = [
@@ -67,5 +58,5 @@ codechecker_test(
 #-------------------------------------------------------
 EOF
 
-# Add rules_codechecker repo to WORKSPACE
-cat ../templates/WORKSPACE.template >> "$1/WORKSPACE"
+# Add rules_codechecker repo MODULE.bazel
+cat ../templates/MODULE.template >> "$1/MODULE.bazel"

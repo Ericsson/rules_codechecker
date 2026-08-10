@@ -117,6 +117,22 @@ def _compilation_context_flags(compilation_context):
 
     return options
 
+def _remove_duplicate_flags(flags):
+    """ Remove duplicate flags while preserving order.
+
+    Args:
+        flags: A list of compile flag strings.
+    Returns:
+      List of compile flags with duplicates removed.
+    """
+    seen = {}
+    unique_flags = []
+    for flag in flags:
+        if flag not in seen:
+            seen[flag] = True
+            unique_flags.append(flag)
+    return unique_flags
+
 def get_compile_flags(ctx, dep):
     """ Return a list of compile options for a target.
 
@@ -141,7 +157,7 @@ def get_compile_flags(ctx, dep):
                     impl_dep[CcInfo].compilation_context,
                 )
 
-    return options
+    return _remove_duplicate_flags(options)
 
 def get_sources(ctx):
     """ Return a list of source files

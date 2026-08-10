@@ -18,6 +18,8 @@ Rulesets for running clang-tidy and the clang static analyzer.
 
 load("@bazel_tools//tools/build_defs/cc:action_names.bzl", "ACTION_NAMES")
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
+load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
+load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 load("common.bzl", "SOURCE_ATTR", "version_specific_attributes")
 load("compile_commands.bzl", "platforms_transition")
 

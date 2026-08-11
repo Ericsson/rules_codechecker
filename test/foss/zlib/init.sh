@@ -37,7 +37,7 @@ cat <<EOF >> "$1/BUILD.bazel"
 
 # codechecker rules
 load(
-    "@rules_codechecker//src:codechecker.bzl",
+    "@rules_codechecker//:defs.bzl",
     "codechecker_test",
 )
 codechecker_test(

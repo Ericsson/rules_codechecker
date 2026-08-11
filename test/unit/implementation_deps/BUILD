@@ -17,11 +17,8 @@ load(
     "cc_library",
 )
 load(
-    "//src:codechecker.bzl",
+    "//:defs.bzl",
     "codechecker_test",
-)
-load(
-    "//src:compile_commands.bzl",
     "compile_commands",
 )
 load(

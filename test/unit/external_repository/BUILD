@@ -18,11 +18,8 @@ load(
     "cc_library",
 )
 load(
-    "@rules_codechecker//src:codechecker.bzl",
+    "@rules_codechecker//:defs.bzl",
     "codechecker_test",
-)
-load(
-    "@rules_codechecker//src:compile_commands.bzl",
     "compile_commands",
 )
 

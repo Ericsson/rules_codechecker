@@ -30,6 +30,7 @@ def _run_code_checker(
         ctx,
         src,
         arguments,
+        info,
         target,
         label,
         options,
@@ -61,9 +62,6 @@ def _run_code_checker(
     )
 
     codechecker_metadata = ctx.actions.declare_file(codechecker_metadata_file_name)
-
-    # TODO: Consider using aliases so we don't have to type //src: everywhere.
-    info = ctx.toolchains["//src:toolchain_type"].codecheckerinfo
 
     if "--ctu" in options:
         inputs = [
@@ -191,6 +189,9 @@ def _per_file_impl(ctx):
     config_file, env_vars = get_config_file(ctx)
     all_files = [compile_commands, config_file]
     _create_wrapper_script(ctx, options, compile_commands, config_file)
+
+    # TODO: Consider using aliases so we don't have to type //src: everywhere.
+    info = ctx.toolchains["//src:toolchain_type"].codecheckerinfo
     for target in ctx.attr.targets:
         if not CcInfo in target:
             continue
@@ -207,6 +208,7 @@ def _per_file_impl(ctx):
                         ctx,
                         src,
                         args,
+                        info,
                         target,
                         ctx.attr.name,
                         options,
@@ -221,18 +223,18 @@ def _per_file_impl(ctx):
         output = ctx.outputs.test_script,
         is_executable = True,
         content = """
-            DATA_DIR=$(dirname {})
+            DATA_DIR=$(dirname {dirname})
             # ls -la $DATA_DIR/data
             # find $DATA_DIR/data -name *.plist -exec sed -i -e "s|<string>.*execroot/codechecker_bazel/|<string>|g" {{}} \\;
             # cat $DATA_DIR/data/test-src-lib.cc_clangsa.plist
             echo "Running: CodeChecker parse $DATA_DIR/data"
-            CodeChecker parse $DATA_DIR/data
-        """.format(ctx.outputs.test_script.short_path),
+            $(realpath {codechecker}) parse $DATA_DIR/data
+        """.format(dirname = ctx.outputs.test_script.short_path, codechecker = info.codechecker.short_path),
     )
     files = depset(
         direct = all_files,
     )
-    run_files = [ctx.outputs.test_script] + all_files
+    run_files = [ctx.outputs.test_script, info.codechecker] + all_files
     return [
         DefaultInfo(
             files = files,

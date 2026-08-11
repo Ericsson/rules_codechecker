@@ -383,14 +383,30 @@ platforms_transition = transition(
     ],
 )
 
-def _check_source_files(source_files, compilation_db):
+def check_source_files(source_files, compilation_db):
+    """Check that all files in compilation_db are present in source_files.
+
+    Args:
+        source_files: list of source file objects.
+        compilation_db: list of compilation database entries.
+    Returns:
+        None if all files are present, or an error message string if a file is missing.
+    """
     available_sources = [src.path for src in source_files]
     checking_sources = [item.file for item in compilation_db]
     for src in checking_sources:
         if src not in available_sources:
-            fail("File: %s\nNot available in collected source files" % src)
+            return "File: %s\nNot available in collected source files" % src
+    return None
 
-def _compile_commands_json(compilation_db):
+def compile_commands_json(compilation_db):
+    """Generate a compile_commands.json string from a compilation database.
+
+    Args:
+        compilation_db: list of structs with file, command, directory fields.
+    Returns:
+        A JSON string representing the compilation database.
+    """
     json_file = "[\n"
     entries = [json.encode(entry) for entry in compilation_db]
     json_file += ",\n".join(entries)
@@ -426,10 +442,12 @@ def compile_commands_impl(ctx):
         fail("Compilation database is empty!")
 
     # Check that we collect all required source files
-    _check_source_files(source_files, compilation_db)
+    error = check_source_files(source_files, compilation_db)
+    if error:
+        fail(error)
 
     # Generate compile_commands.json from compilation database info
-    compile_db_json = _compile_commands_json(compilation_db)
+    compile_db_json = compile_commands_json(compilation_db)
 
     # Save compile_commands.json file
     ctx.actions.write(

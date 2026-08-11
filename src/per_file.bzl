@@ -17,6 +17,7 @@ Rulesets for running codechecker in a different Bazel action
 for each translation unit.
 """
 
+load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 load("codechecker_config.bzl", "get_config_file")
 load(
     "compile_commands.bzl",

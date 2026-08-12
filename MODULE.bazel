@@ -17,7 +17,7 @@ limitations under the License.
 module(name = "rules_codechecker")
 
 bazel_dep(name = "rules_cc", version = "0.2.3")
-bazel_dep(name = "rules_python", version = "0.38.0")
+bazel_dep(name = "rules_python", version = "0.40.0")
 
 bazel_dep(
     name = "buildifier_prebuilt",
@@ -40,5 +40,5 @@ codechecker_extension = use_extension(
 use_repo(codechecker_extension, "default_codechecker_tools")
 
 register_toolchains(
-    "//src:codechecker_local_toolchain",
+    "//:default_toolchain",
 )

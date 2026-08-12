@@ -32,6 +32,7 @@ load(
     _codechecker_config = "codechecker_config",
     _codechecker_suite = "codechecker_suite",
     _codechecker_test = "codechecker_test",
+    _get_platform_alias = "get_platform_alias",
 )
 
 # Toolchain rule, for providing custom tools
@@ -53,3 +54,6 @@ codechecker_toolchain = _codechecker_toolchain
 compile_commands = _compile_commands
 clang_tidy_test = _clang_tidy_test
 clang_analyze_test = _clang_analyze_test
+
+# Helper for the platform suffix codechecker_suite() adds to its test names
+get_platform_alias = _get_platform_alias

@@ -95,6 +95,9 @@ def _get_codechecker_env() -> dict[str, str]:
     Returns the environment for running CodeChecker
     """
     cc_env = os.environ.copy()
+    if "PATH" not in cc_env:
+        # CodeChecker can't run with an empty PATH
+        cc_env["PATH"] = "/bin:/usr/bin:/usr/local/bin"
     # Overwrite analyzer paths
     cc_env["CC_ANALYZER_BIN"] = ANALYZER_EXECUTABLES_ENV_VAR
     return cc_env

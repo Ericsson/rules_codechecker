@@ -17,7 +17,9 @@ load(
     ":compile_commands_analysis_test.bzl",
     "cc_compiler_info_test_suite",
     "collect_headers_test_suite",
+    "custom_ccinfo",
     "get_compile_flags_no_duplicates_test",
+    "get_compile_flags_quote_includes_from_deps_test",
     "get_compile_flags_test_suite",
     "get_sources_test_suite",
 )
@@ -139,6 +141,34 @@ cc_library(
     deps = [":compile_flags_tests_dep_with_includes"],
 )
 
+custom_ccinfo(
+    name = "compile_flags_tests_sys_include_provider",
+    system_includes = ["my/sys/include"],
+    tags = ["manual"],
+)
+
+cc_library(
+    name = "compile_flags_tests_with_system_includes",
+    srcs = ["testdata/foo.cc"],
+    hdrs = ["testdata/foo.h"],
+    tags = ["manual"],
+    deps = [":compile_flags_tests_sys_include_provider"],
+)
+
+custom_ccinfo(
+    name = "compile_flags_tests_quote_include_provider",
+    quote_includes = ["my/quote/include"],
+    tags = ["manual"],
+)
+
+cc_library(
+    name = "compile_flags_tests_with_quote_includes",
+    srcs = ["testdata/foo.cc"],
+    hdrs = ["testdata/foo.h"],
+    tags = ["manual"],
+    deps = [":compile_flags_tests_quote_include_provider"],
+)
+
 get_compile_flags_test_suite(name = "compile_flags_tests")
 
 # BUG (manual): compile commands should not contain duplicate flags.
@@ -146,6 +176,27 @@ get_compile_flags_no_duplicates_test(
     name = "get_compile_flags_no_duplicates",
     tags = ["manual"],
     target_under_test = ":compile_flags_tests_with_dep_includes",
+)
+
+# BUG (manual): quote_includes from implementation_deps are not collected.
+custom_ccinfo(
+    name = "compile_flags_tests_dep_quote_include_provider",
+    quote_includes = ["dep/quote/path"],
+    tags = ["manual"],
+)
+
+cc_library(
+    name = "compile_flags_tests_with_dep_quote_includes",
+    srcs = ["testdata/foo.cc"],
+    hdrs = ["testdata/foo.h"],
+    implementation_deps = [":compile_flags_tests_dep_quote_include_provider"],
+    tags = ["manual"],
+)
+
+get_compile_flags_quote_includes_from_deps_test(
+    name = "get_compile_flags_quote_includes_from_deps",
+    tags = ["manual"],
+    target_under_test = ":compile_flags_tests_with_dep_quote_includes",
 )
 
 # _cc_compiler_info

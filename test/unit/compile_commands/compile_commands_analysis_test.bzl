@@ -30,6 +30,28 @@ load(
 )
 
 # =============================================================================
+# Helper rules
+# =============================================================================
+
+def _custom_ccinfo_impl(ctx):
+    """Rule that provides a CcInfo with custom include paths."""
+    compilation_context = cc_common.create_compilation_context(
+        system_includes = depset(ctx.attr.system_includes),
+        quote_includes = depset(ctx.attr.quote_includes),
+        includes = depset(ctx.attr.includes),
+    )
+    return [CcInfo(compilation_context = compilation_context)]
+
+custom_ccinfo = rule(
+    implementation = _custom_ccinfo_impl,
+    attrs = {
+        "includes": attr.string_list(default = []),
+        "quote_includes": attr.string_list(default = []),
+        "system_includes": attr.string_list(default = []),
+    },
+)
+
+# =============================================================================
 # Helpers
 # =============================================================================
 
@@ -355,6 +377,69 @@ get_compile_flags_dep_includes_test = analysistest.make(
     extra_target_under_test_aspects = [compile_commands_aspect],
 )
 
+def _get_compile_flags_system_includes_test_impl(ctx):
+    """system_includes appear as -isystem in the compile command."""
+    env = analysistest.begin(ctx)
+    commands = _get_compile_commands(analysistest.target_under_test(env)[SourceFilesInfo])
+
+    asserts.true(env, len(commands) > 0, "Should have at least one compile command")
+    asserts.true(
+        env,
+        "-isystem my/sys/include" in commands[0],
+        "Should contain -isystem my/sys/include, got: %s" % commands[0],
+    )
+
+    return analysistest.end(env)
+
+get_compile_flags_system_includes_test = analysistest.make(
+    _get_compile_flags_system_includes_test_impl,
+    extra_target_under_test_aspects = [compile_commands_aspect],
+)
+
+def _get_compile_flags_quote_includes_test_impl(ctx):
+    """quote_includes appear as -iquote in the compile command."""
+    env = analysistest.begin(ctx)
+    commands = _get_compile_commands(analysistest.target_under_test(env)[SourceFilesInfo])
+
+    asserts.true(env, len(commands) > 0, "Should have at least one compile command")
+    asserts.true(
+        env,
+        "-iquote my/quote/include" in commands[0],
+        "Should contain -iquote my/quote/include, got: %s" % commands[0],
+    )
+
+    return analysistest.end(env)
+
+get_compile_flags_quote_includes_test = analysistest.make(
+    _get_compile_flags_quote_includes_test_impl,
+    extra_target_under_test_aspects = [compile_commands_aspect],
+)
+
+def _get_compile_flags_quote_includes_from_deps_test_impl(ctx):
+    """BUG: quote_includes from implementation_deps are missing in compile commands.
+
+    get_compile_flags iterates over deps in SOURCE_ATTR and collects includes,
+    system_includes, and external_includes — but NOT quote_includes.
+    """
+    env = analysistest.begin(ctx)
+    commands = _get_compile_commands(analysistest.target_under_test(env)[SourceFilesInfo])
+
+    foo_commands = [c for c in commands if "foo.cc" in c]
+    asserts.true(env, len(foo_commands) > 0, "Should have a command for foo.cc")
+
+    asserts.true(
+        env,
+        "-iquote dep/quote/path" in foo_commands[0],
+        "Should contain -iquote dep/quote/path from implementation_dep, got: %s" % foo_commands[0],
+    )
+
+    return analysistest.end(env)
+
+get_compile_flags_quote_includes_from_deps_test = analysistest.make(
+    _get_compile_flags_quote_includes_from_deps_test_impl,
+    extra_target_under_test_aspects = [compile_commands_aspect],
+)
+
 def _get_compile_flags_no_duplicates_test_impl(ctx):
     """BUG: Compile flags should not contain duplicates.
 
@@ -532,6 +617,14 @@ def get_compile_flags_test_suite(name):
         name = name + "_dep_includes_test",
         target_under_test = ":" + name + "_with_dep_includes",
     )
+    get_compile_flags_system_includes_test(
+        name = name + "_system_includes_test",
+        target_under_test = ":" + name + "_with_system_includes",
+    )
+    get_compile_flags_quote_includes_test(
+        name = name + "_quote_includes_test",
+        target_under_test = ":" + name + "_with_quote_includes",
+    )
 
     native.test_suite(
         name = name,
@@ -541,6 +634,8 @@ def get_compile_flags_test_suite(name):
             ":" + name + "_includes_test",
             ":" + name + "_copts_test",
             ":" + name + "_dep_includes_test",
+            ":" + name + "_system_includes_test",
+            ":" + name + "_quote_includes_test",
         ],
     )
 

@@ -63,19 +63,13 @@ def get_config_file(ctx):
         else:
             config_info = ctx.attr.config[CodeCheckerConfigInfo]
         if config_info.config_file:
-            # Create a copy of CodeChecker configuration file
+            # Symlink CodeChecker configuration file
             # provided via codechecker_config(config_file)
             config_file = config_info.config_file.files.to_list()[0]
-            ctx.actions.run(
-                inputs = [config_file],
-                outputs = [ctx_config_file],
-                mnemonic = "CopyFile",
-                progress_message = "Copying CodeChecker config file",
-                executable = "cp",
-                arguments = [
-                    config_file.path,
-                    ctx_config_file.path,
-                ],
+            ctx.actions.symlink(
+                output = ctx_config_file,
+                target_file = config_file,
+                progress_message = "Symlinking CodeChecker config file",
             )
         else:
             # Create CodeChecker configuration file in JSON format

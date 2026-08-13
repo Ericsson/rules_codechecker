@@ -1,0 +1,24 @@
+name: Create Tag on Merge
+
+on:
+    pull_request:
+        types: [closed]
+
+jobs:
+    tag:
+        if: github.event.pull_request.merged == true
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  ref: main
+
+            - name: Create and push tag
+              run: |
+                  TAG_NAME="v$(date +%Y.%m.%d.%H%M%S)"
+                  git config user.name "github-actions"
+                  git config user.email "github-actions@github.com"
+                  git tag $TAG_NAME
+                  git push origin $TAG_NAME
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

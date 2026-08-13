@@ -17,18 +17,13 @@ CodeCheckerInfo = provider(
 
 def _codechecker_toolchain_impl(ctx):
     fake_path_dir = "fake_path"
-    uname = ctx.actions.declare_file(fake_path_dir + "/uname")
-    ctx.actions.symlink(
-        output = uname,
-        target_file = ctx.executable.uname,
-    )
     dirname = ctx.actions.declare_file(fake_path_dir + "/dirname")
     ctx.actions.symlink(
         output = dirname,
         target_file = ctx.executable.dirname,
     )
 
-    fake_path_files = [uname, dirname]
+    fake_path_files = [dirname]
 
     runfiles = depset(
         direct = [
@@ -83,12 +78,6 @@ codechecker_toolchain = rule(
         "dirname": attr.label(
             default = "@default_codechecker_tools//:dirname",
             doc = "Executable target for dirname",
-            executable = True,
-            cfg = "exec",
-        ),
-        "uname": attr.label(
-            default = "@default_codechecker_tools//:uname",
-            doc = "Executable target for uname",
             executable = True,
             cfg = "exec",
         ),

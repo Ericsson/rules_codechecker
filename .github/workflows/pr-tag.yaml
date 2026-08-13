@@ -1,24 +1,28 @@
-name: Create Tag on Merge
-
+name: Tag commits on main
 on:
-    pull_request:
-        types: [closed]
-
+  push:
+    branches:
+      - master
 jobs:
-    tag:
-        if: github.event.pull_request.merged == true
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
-              with:
-                  ref: main
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-            - name: Create and push tag
-              run: |
-                  TAG_NAME="v$(date +%Y.%m.%d.%H%M%S)"
-                  git config user.name "github-actions"
-                  git config user.email "github-actions@github.com"
-                  git tag $TAG_NAME
-                  git push origin $TAG_NAME
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get Current Release
+        id: get_current_release
+        uses: joutvhu/get-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get date and time
+        id: datetime
+        run: echo "value=$(date -u +'%Y%m%d-%H%M%S')" >> "$GITHUB_OUTPUT"
+
+      - name: Bump version and push tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          custom_tag: ${{ steps.get_current_release.outputs.tag_name }}-${{ steps.datetime.outputs.value }}
+          tag_prefix: ""

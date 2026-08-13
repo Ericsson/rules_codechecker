@@ -27,13 +27,8 @@ def _codechecker_toolchain_impl(ctx):
         output = dirname,
         target_file = ctx.executable.dirname,
     )
-    openssl = ctx.actions.declare_file(fake_path_dir + "/openssl")
-    ctx.actions.symlink(
-        output = openssl,
-        target_file = ctx.executable.openssl,
-    )
 
-    fake_path_files = [uname, dirname, openssl]
+    fake_path_files = [uname, dirname]
 
     runfiles = depset(
         direct = [
@@ -88,12 +83,6 @@ codechecker_toolchain = rule(
         "dirname": attr.label(
             default = "@default_codechecker_tools//:dirname",
             doc = "Executable target for dirname",
-            executable = True,
-            cfg = "exec",
-        ),
-        "openssl": attr.label(
-            default = "@default_codechecker_tools//:openssl",
-            doc = "Executable target for openssl",
             executable = True,
             cfg = "exec",
         ),

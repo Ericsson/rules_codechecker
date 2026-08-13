@@ -195,7 +195,9 @@ def analyze():
             env.update(codechecker_env)
     if "PATH" not in env:
         # NOTE: this is workaround for CodeChecker
-        env["PATH"] = "/usr/local/bin:/usr/bin:/bin"
+        # CodeChecker never actually uses the PATH, it just
+        # have to be set to something.
+        env["PATH"] = "/"
     env["CC_ANALYZER_BIN"] = generate_analyzer_executables()
     logging.debug("env: %s", str(env))
 

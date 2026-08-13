@@ -27,7 +27,15 @@ def _codechecker_local_repository_impl(repository_ctx):
     clang_tidy_bin_path = repository_ctx.which("clang-tidy")
     if not clang_tidy_bin_path:
         fail("ERROR! Clang-tidy is not detected")
-
+    uname_path = repository_ctx.which("uname")
+    if not uname_path:
+        fail("ERROR! uname is not detected")
+    openssl_path = repository_ctx.which("openssl")
+    if not openssl_path:
+        fail("ERROR! Openssl is not detected")
+    dirname_path = repository_ctx.which("dirname")
+    if not dirname_path:
+        fail("ERROR! dirname is not detected")
     defs = "CODECHECKER_BIN_PATH = '{}'\n".format(codechecker_bin_path)
     defs += "CLANG_BIN_PATH = '{}'\n".format(clang_bin_path)
     defs += "CLANG_TIDY_BIN_PATH = '{}'\n".format(clang_tidy_bin_path)
@@ -41,6 +49,9 @@ def _codechecker_local_repository_impl(repository_ctx):
     repository_ctx.symlink(codechecker_bin_path, "codechecker_bin")
     repository_ctx.symlink(clang_bin_path, "clang_bin")
     repository_ctx.symlink(clang_tidy_bin_path, "clang_tidy_bin")
+    repository_ctx.symlink(uname_path, "uname_bin")
+    repository_ctx.symlink(dirname_path, "dirname_bin")
+    repository_ctx.symlink(openssl_path, "openssl_bin")
 
     repository_ctx.file(
         repository_ctx.path("BUILD"),
@@ -58,6 +69,21 @@ filegroup(
 filegroup(
     name = "clang_tidy",
     srcs = ["clang_tidy_bin"],
+    visibility = ["//visibility:public"],
+)
+filegroup(
+    name = "uname",
+    srcs = ["uname_bin"],
+    visibility = ["//visibility:public"],
+)
+filegroup(
+    name = "dirname",
+    srcs = ["dirname_bin"],
+    visibility = ["//visibility:public"],
+)
+filegroup(
+    name = "openssl",
+    srcs = ["openssl_bin"],
     visibility = ["//visibility:public"],
 )
         """,

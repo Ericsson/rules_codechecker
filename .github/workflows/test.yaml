@@ -81,7 +81,7 @@ jobs:
       - name: Run lint tests
         run: |
           pylint .
-          bazel test //:buildifier --test_output=all
+          bazel test //test/buildifier --test_output=all
         shell: bash -el {0}
 
       # Splitting unit and FOSS tests, since unit tests fail faster.
@@ -151,7 +151,7 @@ jobs:
       - name: Run lint tests
         run: |
           pylint .
-          runuser -u test -- bazel test //:buildifier --test_output=all
+          runuser -u test -- bazel test //test/buildifier --test_output=all
         shell: bash -el {0}
 
       # Splitting unit and FOSS tests, since unit tests fail faster.

@@ -1,15 +1,5 @@
-load("@buildifier_prebuilt//:rules.bzl", "buildifier_test")
-
-buildifier_test(
-    name = "buildifier",
-    exclude_patterns = [
-        "./.ci/*",
-        "./.git/*",
-    ],
-    lint_mode = "warn",
-    lint_warnings = ["all"],
-    mode = "diff",
-    no_sandbox = True,
-    verbose = True,
-    workspace = "//:MODULE.bazel",
+# Repository root marker, used by the buildifier test to find the workspace
+exports_files(
+    ["MODULE.bazel"],
+    visibility = ["//test/buildifier:__pkg__"],
 )

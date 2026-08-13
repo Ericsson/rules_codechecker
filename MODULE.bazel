@@ -28,8 +28,8 @@ single_version_override(
     module_name = "buildifier_prebuilt",
     patch_strip = 1,
     patches = [
-        "//.ci/buildifier:prune.patch",
-        "//.ci/buildifier:template.patch",
+        "//test/buildifier:prune.patch",
+        "//test/buildifier:template.patch",
     ],
 )
 

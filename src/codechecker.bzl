@@ -139,8 +139,7 @@ def _codechecker_impl(ctx):
         executable = codechecker_script,
         arguments = [arguments],
         mnemonic = "CodeChecker",
-        # TODO: remove /bin when dirname is available hermetically
-        env = {"PATH": py_toolchain.py3_runtime.interpreter.dirname + ":/bin"},
+        env = {"PATH": py_toolchain.py3_runtime.interpreter.dirname + ":" + info.dirname.dirname},
         progress_message = "CodeChecker %s" % str(ctx.label),
         # use_default_shell_env = True,
     )

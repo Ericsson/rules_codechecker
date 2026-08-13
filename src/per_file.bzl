@@ -107,8 +107,7 @@ def _run_code_checker(
     py_toolchain = ctx.toolchains["@rules_python//python:toolchain_type"]
     py_interpreter_dir = py_toolchain.py3_runtime.interpreter.dirname
 
-    # TODO: remove /bin when dirname is available hermetically
-    env["PATH"] = (env.get("PATH", "") + ":" + py_interpreter_dir + ":/bin").lstrip(":")
+    env["PATH"] = (env.get("PATH", "") + ":" + py_interpreter_dir + ":" + info.dirname.dirname).lstrip(":")
 
     # Action to run CodeChecker for a file
     ctx.actions.run(

@@ -18,27 +18,26 @@ load(
 )
 load(
     "//test/unit/toolchain:toolchain_runfiles_test.bzl",
-    "mock_executable",
     "runfiles_test_suite",
 )
 
 # --- Mock tools ---
 
 # Mock CodeChecker with a runtime data dependency on helper_data.txt.
-mock_executable(
+sh_binary(
     name = "mock_codechecker",
-    src = "mock_codechecker.sh",
+    srcs = ["mock_codechecker.sh"],
     data = ["helper_data.txt"],
 )
 
-mock_executable(
+sh_binary(
     name = "mock_clang",
-    src = "mock_clang.sh",
+    srcs = ["mock_clang.sh"],
 )
 
-mock_executable(
+sh_binary(
     name = "mock_clang_tidy",
-    src = "mock_clang_tidy.sh",
+    srcs = ["mock_clang_tidy.sh"],
 )
 
 # --- Mock toolchain ---

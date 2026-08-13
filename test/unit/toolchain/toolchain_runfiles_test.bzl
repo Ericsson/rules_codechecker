@@ -24,31 +24,6 @@ runfiles depset.
 load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts")
 
 # ---------------------------------------------------------------------------
-# A minimal executable rule with data deps, used as a mock tool.
-# Needed because codechecker_toolchain requires allow_single_file = True
-# which is incompatible with sh_binary.
-# ---------------------------------------------------------------------------
-
-def _mock_executable_impl(ctx):
-    out = ctx.actions.declare_file(ctx.label.name)
-    ctx.actions.symlink(output = out, target_file = ctx.file.src, is_executable = True)
-    runfiles = ctx.runfiles(files = [out] + ctx.files.data)
-    return [DefaultInfo(
-        executable = out,
-        files = depset([out]),
-        data_runfiles = runfiles,
-    )]
-
-mock_executable = rule(
-    implementation = _mock_executable_impl,
-    attrs = {
-        "data": attr.label_list(allow_files = True),
-        "src": attr.label(mandatory = True, allow_single_file = True),
-    },
-    executable = True,
-)
-
-# ---------------------------------------------------------------------------
 # Subject rule: reads CodeCheckerInfo from a codechecker_toolchain target
 # and re-exports runfiles basenames for inspection by the analysis test.
 # ---------------------------------------------------------------------------
@@ -65,7 +40,7 @@ def _subject_impl(ctx):
     tc_info = ctx.attr.toolchain[platform_common.ToolchainInfo]
     info = tc_info.codecheckerinfo
 
-    # TODO: remove hasattr guard once the fix is applied (direct access is safe).
+    # TODO: remove hasattr guard once the fix is applied.
     if hasattr(info, "runfiles"):
         basenames = sorted([f.basename for f in info.runfiles.to_list()])
         has_runfiles = True
@@ -115,24 +90,24 @@ def _test_data_deps_in_runfiles_impl(ctx):
     # Remove NOT from fail message
     asserts.false(
         env,
-        "mock_codechecker" in info.basenames,
-        "NOT Expected mock_codechecker in runfiles, got: %s" % info.basenames,
+        "mock_codechecker.sh" in info.basenames,
+        "NOT Expected mock_codechecker.sh in runfiles, got: %s" % info.basenames,
     )
 
     # TODO: change asserts.false to asserts.true once the fix is applied.
     # Remove NOT from fail message
     asserts.false(
         env,
-        "mock_clang" in info.basenames,
-        "NOT Expected mock_clang in runfiles, got: %s" % info.basenames,
+        "mock_clang.sh" in info.basenames,
+        "NOT Expected mock_clang.sh in runfiles, got: %s" % info.basenames,
     )
 
     # TODO: change asserts.false to asserts.true once the fix is applied.
     # Remove NOT from fail message
     asserts.false(
         env,
-        "mock_clang_tidy" in info.basenames,
-        "NOT Expected mock_clang_tidy in runfiles, got: %s" % info.basenames,
+        "mock_clang_tidy.sh" in info.basenames,
+        "NOT Expected mock_clang_tidy.sh in runfiles, got: %s" % info.basenames,
     )
 
     return analysistest.end(env)

@@ -115,7 +115,7 @@ def _run_code_checker(
             analyzer_executables,
         ],
         mnemonic = "CodeChecker",
-        use_default_shell_env = True,
+        use_default_shell_env = False,
         progress_message = "CodeChecker analyze {}".format(src.short_path),
     )
     return outputs

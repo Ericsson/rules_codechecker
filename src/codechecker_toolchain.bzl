@@ -27,21 +27,18 @@ codechecker_toolchain = rule(
         "clang_tidy": attr.label(
             default = "@default_codechecker_tools//:clang_tidy",
             doc = "Executable target for `clang-tidy`.",
-            allow_single_file = True,
             executable = True,
             cfg = "exec",
         ),
         "clangsa": attr.label(
             default = "@default_codechecker_tools//:clang",
             doc = "Executable target for `clang`, used for Clang Static Analyzer.",
-            allow_single_file = True,
             executable = True,
             cfg = "exec",
         ),
         "codechecker": attr.label(
-            default = "@default_codechecker_tools//:codechecker",
+            default = "@default_codechecker_tools//:CodeChecker",
             doc = "Executable target for `CodeChecker`.",
-            allow_single_file = True,
             executable = True,
             cfg = "exec",
         ),

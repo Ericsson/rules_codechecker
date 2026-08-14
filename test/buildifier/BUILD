@@ -34,6 +34,7 @@ buildifier_test(
     lint_warnings = ["all"],
     mode = "diff",
     no_sandbox = True,
+    tags = ["buildifier"],
     verbose = True,
     workspace = "//:MODULE.bazel",
 )

@@ -89,7 +89,6 @@ def unit_test(
         srcs = ["//test/unit:grep_check.py"],
         main = "//test/unit:grep_check.py",
         args = python_args,
-        local = True,
         tags = ["unit"] + tags,
         size = size,
         **kwargs

@@ -94,6 +94,18 @@ def _codechecker_impl(ctx):
 
     info = ctx.toolchains["//src:toolchain_type"].codecheckerinfo
 
+    # Derive CC_BIN_DIR so pip-installed CodeChecker can find its data dir.
+    # CodeChecker resolves its config as dirname(CC_BIN_DIR) which must
+    # contain config/, ld_logger/, etc. The pip wheel places these under
+    # data/share/codechecker/. We scan the toolchain runfiles for that path.
+    for f in info.runfiles.to_list():
+        idx = f.path.find("data/share/codechecker/")
+        if idx >= 0:
+            cc_bin_dir = f.path[:idx] + "data/share/codechecker/bin"
+            cc_bin_env = "CC_BIN_DIR=" + cc_bin_dir
+            codechecker_env = (codechecker_env + "; " + cc_bin_env) if codechecker_env else cc_bin_env
+            break
+
     codechecker_files = ctx.actions.declare_directory(ctx.label.name + "/codechecker-files")
     ctx.actions.expand_template(
         template = ctx.file._codechecker_script_template,

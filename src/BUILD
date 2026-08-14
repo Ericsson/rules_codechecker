@@ -11,7 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-load("@rules_python//python:py_binary.bzl", "py_binary")
+load(
+    "@rules_python//python:py_binary.bzl",
+    "py_binary",
+)
+load(
+    "@rules_python//python/entry_points:py_console_script_binary.bzl",
+    "py_console_script_binary",
+)
 load(":codechecker_toolchain.bzl", "codechecker_toolchain")
 
 # Tool filter compile_commands.json file
@@ -80,5 +87,27 @@ codechecker_toolchain(
 toolchain(
     name = "codechecker_local_toolchain",
     toolchain = "codechecker_local",
+    toolchain_type = ":toolchain_type",
+)
+
+# Hermetic pip-based CodeChecker toolchain (uses rules_python pip package)
+py_console_script_binary(
+    name = "CodeChecker",
+    data = ["@pip//codechecker:data"],
+    pkg = "@pip//codechecker",
+    script = "CodeChecker",
+    visibility = ["//visibility:public"],
+)
+
+codechecker_toolchain(
+    name = "codechecker_pip",
+    clang_tidy = "@default_codechecker_tools//:clang_tidy",
+    clangsa = "@default_codechecker_tools//:clang",
+    codechecker = ":CodeChecker",
+)
+
+toolchain(
+    name = "codechecker_pip_toolchain",
+    toolchain = ":codechecker_pip",
     toolchain_type = ":toolchain_type",
 )

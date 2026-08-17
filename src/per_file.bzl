@@ -20,6 +20,10 @@ for each translation unit.
 load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 load("codechecker_config.bzl", "get_config_file")
 load(
+    "common.bzl",
+    "resolve_toolchain_info",
+)
+load(
     "compile_commands.bzl",
     "SourceFilesInfo",
     "compile_commands_aspect",
@@ -187,7 +191,7 @@ def _per_file_impl(ctx):
     all_files = [compile_commands, config_file]
     _create_wrapper_script(ctx, options, compile_commands, config_file)
 
-    info = ctx.toolchains["//:toolchain_type"].codecheckerinfo
+    info = resolve_toolchain_info(ctx)
     for target in ctx.attr.targets:
         if not CcInfo in target:
             continue
@@ -244,6 +248,12 @@ def _per_file_impl(ctx):
 per_file_test = rule(
     implementation = _per_file_impl,
     attrs = {
+        "codechecker_toolchain": attr.label(
+            default = None,
+            doc = "Optional codechecker_toolchain() target. " +
+                  "When set, tools from this target are used instead of " +
+                  "Bazel's toolchain resolution.",
+        ),
         "config": attr.label(
             default = None,
             doc = "CodeChecker configuration",

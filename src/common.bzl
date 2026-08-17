@@ -42,6 +42,25 @@ def version_specific_attributes():
         )})
     return {}
 
+def resolve_toolchain_info(ctx):
+    """Resolve CodeCheckerInfo from explicit attribute or Bazel toolchain resolution.
+
+    If the user specified a `codechecker_toolchain` attribute pointing to a
+    `codechecker_toolchain()` target, use its provider directly. Otherwise,
+    fall back to Bazel's standard toolchain resolution.
+
+    Args:
+        ctx: The rule context. Must have a `codechecker_toolchain` attribute
+             and the `//src:toolchain_type` toolchain declared.
+    Returns:
+        A CodeCheckerInfo provider instance.
+    """
+    if ctx.attr.codechecker_toolchain:
+        return ctx.attr.codechecker_toolchain[platform_common.ToolchainInfo].codecheckerinfo
+
+    # TODO: Consider using aliases so we don't have to type //src: everywhere.
+    return ctx.toolchains["//:toolchain_type"].codecheckerinfo
+
 def warning(ctx, msg):
     """
     Prints message if the debug tag is enabled.

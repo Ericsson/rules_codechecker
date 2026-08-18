@@ -20,10 +20,6 @@ for each translation unit.
 load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 load("codechecker_config.bzl", "get_config_file")
 load(
-    "common.bzl",
-    "resolve_toolchain_info",
-)
-load(
     "compile_commands.bzl",
     "SourceFilesInfo",
     "compile_commands_aspect",
@@ -191,7 +187,10 @@ def _per_file_impl(ctx):
     all_files = [compile_commands, config_file]
     _create_wrapper_script(ctx, options, compile_commands, config_file)
 
-    info = resolve_toolchain_info(ctx)
+    if ctx.attr.toolchain:
+        info = ctx.attr.toolchain[platform_common.ToolchainInfo].codecheckerinfo
+    else:
+        info = ctx.toolchains["//:toolchain_type"].codecheckerinfo
     for target in ctx.attr.targets:
         if not CcInfo in target:
             continue

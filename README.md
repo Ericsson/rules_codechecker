@@ -454,7 +454,7 @@ codechecker_extension = use_extension(
     "module_register_default_codechecker_tools",
 )
 use_repo(codechecker_extension, "default_codechecker_tools")
-register_toolchains("@rules_codechecker//src:codechecker_local_toolchain")
+register_toolchains("@rules_codechecker//:default_toolchain")
 ```
 
 ### Providing your own tools
@@ -491,7 +491,7 @@ codechecker_toolchain(
 toolchain(
     name = "codechecker_custom_toolchain",
     toolchain = ":codechecker_custom",
-    toolchain_type = "@rules_codechecker//src:toolchain_type",
+    toolchain_type = "@rules_codechecker//:toolchain_type",
     # Optionally constrain which execution platform this applies to:
     # exec_compatible_with = ["@platforms//os:linux"],
 )

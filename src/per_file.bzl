@@ -187,8 +187,7 @@ def _per_file_impl(ctx):
     all_files = [compile_commands, config_file]
     _create_wrapper_script(ctx, options, compile_commands, config_file)
 
-    # TODO: Consider using aliases so we don't have to type //src: everywhere.
-    info = ctx.toolchains["//src:toolchain_type"].codecheckerinfo
+    info = ctx.toolchains["//:toolchain_type"].codecheckerinfo
     for target in ctx.attr.targets:
         if not CcInfo in target:
             continue
@@ -282,5 +281,5 @@ per_file_test = rule(
         "test_script": "%{name}/test_script.sh",
     },
     test = True,
-    toolchains = ["//src:toolchain_type"],
+    toolchains = ["//:toolchain_type"],
 )

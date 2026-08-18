@@ -8,15 +8,34 @@ CodeCheckerInfo = provider(
         "clang_tidy": "clang-tidy executable",
         "clangsa": "Clang executable",
         "codechecker": "CodeChecker executable",
+        "runfiles": "Depset of files needed to run the tools: the three executables " +
+                    "plus their transitive data_runfiles. Pass to `tools` in " +
+                    "ctx.actions.run and include in test runfiles.",
     },
 )
 
 def _codechecker_toolchain_impl(ctx):
+    runfiles = depset(
+        direct = [
+            ctx.executable.codechecker,
+            ctx.executable.clangsa,
+            ctx.executable.clang_tidy,
+        ],
+        transitive = [
+            # We also collect files necessary for these programs to run.
+            # Those files should be declared with `data = [...]`
+            # in the executable's target.
+            ctx.attr.codechecker[DefaultInfo].data_runfiles.files,
+            ctx.attr.clangsa[DefaultInfo].data_runfiles.files,
+            ctx.attr.clang_tidy[DefaultInfo].data_runfiles.files,
+        ],
+    )
     toolchain_info = platform_common.ToolchainInfo(
         codecheckerinfo = CodeCheckerInfo(
             codechecker = ctx.executable.codechecker,
             clang_tidy = ctx.executable.clang_tidy,
             clangsa = ctx.executable.clangsa,
+            runfiles = runfiles,
         ),
     )
     return [toolchain_info]

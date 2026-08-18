@@ -40,15 +40,9 @@ def _subject_impl(ctx):
     tc_info = ctx.attr.toolchain[platform_common.ToolchainInfo]
     info = tc_info.codecheckerinfo
 
-    # TODO: remove hasattr guard once the fix is applied.
-    if hasattr(info, "runfiles"):
-        basenames = sorted([f.basename for f in info.runfiles.to_list()])
-        has_runfiles = True
-    else:
-        basenames = []
-        has_runfiles = False
+    basenames = sorted([f.basename for f in info.runfiles.to_list()])
 
-    return [_RunfilesInfo(basenames = basenames, has_runfiles = has_runfiles)]
+    return [_RunfilesInfo(basenames = basenames)]
 
 subject_rule = rule(
     implementation = _subject_impl,
@@ -67,47 +61,31 @@ def _test_data_deps_in_runfiles_impl(ctx):
     target = analysistest.target_under_test(env)
     info = target[_RunfilesInfo]
 
-    # TODO: change asserts.false to asserts.true once the fix is applied.
-    # Remove NOT from fail message
-    asserts.false(
-        env,
-        info.has_runfiles,
-        "Expected CodeCheckerInfo to NOT have runfiles.",
-    )
-
     # helper_data.txt is declared as data dep of the mock codechecker tool.
-    # TODO: change asserts.false to asserts.true once the fix is applied.
-    # Remove NOT from fail message
-    asserts.false(
+    asserts.true(
         env,
         "helper_data.txt" in info.basenames,
-        "NOT Expected helper_data.txt (data dep of mock tool) in runfiles, " +
+        "Expected helper_data.txt (data dep of mock tool) in runfiles, " +
         "got: %s" % info.basenames,
     )
 
     # The mock executables themselves.
-    # TODO: change asserts.false to asserts.true once the fix is applied.
-    # Remove NOT from fail message
-    asserts.false(
+    asserts.true(
         env,
         "mock_codechecker.sh" in info.basenames,
-        "NOT Expected mock_codechecker.sh in runfiles, got: %s" % info.basenames,
+        "Expected mock_codechecker.sh in runfiles, got: %s" % info.basenames,
     )
 
-    # TODO: change asserts.false to asserts.true once the fix is applied.
-    # Remove NOT from fail message
-    asserts.false(
+    asserts.true(
         env,
         "mock_clang.sh" in info.basenames,
-        "NOT Expected mock_clang.sh in runfiles, got: %s" % info.basenames,
+        "Expected mock_clang.sh in runfiles, got: %s" % info.basenames,
     )
 
-    # TODO: change asserts.false to asserts.true once the fix is applied.
-    # Remove NOT from fail message
-    asserts.false(
+    asserts.true(
         env,
         "mock_clang_tidy.sh" in info.basenames,
-        "NOT Expected mock_clang_tidy.sh in runfiles, got: %s" % info.basenames,
+        "Expected mock_clang_tidy.sh in runfiles, got: %s" % info.basenames,
     )
 
     return analysistest.end(env)

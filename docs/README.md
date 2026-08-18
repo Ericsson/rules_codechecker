@@ -491,7 +491,7 @@ codechecker_toolchain(
 toolchain(
     name = "codechecker_custom_toolchain",
     toolchain = ":codechecker_custom",
-    toolchain_type = "@rules_codechecker//src:toolchain_type",
+    toolchain_type = "@rules_codechecker//:toolchain_type",
     # Optionally constrain which execution platform this applies to:
     # exec_compatible_with = ["@platforms//os:linux"],
 )

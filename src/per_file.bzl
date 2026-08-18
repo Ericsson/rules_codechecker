@@ -248,12 +248,6 @@ def _per_file_impl(ctx):
 per_file_test = rule(
     implementation = _per_file_impl,
     attrs = {
-        "codechecker_toolchain": attr.label(
-            default = None,
-            doc = "Optional codechecker_toolchain() target. " +
-                  "When set, tools from this target are used instead of " +
-                  "Bazel's toolchain resolution.",
-        ),
         "config": attr.label(
             default = None,
             doc = "CodeChecker configuration",
@@ -279,6 +273,12 @@ per_file_test = rule(
                 compile_commands_aspect,
             ],
             doc = "List of compilable targets which should be checked.",
+        ),
+        "toolchain": attr.label(
+            default = None,
+            doc = "Optional toolchain() target. " +
+                  "When set, tools from this target are used instead of " +
+                  "Bazel's toolchain resolution.",
         ),
         "_per_file_script_template": attr.label(
             default = ":per_file_script.py",

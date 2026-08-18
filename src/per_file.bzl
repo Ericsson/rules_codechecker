@@ -93,12 +93,21 @@ def _run_code_checker(
     analyzer_executables = "clangsa:" + info.clangsa.path + \
                            ";clang-tidy:" + info.clang_tidy.path
 
+    # Derive CC_BIN_DIR so pip-installed CodeChecker can find its data dir.
+    action_env = {}
+    for f in info.runfiles.to_list():
+        idx = f.path.find("data/share/codechecker/")
+        if idx >= 0:
+            action_env["CC_BIN_DIR"] = f.path[:idx] + "data/share/codechecker/bin"
+            break
+
     # Action to run CodeChecker for a file
     ctx.actions.run(
         inputs = inputs,
         outputs = outputs,
         executable = ctx.outputs.per_file_script,
         tools = [info.runfiles],
+        env = action_env,
         arguments = [
             info.codechecker.path,
             data_dir,
@@ -216,17 +225,28 @@ def _per_file_impl(ctx):
                         sources_and_headers,
                     )
                     all_files += outputs
+
+    # Derive CC_BIN_DIR for the test script so CodeChecker parse can find config
+    cc_bin_dir_export = ""
+    for f in info.runfiles.to_list():
+        idx = f.short_path.find("data/share/codechecker/")
+        if idx >= 0:
+            # In test runfiles, short_path for external repos starts with ../
+            cc_bin_dir_export = 'export CC_BIN_DIR="$TEST_SRCDIR/_main/' + f.short_path[:idx] + 'data/share/codechecker/bin"'
+            break
+
     ctx.actions.write(
         output = ctx.outputs.test_script,
         is_executable = True,
         content = """
+            {cc_bin_dir_export}
             DATA_DIR=$(dirname {dirname})
             # ls -la $DATA_DIR/data
             # find $DATA_DIR/data -name *.plist -exec sed -i -e "s|<string>.*execroot/codechecker_bazel/|<string>|g" {{}} \\;
             # cat $DATA_DIR/data/test-src-lib.cc_clangsa.plist
             echo "Running: CodeChecker parse $DATA_DIR/data"
             $(realpath {codechecker}) parse $DATA_DIR/data
-        """.format(dirname = ctx.outputs.test_script.short_path, codechecker = info.codechecker.short_path),
+        """.format(dirname = ctx.outputs.test_script.short_path, codechecker = info.codechecker.short_path, cc_bin_dir_export = cc_bin_dir_export),
     )
     files = depset(
         direct = all_files,

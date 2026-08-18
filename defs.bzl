@@ -41,10 +41,13 @@ load(
     _codechecker_toolchain = "codechecker_toolchain",
 )
 
-# Compilation database (compile_commands.json) rule
+# Compilation database (compile_commands.json) rule, aspect and provider
 load(
     "//src:compile_commands.bzl",
+    _SourceFilesInfo = "SourceFilesInfo",
     _compile_commands = "compile_commands",
+    _compile_commands_aspect = "compile_commands_aspect",
+    _platforms_transition = "platforms_transition",
 )
 
 codechecker_test = _codechecker_test
@@ -57,3 +60,8 @@ clang_analyze_test = _clang_analyze_test
 
 # Helper for the platform suffix codechecker_suite() adds to its test names
 get_platform_alias = _get_platform_alias
+
+# Building blocks for rules collecting the compilation database
+compile_commands_aspect = _compile_commands_aspect
+platforms_transition = _platforms_transition
+SourceFilesInfo = _SourceFilesInfo

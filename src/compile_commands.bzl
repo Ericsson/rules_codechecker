@@ -48,7 +48,7 @@ load(
 )
 
 SourceFilesInfo = provider(
-    doc = "Source files and corresponding compilation database (or compile commands)",
+    doc = "Source files and compilation database, returned by compile_commands_aspect",
     fields = {
         "compilation_db": "list of compile commands with parameters: file, command, directory",
         "headers": "list of required header files",
@@ -373,6 +373,7 @@ def _platforms_transition_impl(settings, attr):
         "//command_line_option:platforms": platforms,
     }
 
+# Requires a "platform" attribute on the rule using it
 platforms_transition = transition(
     implementation = _platforms_transition_impl,
     inputs = [

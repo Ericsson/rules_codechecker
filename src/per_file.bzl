@@ -69,9 +69,6 @@ def _run_code_checker(
             compile_commands_json,
             config_file,
             config,
-            info.codechecker,
-            info.clangsa,
-            info.clang_tidy,
         ] + sources_and_headers
     else:
         # NOTE: we collect only headers, so CTU may not work!
@@ -81,9 +78,6 @@ def _run_code_checker(
             config_file,
             src,
             config,
-            info.codechecker,
-            info.clangsa,
-            info.clang_tidy,
         ], transitive = [headers])
 
     outputs = [
@@ -104,6 +98,7 @@ def _run_code_checker(
         inputs = inputs,
         outputs = outputs,
         executable = ctx.outputs.per_file_script,
+        tools = [info.runfiles],
         arguments = [
             info.codechecker.path,
             data_dir,
@@ -177,6 +172,7 @@ def _create_wrapper_script(ctx, options, compile_commands_json, config_file):
     )
 
 def _per_file_impl(ctx):
+    info = ctx.toolchains["//src:toolchain_type"].codecheckerinfo
     compile_commands = None
     for output in compile_commands_impl(ctx):
         if type(output) == "DefaultInfo":
@@ -191,8 +187,7 @@ def _per_file_impl(ctx):
     all_files = [compile_commands, config_file]
     _create_wrapper_script(ctx, options, compile_commands, config_file)
 
-    # TODO: Consider using aliases so we don't have to type //src: everywhere.
-    info = ctx.toolchains["//src:toolchain_type"].codecheckerinfo
+    info = ctx.toolchains["//:toolchain_type"].codecheckerinfo
     for target in ctx.attr.targets:
         if not CcInfo in target:
             continue
@@ -235,7 +230,9 @@ def _per_file_impl(ctx):
     files = depset(
         direct = all_files,
     )
-    run_files = [ctx.outputs.test_script, info.codechecker] + all_files
+    run_files = [
+        ctx.outputs.test_script,
+    ] + info.runfiles.to_list() + all_files
     return [
         DefaultInfo(
             files = files,
@@ -284,5 +281,5 @@ per_file_test = rule(
         "test_script": "%{name}/test_script.sh",
     },
     test = True,
-    toolchains = ["//src:toolchain_type"],
+    toolchains = ["//:toolchain_type"],
 )

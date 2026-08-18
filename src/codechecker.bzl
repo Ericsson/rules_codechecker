@@ -92,7 +92,7 @@ def _codechecker_impl(ctx):
 
     config_file, codechecker_env = get_config_file(ctx)
 
-    info = ctx.toolchains["//src:toolchain_type"].codecheckerinfo
+    info = ctx.toolchains["//:toolchain_type"].codecheckerinfo
 
     codechecker_files = ctx.actions.declare_directory(ctx.label.name + "/codechecker-files")
     ctx.actions.expand_template(
@@ -118,15 +118,13 @@ def _codechecker_impl(ctx):
     ctx.actions.run(
         inputs = depset(
             [
-                info.codechecker,
-                info.clangsa,
-                info.clang_tidy,
                 ctx.outputs.codechecker_script,
                 ctx.outputs.codechecker_commands,
                 ctx.outputs.codechecker_skipfile,
                 config_file,
             ] + source_files,
         ),
+        tools = [info.runfiles],
         outputs = [
             codechecker_files,
             ctx.outputs.codechecker_log,
@@ -208,7 +206,7 @@ codechecker = rule(
         "compile_commands": "%{name}/compile_commands.json",
     },
     toolchains = [
-        "//src:toolchain_type",
+        "//:toolchain_type",
     ],
 )
 
@@ -229,7 +227,7 @@ def _codechecker_test_impl(ctx):
     if not codechecker_files:
         fail("Execution results required for codechecker test are not available")
 
-    info = ctx.toolchains["//src:toolchain_type"].codecheckerinfo
+    info = ctx.toolchains["//:toolchain_type"].codecheckerinfo
 
     # Create test script from template
     ctx.actions.expand_template(
@@ -250,10 +248,7 @@ def _codechecker_test_impl(ctx):
     # Return test script and all required files
     run_files = default_runfiles + [
         ctx.outputs.codechecker_test_script,
-        info.codechecker,
-        info.clang_tidy,
-        info.clangsa,
-    ]
+    ] + info.runfiles.to_list()
     return [
         DefaultInfo(
             files = depset(all_files),
@@ -314,7 +309,7 @@ _codechecker_test = rule(
         "compile_commands": "%{name}/compile_commands.json",
     },
     toolchains = [
-        "//src:toolchain_type",
+        "//:toolchain_type",
     ],
     test = True,
 )

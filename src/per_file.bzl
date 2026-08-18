@@ -172,7 +172,7 @@ def _create_wrapper_script(ctx, options, compile_commands_json, config_file):
     )
 
 def _per_file_impl(ctx):
-    info = ctx.toolchains["//src:toolchain_type"].codecheckerinfo
+    info = ctx.toolchains["//:toolchain_type"].codecheckerinfo
     compile_commands = None
     for output in compile_commands_impl(ctx):
         if type(output) == "DefaultInfo":

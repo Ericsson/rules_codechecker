@@ -1,0 +1,4 @@
+In the BUILD file, this text file is declared as a runfile dependency to the (mock) codechecker toolchain
+through the data field of sh_binary target.
+We expect this text file (and any other, similarly declared resources)
+to be available through the toolchain.

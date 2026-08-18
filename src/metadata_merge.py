@@ -22,11 +22,80 @@ import sys
 from typing import List, Dict, Any
 
 
+def _merge_analyzer_statistics(stat1, stat2):
+    """
+    Merges two analyzer_statistics dicts into stat1.
+
+    Sums failed/successful counts, extends source lists,
+    and preserves the version field.
+    """
+    stat1["failed"] = stat1["failed"] + stat2["failed"]
+    stat1["failed_sources"].extend(stat2["failed_sources"])
+    stat1["successful"] = stat1["successful"] + stat2["successful"]
+    stat1["successful_sources"].extend(stat2["successful_sources"])
+
+
+def _merge_checkers(checkers1, checkers2):
+    """
+    Merges two checker dicts.
+
+    A checker is enabled (True) in the result if it is enabled
+    in either input. This handles the case where different
+    per-file runs may report slightly different checker sets.
+    """
+    for checker, enabled in checkers2.items():
+        if checker not in checkers1:
+            checkers1[checker] = enabled
+        else:
+            # If enabled in either, mark as enabled
+            checkers1[checker] = checkers1[checker] or enabled
+
+
+def _merge_analyzers(analyzers1, analyzers2):
+    """
+    Merges analyzer sections from two metadata files.
+
+    Handles the case where json2 has analyzers not present
+    in json1 by initializing them from json2.
+    """
+    for analyzer_name, analyzer_data in analyzers2.items():
+        if analyzer_name not in analyzers1:
+            # Analyzer exists in json2 but not json1; adopt it
+            analyzers1[analyzer_name] = analyzer_data
+            continue
+
+        # Merge checkers
+        if "checkers" in analyzer_data:
+            if "checkers" not in analyzers1[analyzer_name]:
+                analyzers1[analyzer_name]["checkers"] = {}
+            _merge_checkers(
+                analyzers1[analyzer_name]["checkers"],
+                analyzer_data["checkers"],
+            )
+
+        # Merge analyzer_statistics
+        if "analyzer_statistics" in analyzer_data:
+            if "analyzer_statistics" not in analyzers1[analyzer_name]:
+                analyzers1[analyzer_name]["analyzer_statistics"] = (
+                    analyzer_data["analyzer_statistics"]
+                )
+            else:
+                _merge_analyzer_statistics(
+                    analyzers1[analyzer_name]["analyzer_statistics"],
+                    analyzer_data["analyzer_statistics"],
+                )
+
+
 def merge_two_json(json1, json2):
     """
-    Merges the data of two json files.
+    Merges the data of two metadata json files.
 
     If both json files are empty, returns an empty json.
+    Handles all fields defined in the CodeChecker metadata spec:
+    - version, name, action_num, command, working_directory,
+      output_path, result_source_files, analyzers (with checkers
+      and analyzer_statistics including version), skipped,
+      timestamps.
     """
     if json1 == {}:
         return json2
@@ -35,46 +104,49 @@ def merge_two_json(json1, json2):
     # Happens when analysis of all files was skipped
     if json1 == {} and json2 == {}:
         return {}
-    # Fail if the plist file version is different
-    assert json1["version"] == json2["version"]
-    json1_root = json1["tools"][0]
-    json2_root = json2["tools"][0]
-    # Command, working directory nad output directory may be different
-    # from metadata to metadata, due to remote workers.
-    # Currently we choose the first of these values.
-    # We expect the following fields to be the same in all metadata files.
-    assert json1_root["name"] == json2_root["name"]
-    # same CodeChecker version
-    assert json1_root["version"] == json2_root["version"]
-    # We assume that the list of enabled checkers haven't changed between runs.
-    # We append info from json2 to json1 from here on out
-    json1_root["action_num"] += json2_root["action_num"]
-    json1_root["result_source_files"].update(json2_root["result_source_files"])
-    json1_root["skipped"] = json1_root["skipped"] + json2_root["skipped"]
-    # Merge time; we assume here both json files describe jobs in
-    # the same analysis invocation, implying that the analysis start
-    # time is the lowest timestamp, and the end is the highest.
+    # Fail if the metadata format version is not 2
+    assert json1["version"] == 2
+    assert json2["version"] == 2
+    json1_tools = json1["tools"][0]
+    json2_tools = json2["tools"][0]
+    # We expect the following fields to be the same in all
+    # metadata files from the same analysis invocation.
+    assert json1_tools["name"] == json2_tools["name"]
+    # Same CodeChecker version
+    assert json1_tools["version"] == json2_tools["version"]
+    # command, working_directory and output_path may differ
+    # between per-file runs (e.g. remote workers). We keep
+    # json1's values as the canonical ones.
+
+    # Sum action counts and skipped files
+    json1_tools["action_num"] += json2_tools["action_num"]
+    json1_tools["skipped"] = json1_tools["skipped"] + json2_tools["skipped"]
+
+    # Merge result_source_files mapping
+    json1_tools["result_source_files"].update(
+        json2_tools["result_source_files"]
+    )
+
+    # Merge timestamps; we assume both json files describe jobs
+    # in the same analysis invocation, implying that the analysis
+    # start time is the lowest timestamp, and the end is the
+    # highest.
     # Note: caching will break this assumption
-    json1_root["timestamps"]["begin"] = min(
-        float(json1_root["timestamps"]["begin"]),
-        float(json2_root["timestamps"]["begin"]),
+    # Users may see months, or even years long difference in timestamps
+    json1_tools["timestamps"]["begin"] = min(
+        float(json1_tools["timestamps"]["begin"]),
+        float(json2_tools["timestamps"]["begin"]),
     )
-    json1_root["timestamps"]["end"] = max(
-        float(json1_root["timestamps"]["end"]),
-        float(json2_root["timestamps"]["end"]),
+    json1_tools["timestamps"]["end"] = max(
+        float(json1_tools["timestamps"]["end"]),
+        float(json2_tools["timestamps"]["end"]),
     )
-    # Merge analyzers
-    for key, _ in json2_root["analyzers"].items():
-        json1_stat = json1_root["analyzers"][key]["analyzer_statistics"]
-        json2_stat = json2_root["analyzers"][key]["analyzer_statistics"]
-        json1_stat["failed"] = json1_stat["failed"] + json2_stat["failed"]
-        json1_stat["failed_sources"].extend(json2_stat["failed_sources"])
-        json1_stat["successful"] = (
-            json1_stat["successful"] + json2_stat["successful"]
-        )
-        json1_stat["successful_sources"].extend(
-            json2_stat["successful_sources"]
-        )
+
+    # Merge analyzers (checkers + analyzer_statistics)
+    _merge_analyzers(
+        json1_tools["analyzers"], json2_tools["analyzers"]
+    )
+
     return json1
 
 

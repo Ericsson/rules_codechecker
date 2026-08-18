@@ -454,7 +454,7 @@ codechecker_extension = use_extension(
     "module_register_default_codechecker_tools",
 )
 use_repo(codechecker_extension, "default_codechecker_tools")
-register_toolchains("@rules_codechecker//src:codechecker_local_toolchain")
+register_toolchains("@rules_codechecker//:default_toolchain")
 ```
 
 ### Providing your own tools

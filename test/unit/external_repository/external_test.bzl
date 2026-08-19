@@ -108,6 +108,8 @@ def external_test(
         main = "//test/unit/external_repository:external_test_runner.py",
         args = python_args,
         data = _SRCS + ["//:MODULE.bazel"],
+        # No other way to ensure integrated bazel can find the repository
+        local = True,
         size = size,
         tags = tags,
         **kwargs

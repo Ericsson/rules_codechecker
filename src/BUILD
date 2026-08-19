@@ -20,18 +20,12 @@ py_binary(
     visibility = ["//visibility:public"],
 )
 
-# For targets using WORKSPACE files we use our own python toolchain,
-# therefore we cannot load from rules_python.
-# buildifier: disable=native-py
 py_binary(
     name = "codechecker_script",
     srcs = ["codechecker_script.py"],
     visibility = ["//visibility:public"],
 )
 
-# For targets using WORKSPACE files we use our own python toolchain,
-# therefore we cannot load from rules_python.
-# buildifier: disable=native-py
 py_binary(
     name = "per_file_script",
     srcs = ["per_file_script.py"],

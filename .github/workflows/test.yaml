@@ -88,7 +88,7 @@ jobs:
       # Therefore: less wasted CI runtime.
       - name: Run unit tests
         run: |
-          bazel test //...
+          bazel test //... --spawn_strategy=sandboxed --test_tag_filters=-buildifier
           pytest test/unit ${{ runner.debug == '1' && '--log-cli-level=DEBUG' || '' }}
         shell: bash -el {0}
 
@@ -158,7 +158,7 @@ jobs:
       # Therefore: less wasted CI runtime.
       - name: Run unit tests
         run: |
-          runuser -u test -- bazel test //...
+          runuser -u test -- bazel test //... --spawn_strategy=sandboxed --test_tag_filters=-buildifier
           runuser -u test -- pytest test/unit ${{ runner.debug == '1' && '--log-cli-level=DEBUG' || '' }}
         shell: bash -el {0}
 

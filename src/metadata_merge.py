@@ -22,6 +22,9 @@ import sys
 from typing import List, Dict, Any
 
 
+# Structure of metadata files is defined here:
+# https://github.com/Ericsson/codechecker/blob/master/docs/report_directory.md#metadata-structure
+
 def _merge_analyzer_statistics(stat1, stat2):
     """
     Merges two analyzer_statistics dicts into stat1.

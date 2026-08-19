@@ -80,19 +80,15 @@ SYSTEM_INCLUDE = "-isystem "
 QUOTE_INCLUDE = "-iquote "
 EXTERNAL_INCLUDE = "-isystem "
 
-# Function copied from https://gist.github.com/oquenchil/7e2c2bd761aa1341b458cc25608da50c
-# NOTE: added local_defines
-def get_compile_flags(ctx, dep):
-    """ Return a list of compile options
+def _compilation_context_flags(compilation_context):
+    """ Return a list of compile options from a compilation_context.
 
     Args:
-        ctx: The context variable.
-        dep: A target with CcInfo.
+        compilation_context: A CcInfo.compilation_context object.
     Returns:
       List of compile options.
     """
     options = []
-    compilation_context = dep[CcInfo].compilation_context
 
     for define in compilation_context.defines.to_list():
         options.append("-D'{}'".format(define))
@@ -114,42 +110,56 @@ def get_compile_flags(ctx, dep):
         if len(quote_include) == 0:
             quote_include = "."
         options.append(QUOTE_INCLUDE + quote_include)
+
     if hasattr(compilation_context, "external_includes"):
         for external_include in compilation_context.external_includes.to_list():
             if len(external_include) == 0:
                 external_include = "."
             options.append(EXTERNAL_INCLUDE + external_include)
 
-    for attr in SOURCE_ATTR:
-        if not hasattr(ctx.rule.attr, attr):
-            continue
-
-        deps = getattr(ctx.rule.attr, attr)
-        if not type(deps) == "list":
-            continue
-
-        for dep in deps:
-            if CcInfo not in dep:
-                continue
-
-            compilation_context = dep[CcInfo].compilation_context
-            for include in compilation_context.includes.to_list():
-                if len(include) == 0:
-                    include = "."
-                options.append("-I{}".format(include))
-
-            for system_include in compilation_context.system_includes.to_list():
-                if len(system_include) == 0:
-                    system_include = "."
-                options.append(SYSTEM_INCLUDE + system_include)
-
-            if hasattr(compilation_context, "external_includes"):
-                for external_include in compilation_context.external_includes.to_list():
-                    if len(external_include) == 0:
-                        external_include = "."
-                    options.append(EXTERNAL_INCLUDE + external_include)
-
     return options
+
+def _remove_duplicate_flags(flags):
+    """ Remove duplicate flags while preserving order.
+
+    Args:
+        flags: A list of compile flag strings.
+    Returns:
+      List of compile flags with duplicates removed.
+    """
+    seen = {}
+    unique_flags = []
+    for flag in flags:
+        if flag not in seen:
+            seen[flag] = True
+            unique_flags.append(flag)
+    return unique_flags
+
+def get_compile_flags(ctx, dep):
+    """ Return a list of compile options for a target.
+
+    Args:
+        ctx: The context variable.
+        dep: A target with CcInfo.
+    Returns:
+      List of compile options.
+    """
+    options = _compilation_context_flags(dep[CcInfo].compilation_context)
+
+    # implementation_deps intentionally does not propagate its includes
+    # into the target's CcInfo.compilation_context, so we must extract
+    # them explicitly. This may produce duplication.
+    if hasattr(ctx.rule.attr, "implementation_deps"):
+        impl_deps = getattr(ctx.rule.attr, "implementation_deps")
+        if type(impl_deps) == "list":
+            for impl_dep in impl_deps:
+                if CcInfo not in impl_dep:
+                    continue
+                options += _compilation_context_flags(
+                    impl_dep[CcInfo].compilation_context,
+                )
+
+    return _remove_duplicate_flags(options)
 
 def get_sources(ctx):
     """ Return a list of source files

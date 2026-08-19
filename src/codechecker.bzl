@@ -92,7 +92,10 @@ def _codechecker_impl(ctx):
 
     config_file, codechecker_env = get_config_file(ctx)
 
-    info = ctx.toolchains["//:toolchain_type"].codecheckerinfo
+    if ctx.attr.toolchain:
+        info = ctx.attr.toolchain[platform_common.ToolchainInfo].codecheckerinfo
+    else:
+        info = ctx.toolchains["//:toolchain_type"].codecheckerinfo
 
     codechecker_files = ctx.actions.declare_directory(ctx.label.name + "/codechecker-files")
     ctx.actions.expand_template(
@@ -187,6 +190,12 @@ codechecker = rule(
             ],
             doc = "List of compilable targets which should be checked.",
         ),
+        "toolchain": attr.label(
+            default = None,
+            doc = "Optional toolchain() target. " +
+                  "When set, tools from this target are used instead of " +
+                  "Bazel's toolchain resolution.",
+        ),
         "_codechecker_script_template": attr.label(
             default = ":codechecker_script.py",
             allow_single_file = True,
@@ -227,7 +236,10 @@ def _codechecker_test_impl(ctx):
     if not codechecker_files:
         fail("Execution results required for codechecker test are not available")
 
-    info = ctx.toolchains["//:toolchain_type"].codecheckerinfo
+    if ctx.attr.toolchain:
+        info = ctx.attr.toolchain[platform_common.ToolchainInfo].codecheckerinfo
+    else:
+        info = ctx.toolchains["//:toolchain_type"].codecheckerinfo
 
     # Create test script from template
     ctx.actions.expand_template(
@@ -289,6 +301,12 @@ _codechecker_test = rule(
             cfg = platforms_transition,
             doc = "List of compilable targets which should be checked.",
         ),
+        "toolchain": attr.label(
+            default = None,
+            doc = "Optional toolchain() target. " +
+                  "When set, tools from this target are used instead of " +
+                  "Bazel's toolchain resolution.",
+        ),
         "_codechecker_script_template": attr.label(
             default = ":codechecker_script.py",
             allow_single_file = True,
@@ -324,6 +342,7 @@ def codechecker_test(
         analyze = [],
         tags = [],
         per_file = False,
+        toolchain = None,
         **kwargs):
     """
     Macro to choose the appropriate codechecker rule
@@ -339,6 +358,9 @@ def codechecker_test(
         tags: Bazel tags
         per_file: Boolean value, toggles wether to run the analysis
                   with the experimental per_file rule.
+        toolchain: Optional toolchain() target.
+                  When set, tools from this target are used instead of
+                  Bazel's toolchain resolution.
         **kwargs: Other miscellaneous arguments.
     Returns:
         none
@@ -353,6 +375,7 @@ def codechecker_test(
             options = analyze,
             skip = skip,
             config = config,
+            toolchain = toolchain,
             tags = codechecker_tags,
             **kwargs
         )
@@ -365,6 +388,7 @@ def codechecker_test(
             skip = skip,
             config = config,
             analyze = analyze,
+            toolchain = toolchain,
             tags = codechecker_tags,
             **kwargs
         )

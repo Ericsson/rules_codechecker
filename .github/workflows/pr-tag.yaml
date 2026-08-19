@@ -9,20 +9,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Get Current Release
-        id: get_current_release
-        uses: joutvhu/get-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Get date and time
-        id: datetime
-        run: echo "value=$(date -u +'%Y%m%d-%H%M%S')" >> "$GITHUB_OUTPUT"
-
       - name: Bump version and push tag
         id: tag_version
         uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          custom_tag: ${{ steps.get_current_release.outputs.tag_name }}-${{ steps.datetime.outputs.value }}
-          tag_prefix: ""
+
+      # Optionally create releases too.
+      #- name: Create a GitHub release
+      #  uses: ncipollo/release-action@v1
+      #  with:
+      #    tag: ${{ steps.tag_version.outputs.new_tag }}
+      #    name: Release ${{ steps.tag_version.outputs.new_tag }}
+      #    body: ${{ steps.tag_version.outputs.changelog }}

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # Copyright 2023 Ericsson AB
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +17,7 @@ CodeChecker Bazel build & test wrapper script
 """
 
 from __future__ import print_function
+from dataclasses import dataclass
 import logging
 import os
 import plistlib
@@ -26,20 +25,27 @@ import re
 import shlex
 import subprocess
 import sys
+import argparse
 
-EXECUTION_MODE = "{Mode}"
-VERBOSITY = "{Verbosity}"
-CODECHECKER_PATH = os.path.realpath("{codechecker_bin}")
-CLANG_PATH = os.path.realpath("{clang_bin}")
-CLANG_TIDY_PATH = os.path.realpath("{clang_tidy_bin}")
-CODECHECKER_SKIPFILE = "{codechecker_skipfile}"
-CODECHECKER_CONFIG = "{codechecker_config}"
-CODECHECKER_ANALYZE = "{codechecker_analyze}"
-CODECHECKER_FILES = "{codechecker_files}"
-CODECHECKER_LOG = "{codechecker_log}"
-CODECHECKER_SEVERITIES = "{Severities}"
-CODECHECKER_ENV = "{codechecker_env}"
-COMPILE_COMMANDS = "{compile_commands}"
+
+@dataclass
+class Config:  # pylint: disable=too-many-instance-attributes
+    """Configuration parsed from command-line arguments."""
+
+    execution_mode: str
+    verbosity: str
+    codechecker_path: str
+    compile_commands: str
+    clang_path: str
+    clang_tidy_path: str
+    codechecker_skipfile: str
+    codechecker_config: str
+    codechecker_analyze: str
+    codechecker_files: str
+    codechecker_log: str
+    codechecker_env: str
+    codechecker_severities: str
+
 
 START_PATH = r"\/(?:(?!\.\s+)\S)+"
 BAZEL_PATHS = {
@@ -49,17 +55,62 @@ BAZEL_PATHS = {
 }
 
 
-def fail(message, exit_code=1):
+def parse_args(argv=None):
+    """Parse command-line arguments and return a Config instance."""
+    parser = argparse.ArgumentParser(description="CodeChecker Bazel Wrapper")
+
+    parser.add_argument("--mode", required=True, help="Execution mode")
+    parser.add_argument("--verbosity", default="INFO", help="Log level")
+    parser.add_argument(
+        "--codechecker_path", required=True, help="CodeChecker path"
+    )
+    parser.add_argument("--clang_tidy", required=False, help="clang-tidy path")
+    parser.add_argument("--clang", required=False, help="clang path")
+    parser.add_argument("--commands", help="Compile commands json")
+    parser.add_argument("--skip", help="Skipfile path")
+    parser.add_argument("--config", help="Config file path")
+    parser.add_argument("--analyze", default="", help="Analysis options")
+    parser.add_argument(
+        "--files", help="Folder where CodeChecker will store its results"
+    )
+    parser.add_argument("--log", help="Log file path")
+    parser.add_argument("--env", help="Environment for CodeChecker")
+    parser.add_argument("--severities", help="List of severities to fail on")
+
+    args = parser.parse_args(argv)
+
+    return Config(
+        execution_mode=args.mode,
+        verbosity=args.verbosity,
+        codechecker_path=os.path.realpath(args.codechecker_path),
+        compile_commands=args.commands,
+        clang_path=os.path.realpath(args.clang) if args.clang else None,
+        clang_tidy_path=(
+            os.path.realpath(args.clang_tidy) if args.clang_tidy else None
+        ),
+        codechecker_skipfile=args.skip,
+        codechecker_config=args.config,
+        codechecker_analyze=args.analyze,
+        codechecker_files=args.files,
+        codechecker_log=args.log,
+        codechecker_env=args.env,
+        codechecker_severities=args.severities,
+    )
+
+
+def fail(codechecker_log, message, exit_code=1):
     """Print error message and return exit code"""
     logging.error(message)
     print()
     print("*" * 50)
     print("codechecker script execution FAILED!")
-    if log_file_name():
-        print(f"See: {log_file_name()}")
+    if log_file_name(codechecker_log):
+        print(f"See: {log_file_name(codechecker_log)}")
         print("*" * 50)
         try:
-            with open(log_file_name(), encoding="utf-8") as log_file:
+            with open(
+                log_file_name(codechecker_log), encoding="utf-8"
+            ) as log_file:
                 print(log_file.read())
         except IOError:
             print("File not accessible")
@@ -70,10 +121,10 @@ def fail(message, exit_code=1):
     sys.exit(exit_code)
 
 
-def read_file(filename):
+def read_file(codechecker_log, filename):
     """Read text file and return its contents"""
     if not os.path.isfile(filename):
-        fail(f"File not found: {filename}")
+        fail(codechecker_log, f"File not found: {filename}")
     with open(filename, encoding="utf-8") as handle:
         return handle.read()
 
@@ -99,48 +150,50 @@ def valid_parameter(parameter):
     return True
 
 
-def log_file_name():
+def log_file_name(codechecker_log):
     """Check and return log file name"""
-    if valid_parameter(CODECHECKER_LOG):
-        return CODECHECKER_LOG
+    if valid_parameter(codechecker_log):
+        return codechecker_log
     return None
 
 
-def setup():
+def setup(verbosity, codechecker_log):
     """Setup logging parameters for execution session"""
-    if VERBOSITY == "INFO":
+    if verbosity == "INFO":
         log_level = logging.INFO
-    elif VERBOSITY == "WARN":
+    elif verbosity == "WARN":
         log_level = logging.WARN
     else:
         log_level = logging.DEBUG
     log_format = "[codechecker] %(levelname)5s: %(message)s"
 
-    if log_file_name():
+    if log_file_name(codechecker_log):
         logging.basicConfig(
-            filename=log_file_name(), level=log_level, format=log_format
+            filename=log_file_name(codechecker_log),
+            level=log_level,
+            format=log_format,
         )
     else:
         logging.basicConfig(level=log_level, format=log_format)
 
 
-def input_data():
+def input_data(cfg):
     """Print out input (external) parameters"""
     stage("CodeChecker input data:", "debug")
-    logging.debug("EXECUTION_MODE       : %s", str(EXECUTION_MODE))
-    logging.debug("VERBOSITY            : %s", str(VERBOSITY))
-    logging.debug("CODECHECKER_PATH     : %s", str(CODECHECKER_PATH))
-    logging.debug("CODECHECKER_SKIPFILE : %s", str(CODECHECKER_SKIPFILE))
-    logging.debug("CODECHECKER_CONFIG   : %s", str(CODECHECKER_CONFIG))
-    logging.debug("CODECHECKER_ANALYZE  : %s", str(CODECHECKER_ANALYZE))
-    logging.debug("CODECHECKER_FILES    : %s", str(CODECHECKER_FILES))
-    logging.debug("CODECHECKER_LOG      : %s", str(CODECHECKER_LOG))
-    logging.debug("CODECHECKER_ENV      : %s", str(CODECHECKER_ENV))
-    logging.debug("COMPILE_COMMANDS     : %s", str(COMPILE_COMMANDS))
+    logging.debug("EXECUTION_MODE       : %s", str(cfg.execution_mode))
+    logging.debug("VERBOSITY            : %s", str(cfg.verbosity))
+    logging.debug("CODECHECKER_PATH     : %s", str(cfg.codechecker_path))
+    logging.debug("CODECHECKER_SKIPFILE : %s", str(cfg.codechecker_skipfile))
+    logging.debug("CODECHECKER_CONFIG   : %s", str(cfg.codechecker_config))
+    logging.debug("CODECHECKER_ANALYZE  : %s", str(cfg.codechecker_analyze))
+    logging.debug("CODECHECKER_FILES    : %s", str(cfg.codechecker_files))
+    logging.debug("CODECHECKER_LOG      : %s", str(cfg.codechecker_log))
+    logging.debug("CODECHECKER_ENV      : %s", str(cfg.codechecker_env))
+    logging.debug("COMPILE_COMMANDS     : %s", str(cfg.compile_commands))
     logging.debug("")
 
 
-def execute(cmd, env=None, codes=None):
+def execute(codechecker_log, cmd, env=None, codes=None):
     """Execute CodeChecker commands"""
     if codes is None:
         codes = [0]
@@ -156,7 +209,10 @@ def execute(cmd, env=None, codes=None):
         stdout = stdout.decode("utf-8")
         stderr = stderr.decode("utf-8")
         if process.returncode not in codes:
-            fail(f"\ncommand: {cmd}\nstdout: {stdout}\nstderr: {stderr}\n")
+            fail(
+                codechecker_log,
+                f"\ncommand: {cmd}\nstdout: {stdout}\nstderr: {stderr}\n",
+            )
         logging.debug("Executing: %s", cmd)
         # logging.debug("Output:\n\n%s\n", stdout)
     return stdout
@@ -168,53 +224,61 @@ def create_folder(path):
         os.makedirs(path)
 
 
-def prepare():
+def prepare(codechecker_files):
     """Prepare CodeChecker execution environment"""
     stage("CodeChecker files:")
-    logging.info("Creating folder: %s", CODECHECKER_FILES)
-    create_folder(CODECHECKER_FILES)
+    logging.info("Creating folder: %s", codechecker_files)
+    create_folder(codechecker_files)
 
 
-def generate_analyzer_executables():
+def generate_analyzer_executables(cfg):
     """
     Generates the value for the CC_ANALYZER_BIN environment variable
     """
-    analyzer_executables = f"clangsa:{CLANG_PATH};clang-tidy:{CLANG_TIDY_PATH}"
+    analyzer_executables = (
+        f"clangsa:{cfg.clang_path};clang-tidy:{cfg.clang_tidy_path}"
+    )
     return analyzer_executables
 
 
-def analyze():
+def analyze(cfg):
     """Run CodeChecker analyze command"""
     stage("CodeChecker analyze:")
 
     env = os.environ
-    if CODECHECKER_ENV:
-        env_list = CODECHECKER_ENV.split("; ")
+    if cfg.codechecker_env:
+        env_list = cfg.codechecker_env.split("; ")
         if env_list:
             codechecker_env = dict(item.split("=", 1) for item in env_list)
             env.update(codechecker_env)
     if "PATH" not in env:
         env["PATH"] = "/bin"  # NOTE: this is workaround for CodeChecker 6.24.4
-    env["CC_ANALYZER_BIN"] = generate_analyzer_executables()
+    env["CC_ANALYZER_BIN"] = generate_analyzer_executables(cfg)
     logging.debug("env: %s", str(env))
 
-    output = execute(f"{CODECHECKER_PATH} analyzers --details", env=env)
+    output = execute(
+        cfg.codechecker_log,
+        f"{cfg.codechecker_path} analyzers --details",
+        env=env,
+    )
     logging.debug("Analyzers:\n\n%s", output)
 
     command = (
-        f"{CODECHECKER_PATH} analyze --skip={CODECHECKER_SKIPFILE} "
-        f"{COMPILE_COMMANDS} --output={CODECHECKER_FILES}/data "
-        f"--config {CODECHECKER_CONFIG} {CODECHECKER_ANALYZE}"
+        f"{cfg.codechecker_path} analyze --skip={cfg.codechecker_skipfile} "
+        f"{cfg.compile_commands} --output={cfg.codechecker_files}/data "
+        f"--config {cfg.codechecker_config} {cfg.codechecker_analyze}"
     )
     # FIXME: Workaround "CodeChecker simply remove compiler-rt include path".
     # This can be removed once codechecker 6.16.0 is used.
     # command += " --keep-gcc-intrin"
     logging.info("Running CodeChecker analyze...")
-    output = execute(command, env=env)
+    output = execute(cfg.codechecker_log, command, env=env)
     logging.info("Output:\n\n%s\n", output)
     if output.find("- Failed to analyze") != -1:
         logging.error("CodeChecker failed to analyze some files")
-        fail("Make sure that the target can be built first")
+        fail(
+            cfg.codechecker_log, "Make sure that the target can be built first"
+        )
 
 
 def fix_path_with_regex(data: str) -> str:
@@ -231,10 +295,10 @@ def fix_path_with_regex(data: str) -> str:
     return data
 
 
-def fix_bazel_paths():
+def fix_bazel_paths(codechecker_files):
     """Remove Bazel leading paths in all files"""
     stage("Fix CodeChecker output:")
-    folder = CODECHECKER_FILES
+    folder = codechecker_files
     logging.info("Fixing Bazel paths in %s", folder)
     counter = 0
     for root, _, files in os.walk(folder):
@@ -312,10 +376,10 @@ def resolve_yaml_symlinks(filepath):
             output_file.writelines(line_to_write)
 
 
-def resolve_symlinks():
+def resolve_symlinks(codechecker_files):
     """Change ".../execroot/apps" paths to absolute paths in data/* files"""
     stage("Resolve file paths in CodeChecker analyze output:")
-    analyze_outdir = CODECHECKER_FILES + "/data"
+    analyze_outdir = codechecker_files + "/data"
     logging.info(
         "Resolving file paths in CodeChecker analyze output at: %s",
         analyze_outdir,
@@ -333,76 +397,77 @@ def resolve_symlinks():
     logging.info("Processed file paths in %d files", files_processed)
 
 
-def update_file_paths():
+def update_file_paths(codechecker_files):
     """
     Fix bazel sandbox paths and resolve symbolic links
     in generated files to real paths
     """
-    fix_bazel_paths()
-    resolve_symlinks()
+    fix_bazel_paths(codechecker_files)
+    resolve_symlinks(codechecker_files)
 
 
-def parse():
+def parse(cfg):
     """Run CodeChecker parse commands"""
     stage("CodeChecker parse:")
     logging.info("CodeChecker parse -e json")
     codechecker_parse = (
-        f"{CODECHECKER_PATH} parse --config "
-        f"{CODECHECKER_CONFIG} {CODECHECKER_FILES}/data"
+        f"{cfg.codechecker_path} parse --config "
+        f"{cfg.codechecker_config} {cfg.codechecker_files}/data"
     )
     # Save results to JSON file
     command = (
         f"{codechecker_parse} --export=json > "
-        f"{CODECHECKER_FILES}/result.json"
+        f"{cfg.codechecker_files}/result.json"
     )
-    execute(command, codes=[0, 2])
-    # logging.debug(
-    #     "JSON:\n\n%s\n", read_file(CODECHECKER_FILES + "/result.json")
-    # )
+    execute(cfg.codechecker_log, command, codes=[0, 2])
     # Save results as HTML report
     logging.info("CodeChecker parse -e html")
     command = (
         codechecker_parse
         + " --export=html --output="
-        + CODECHECKER_FILES
+        + cfg.codechecker_files
         + "/report"
     )
-    execute(command, codes=[0, 2])
+    execute(cfg.codechecker_log, command, codes=[0, 2])
     # Save results to text file
     logging.info("CodeChecker parse to text result")
-    command = codechecker_parse + " > " + CODECHECKER_FILES + "/result.txt"
-    execute(command, codes=[0, 2])
+    command = codechecker_parse + " > " + cfg.codechecker_files + "/result.txt"
+    execute(cfg.codechecker_log, command, codes=[0, 2])
     logging.info(
-        "Result:\n\n%s\n", read_file(CODECHECKER_FILES + "/result.txt")
+        "Result:\n\n%s\n",
+        read_file(cfg.codechecker_log, cfg.codechecker_files + "/result.txt"),
     )
 
 
-def run():
+def run(cfg):
     """Perform all steps for "bazel build" phase"""
-    prepare()
-    analyze()
-    parse()
-    update_file_paths()
+    prepare(cfg.codechecker_files)
+    analyze(cfg)
+    parse(cfg)
+    update_file_paths(cfg.codechecker_files)
 
 
-def check_results():
+def check_results(cfg):
     """Check/verify CodeChecker results"""
     stage("Checking result:")
     # Get results file and read it
-    result_file = CODECHECKER_FILES + "/result.txt"
+    result_file = cfg.codechecker_files + "/result.txt"
     logging.info("Find CodeChecker results in bazel-out")
-    logging.info("      all artifacts: %s/", CODECHECKER_FILES)
-    logging.info("      HTML report:   %s/report/index.html", CODECHECKER_FILES)
+    logging.info("      all artifacts: %s/", cfg.codechecker_files)
+    logging.info(
+        "      HTML report:   %s/report/index.html", cfg.codechecker_files
+    )
     logging.info("      result file:   %s", result_file)
-    results = read_file(result_file)
+    results = read_file(cfg.codechecker_log, result_file)
     logging.info("Results: \n\n%s\n", results)
     # Collect defect severities to detect
-    if not valid_parameter(CODECHECKER_SEVERITIES):
+    if not valid_parameter(cfg.codechecker_severities):
         fail(
+            cfg.codechecker_log,
             "CodeChecker defect severities are invalid: "
-            f"{str(CODECHECKER_SEVERITIES)}"
+            f"{str(cfg.codechecker_severities)}",
         )
-    severities = shlex.split(CODECHECKER_SEVERITIES)
+    severities = shlex.split(cfg.codechecker_severities)
     # Add HIGH severity by default
     if not severities:
         severities.append("HIGH")
@@ -429,30 +494,34 @@ def check_results():
     if passed:
         logging.info("No defects found by CodeChecker")
     else:
-        fail(f"CodeChecker found defects:\n{conclusion}")
+        fail(cfg.codechecker_log, f"CodeChecker found defects:\n{conclusion}")
 
 
-def test():
+def test(cfg):
     """Perform all steps for "bazel test" phase"""
-    check_results()
+    check_results(cfg)
 
 
 def main():
     """Main function"""
-    setup()
-    input_data()
+    cfg = parse_args()
+    setup(cfg.verbosity, cfg.codechecker_log)
+    input_data(cfg)
     try:
-        if EXECUTION_MODE == "Run":
-            run()
-        elif EXECUTION_MODE == "Test":
-            test()
+        if cfg.execution_mode == "Run":
+            run(cfg)
+        elif cfg.execution_mode == "Test":
+            test(cfg)
         else:
-            fail(f"Wrong codechecker script mode: {EXECUTION_MODE}")
+            fail(
+                cfg.codechecker_log,
+                f"Wrong codechecker script mode: {cfg.execution_mode}",
+            )
     # We want to fail explicitly here
     # pylint: disable=broad-exception-caught
     except Exception as error:
         logging.exception(error)
-        fail("Caught Exception. Terminated")
+        fail(cfg.codechecker_log, "Caught Exception. Terminated")
 
 
 if __name__ == "__main__":

@@ -41,11 +41,12 @@ toolchain(
     toolchain_type = ":toolchain_type",
 )
 
-# Repository root marker, used by buildifier and pylint tests
+# Repository root marker, used by the buildifier, pylint, and external_repository tests
 exports_files(
     ["MODULE.bazel"],
     visibility = [
         "//test/buildifier:__pkg__",
         "//test/pylint:__pkg__",
+        "//test/unit/external_repository:__pkg__",
     ],
 )

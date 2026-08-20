@@ -15,8 +15,8 @@
 # -----------------------------------------------------------------------
 # FOSS integration tests for rules_codechecker
 #
-# Each test downloads a real FOSS project, sets up a standalone Bazel
-# project with rules_codechecker, and verifies the rules execute
+# Each test creates a Bazel project that depends on a real FOSS module
+# from the Bazel Central Registry, and verifies the rules execute
 # successfully via "bazel build".
 #
 # Run all:   bazel test //test/bazel/...
@@ -34,7 +34,7 @@ foss_test(
         ":codechecker_test",
         ":compile_commands",
     ],
-    url = "https://github.com/madler/zlib/releases/download/v1.3.2/zlib-1.3.2.tar.gz",
+    version = "1.3.2",
 )
 
 foss_test(
@@ -44,7 +44,7 @@ foss_test(
         ":codechecker_test",
         ":compile_commands",
     ],
-    url = "https://github.com/jbeder/yaml-cpp/archive/refs/tags/yaml-cpp-0.9.0.tar.gz",
+    version = "0.9.0.bcr.1",
 )
 
 foss_test(
@@ -54,7 +54,7 @@ foss_test(
         ":codechecker_test",
         ":compile_commands",
     ],
-    url = "https://github.com/google/double-conversion/archive/refs/tags/v3.4.0.tar.gz",
+    version = "3.3.1",
 )
 
 foss_test(
@@ -64,5 +64,5 @@ foss_test(
         ":codechecker_test",
         ":compile_commands",
     ],
-    url = "https://github.com/pytorch/cpuinfo/archive/66ee79c0.tar.gz",
+    version = "0.0.0-20260312-7607ca5",
 )

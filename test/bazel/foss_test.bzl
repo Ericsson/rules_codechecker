@@ -16,15 +16,18 @@
 Macro for generating FOSS integration tests for rules_codechecker.
 
 Each foss_test() generates a local py_test that:
-  1. Downloads a FOSS project into a temp directory
-  2. Sets up a standalone Bazel project with rules_codechecker
-  3. Runs "bazel build" on codechecker targets to verify the rules work
-  4. Validates the outputs (compile_commands.json, codechecker artifacts)
+  1. Creates a Bazel project depending on the FOSS module and on our rules
+  2. Runs "bazel build" on codechecker targets to verify the rules work
+  3. Validates the outputs (compile_commands.json, codechecker artifacts)
+
+The FOSS project comes from the Bazel Central Registry, therefore Bazel
+downloads it, verifies it and resolves its dependencies, see
+https://registry.bazel.build
 
 Example:
     foss_test(
         name = "zlib",
-        url = "https://github.com/madler/zlib/archive/<commit>.tar.gz",
+        version = "1.3.1.bcr.7",
         tests = [":codechecker_test", ":compile_commands"],
     )
 """
@@ -33,8 +36,9 @@ load("@rules_python//python:defs.bzl", "py_test")
 
 def foss_test(
         name,
-        url,
+        version,
         tests,
+        module = None,
         target = None,
         tags = [],
         size = "large",
@@ -43,15 +47,18 @@ def foss_test(
 
     Args:
         name: Test name.
-        url: URL to the source archive (.tar.gz).
+        version: Version of the module in the Bazel Central Registry.
         tests: Analysis targets to build (e.g. codechecker_test, compile_commands).
-        target: The cc_library target to analyze. Defaults to ":<name>".
+        module: Name of the module. Defaults to <name>.
+        target: The cc_library target to analyze. Defaults to @<module>//:<module>.
         tags: Additional test tags.
-        size: Test size (default: enormous, as these download + run bazel).
+        size: Test size (default: large, as these download and run bazel).
         **kwargs: Forwarded to py_test.
     """
+    if module == None:
+        module = name
     if target == None:
-        target = ":" + name
+        target = "@%s//:%s" % (module, module)
 
     py_test(
         name = name,
@@ -59,7 +66,8 @@ def foss_test(
         main = "foss_test_runner.py",
         args = [
             "-vvv",
-            "--url=" + url,
+            "--module=" + module,
+            "--version=" + version,
             "--target=" + target,
             "--tests",
         ] + tests,

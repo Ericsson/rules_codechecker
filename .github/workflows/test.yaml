@@ -154,6 +154,11 @@ jobs:
           runuser -u test -- bazel test //test/buildifier --test_output=all
         shell: bash -el {0}
 
+      - name: Run foss tests
+        run: |
+          runuser -u test -- bazel test //test/bazel/... --test_output=all
+        shell: bash -el {0}
+
       # Splitting unit and FOSS tests, since unit tests fail faster.
       # Therefore: less wasted CI runtime.
       - name: Run unit tests

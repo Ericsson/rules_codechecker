@@ -207,6 +207,7 @@ def _per_file_impl(ctx):
         info = ctx.attr.toolchain[platform_common.ToolchainInfo].codecheckerinfo
     else:
         info = ctx.toolchains["//:toolchain_type"].codecheckerinfo
+
     for target in ctx.attr.targets:
         if not CcInfo in target:
             continue
@@ -235,6 +236,52 @@ def _per_file_impl(ctx):
                         sources_and_headers,
                     )
                     all_files += outputs
+
+    # Parse action: collect all plists into a directory and run
+    # CodeChecker parse to produce result.txt, result.json, HTML report
+    codechecker_files = ctx.actions.declare_directory(
+        ctx.label.name + "/parse",
+    )
+    codechecker_parse_log = ctx.actions.declare_file(
+        ctx.label.name + "/codechecker_parse.log",
+    )
+
+    # Build arguments for the parse action
+    # The data dir is where the per-file analyze actions put their plists
+    # All plists are in <name>/data/, derive path from first plist
+    #data_dir_path = plist_and_metadata_files[0].dirname if plist_and_metadata_files else ""
+
+    ctx.actions.run(
+        inputs = all_files + [config_file],
+        outputs = [codechecker_files, codechecker_parse_log],
+        executable = per_file_script,
+        tools = [
+            info.runfiles,
+            ctx.attr._per_file_script[DefaultInfo].files_to_run,
+        ],
+        arguments = [
+            "--mode",
+            "Parse",
+            "--codechecker",
+            info.codechecker.path,
+            "--data_dir",
+            codechecker_files.path,
+            "--log",
+            codechecker_parse_log.path,
+            "--config",
+            config_file.path,
+            "--clang",
+            info.clangsa.path,
+            "--clang_tidy",
+            info.clang_tidy.path,
+        ],
+        mnemonic = "CodeCheckerParse",
+        use_default_shell_env = True,
+        progress_message = "CodeChecker parse %s" % str(ctx.label),
+    )
+
+    all_files += [codechecker_files, codechecker_parse_log]
+
     ctx.actions.write(
         output = ctx.outputs.test_script,
         is_executable = True,

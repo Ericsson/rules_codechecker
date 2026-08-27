@@ -403,6 +403,7 @@ def update_file_paths(codechecker_files):
     Fix bazel sandbox paths and resolve symbolic links
     in generated files to real paths
     """
+    return
     fix_bazel_paths(codechecker_files)
     resolve_symlinks(codechecker_files)
 

@@ -164,6 +164,7 @@ def _codechecker_impl(ctx):
         ),
         OutputGroupInfo(
             codechecker_files = depset([codechecker_files]),
+            source_files = depset(source_files),
         ),
     ]
 
@@ -225,12 +226,14 @@ def _codechecker_test_impl(ctx):
     all_files = []
     default_runfiles = []
     codechecker_files = []
+    source_files = []
     for output in info:
         if type(output) == "DefaultInfo":
             all_files = output.files.to_list()
             default_runfiles = output.default_runfiles.files.to_list()
         if type(output) == "OutputGroupInfo":
             codechecker_files = output.codechecker_files.to_list()[0]
+            source_files = output.source_files.to_list()
     if not all_files:
         fail("Files required for codechecker test are not available")
     if not codechecker_files:
@@ -278,6 +281,10 @@ def _codechecker_test_impl(ctx):
             files = depset(all_files),
             runfiles = all_runfiles,
             executable = launcher,
+        ),
+        OutputGroupInfo(
+            codechecker_files = depset([codechecker_files]),
+            source_files = depset(source_files),
         ),
     ]
 

@@ -190,6 +190,8 @@ def _per_file_impl(ctx):
     options = ctx.attr.default_options + ctx.attr.options
     config_file, env_vars = get_config_file(ctx)
     all_files = [compile_commands, config_file]
+    codechecker_files = []
+    source_files = []
 
     # Create per_file_script
     per_file_script = ctx.actions.declare_file(ctx.label.name + "/per_file_script")
@@ -208,6 +210,7 @@ def _per_file_impl(ctx):
         if SourceFilesInfo in target:
             if hasattr(target[SourceFilesInfo], "transitive_source_files"):
                 srcs = target[SourceFilesInfo].transitive_source_files.to_list()
+                source_files += srcs
                 all_files += srcs
                 compilation_context = target[CcInfo].compilation_context
                 for src in srcs:
@@ -230,6 +233,7 @@ def _per_file_impl(ctx):
                         sources_and_headers,
                     )
                     all_files += outputs
+                    codechecker_files += outputs
     ctx.actions.write(
         output = ctx.outputs.test_script,
         is_executable = True,
@@ -253,6 +257,10 @@ def _per_file_impl(ctx):
             files = files,
             runfiles = ctx.runfiles(files = run_files),
             executable = ctx.outputs.test_script,
+        ),
+        OutputGroupInfo(
+            codechecker_files = codechecker_files,
+            source_files = source_files,
         ),
     ]
 

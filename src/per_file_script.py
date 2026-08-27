@@ -297,6 +297,8 @@ def main():
     Main function of CodeChecker wrapper
     """
     cfg = parse_args()
+    print(os.getcwd())
+    print(cfg.file_path)
     _create_compile_commands_json_with_absolute_paths(cfg)
     _run_codechecker(cfg)
     _move_output_files(cfg)

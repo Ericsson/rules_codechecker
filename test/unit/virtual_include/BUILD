@@ -51,6 +51,7 @@ codechecker_test(
     targets = [
         "virtual_include",
     ],
+    visibility = ["//test/unit/parse:__pkg__"],
 )
 
 codechecker_test(

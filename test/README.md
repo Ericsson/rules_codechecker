@@ -18,7 +18,7 @@ For more verbosity in python tests use **`-vvv`** or **`--log-cli-level=DEBUG`**
     ```
 
 
-## Adding New Unit Tests
+## Adding New Tests,
 
 ### Create a Test Folder
    Inside the `unit` directory, create a folder for your new test. This folder should contain:
@@ -29,7 +29,7 @@ For more verbosity in python tests use **`-vvv`** or **`--log-cli-level=DEBUG`**
 ### Create a skylib test
 
 With skylib we can test anything that does not use the output of
-`ctx.actions.run` actions (i.e. anything known at analysis time).
+`ctx.actions.run` actions (i.e. anything known at Bazel's analysis time).
 Skylib provides two different kinds of tests: **unit tests** and
 **analysis tests**.
 
@@ -55,29 +55,6 @@ a. An **implementation function** that receives the test environment,
 b. A **test rule** created with `analysistest.make()`.
 c. **Instantiation** in the `BUILD` file where the test rule is called
     with `target_under_test` pointing to the subject target.
-
-##### Skeleton `.bzl` file
-
-```starlark
-load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts")
-
-def _my_test_impl(ctx):
-    env = analysistest.begin(ctx)
-
-    # Retrieve the target being tested.
-    target = analysistest.target_under_test(env)
-
-    # Make assertions on its providers.
-    asserts.true(
-        env,
-        SomeProvider in target,
-        "Target should provide SomeProvider",
-    )
-
-    return analysistest.end(env)
-
-my_test = analysistest.make(_my_test_impl)
-```
 
 ###### Custom attributes
 
@@ -109,27 +86,6 @@ my_aspect_test = analysistest.make(
 
 This makes the aspect's providers available on the target under test.
 
-##### Skeleton `BUILD` file
-
-```starlark
-load(":my_test.bzl", "my_test")
-
-# Subject target — what we are testing.
-# Always tag "manual" so it isn't built outside the test.
-cc_library(
-    name = "my_subject",
-    srcs = ["testdata/foo.cc"],
-    defines = ["MY_DEFINE=1"],
-    tags = ["manual"],
-)
-
-# Analysis test — points at the subject.
-my_test(
-    name = "my_analysis_test",
-    target_under_test = ":my_subject",
-)
-```
-
 #### Test suites
 
 When you have multiple related analysis tests, group them with a
@@ -138,37 +94,18 @@ run the whole group with one target:
 
 ```starlark
 def my_test_suite(name):
-    first_test(
-        name = name + "_first",
-        target_under_test = ":" + name + "_first_subject",
-    )
-    second_test(
-        name = name + "_second",
-        target_under_test = ":" + name + "_second_subject",
+    one_test(
+        name = name + "_one",
+        target_under_test = ":" + name + "_one_subject",
     )
 
     native.test_suite(
         name = name,
         tests = [
-            ":" + name + "_first",
-            ":" + name + "_second",
+            ":" + name + "_one",
         ],
     )
 ```
-
-#### Assertions
-
-Commonly used assertions from `@bazel_skylib//lib:unittest.bzl`:
-
-| Function | Purpose |
-|---|---|
-| `asserts.true(env, cond, msg)` | Condition is true |
-| `asserts.false(env, cond, msg)` | Condition is false |
-| `asserts.equals(env, expected, actual)` | Equality check |
-| `asserts.new_set_equals(env, expected, actual)` | Set equality |
-
-Always include a descriptive failure message — skylib error output can
-be cryptic without one.
 
 ### Unit tests
 
@@ -176,36 +113,6 @@ For a small example see `test/unit/basic/unit_test.bzl`.
 
 A skylib unit test calls a pure Starlark function directly and asserts
 on its return value. Use it when you don't need a full Bazel target.
-
-```starlark
-load("@bazel_skylib//lib:unittest.bzl", "unittest", "asserts")
-
-def _my_unit_test_impl(ctx):
-    env = unittest.begin(ctx)
-
-    result = my_function("input")
-    asserts.equals(env, "expected", result)
-
-    return unittest.end(env)
-
-my_unit_test = unittest.make(_my_unit_test_impl)
-
-def my_unit_test_suite(name):
-    my_unit_test(name = name + "_my_unit_test")
-
-    native.test_suite(
-        name = name,
-        tests = [":" + name + "_my_unit_test"],
-    )
-```
-
-Then in `BUILD`:
-
-```starlark
-load(":my_test.bzl", "my_unit_test_suite")
-
-my_unit_test_suite(name = "my_tests")
-```
 
 ---
 ### Creating unit tests asserting on the output of a rule

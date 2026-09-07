@@ -56,57 +56,6 @@ b. A **test rule** created with `analysistest.make()`.
 c. **Instantiation** in the `BUILD` file where the test rule is called
     with `target_under_test` pointing to the subject target.
 
-###### Custom attributes
-
-If your test needs configurable expected values, pass an `attrs` dict
-to `analysistest.make()`:
-
-```starlark
-my_test = analysistest.make(
-    _my_test_impl,
-    attrs = {
-        "expected_value": attr.string(default = "hello"),
-    },
-)
-```
-
-Access them in the implementation with `ctx.attr.expected_value`.
-
-###### Testing aspects
-
-If your rule uses an aspect, tell the test to apply it with
-`extra_target_under_test_aspects`:
-
-```starlark
-my_aspect_test = analysistest.make(
-    _my_aspect_test_impl,
-    extra_target_under_test_aspects = [my_aspect],
-)
-```
-
-This makes the aspect's providers available on the target under test.
-
-#### Test suites
-
-When you have multiple related analysis tests, group them with a
-test-suite macro. This keeps the `BUILD` file readable and lets you
-run the whole group with one target:
-
-```starlark
-def my_test_suite(name):
-    one_test(
-        name = name + "_one",
-        target_under_test = ":" + name + "_one_subject",
-    )
-
-    native.test_suite(
-        name = name,
-        tests = [
-            ":" + name + "_one",
-        ],
-    )
-```
-
 ### Unit tests
 
 For a small example see `test/unit/basic/unit_test.bzl`.

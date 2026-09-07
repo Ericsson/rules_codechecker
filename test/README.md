@@ -36,32 +36,13 @@ Skylib provides two different kinds of tests: **unit tests** and
 For more in depth information check the skylib documentation for [analysis](https://github.com/bazelbuild/bazel-skylib/blob/main/docs/analysis_test_doc.md) and [unit tests](https://github.com/bazelbuild/bazel-skylib/blob/main/docs/unittest_doc.md).
 
 - **Unit tests** assert on a single Starlark function — call it with
-    known inputs and check the return value.
+    known inputs and check the return value. (See example in: `test/unit/basic/analysis_test.bzl`.)
 - **Analysis tests** build a real Bazel target and then inspect the
     providers it returns (e.g. `DefaultInfo`, `CcInfo`, or custom
-    providers) without executing any actions.
+    providers) without executing any actions. (See example in: `test/unit/basic/unit_test.bzl`.)
 
 Both are created in a `.bzl` file, instantiated from a `BUILD` file,
 and run with `bazel test`.
-
-#### Analysis tests
-
-See a small example in `test/unit/basic/analysis_test.bzl`.
-An analysis test has three parts:
-
-a. An **implementation function** that receives the test environment,
-    retrieves the target under test, and makes assertions on its
-    providers. (must start with `analysistest.begin(ctx)` and end with `return analysistest.end(env)`)
-b. A **test rule** created with `analysistest.make()`.
-c. **Instantiation** in the `BUILD` file where the test rule is called
-    with `target_under_test` pointing to the subject target.
-
-### Unit tests
-
-For a small example see `test/unit/basic/unit_test.bzl`.
-
-A skylib unit test calls a pure Starlark function directly and asserts
-on its return value. Use it when you don't need a full Bazel target.
 
 ---
 ### Creating unit tests asserting on the output of a rule

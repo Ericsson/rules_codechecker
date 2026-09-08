@@ -41,8 +41,11 @@ import urllib
 import urllib.error
 import urllib.request
 
-# Basename of the analysis output directory produced by codechecker_test.
-REPORT_DIR_NAME = "codechecker-files"
+# helpers is the ":helpers" py_library, imported as a top-level module at
+# runtime under Bazel. pylint runs outside Bazel and cannot resolve it
+# statically, so silence the false positive here.
+# pylint: disable=import-error
+from helpers import resolve_report_data, run_codechecker
 
 
 def _get_free_port():
@@ -144,6 +147,8 @@ def parse_args() -> argparse.Namespace:
         default="unit_test_bazel",
         help="Project name to store the results under.",
     )
+    # This argument is also found in the parse_check test
+    # pylint: disable=duplicate-code
     parser.add_argument(
         "paths",
         nargs="+",
@@ -153,28 +158,9 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def resolve_report_data(paths: list[str]) -> str:
-    """Return the data subdirectory that CodeChecker store consumes.
-
-    Bazel passes every output of the analysis target via $(rootpaths); the
-    report directory is the one ending in "codechecker-files", and the plist
-    reports live in its "data" subdirectory.
-    """
-    report_dirs = [p for p in paths if os.path.basename(p) == REPORT_DIR_NAME]
-    if not report_dirs:
-        print(f"FAILED: no {REPORT_DIR_NAME} directory in paths: {paths}")
-        sys.exit(1)
-    data_dir = os.path.join(report_dirs[0], "data")
-    if not os.path.isdir(data_dir):
-        print(f"FAILED: report data directory not found at {data_dir}")
-        sys.exit(1)
-    return data_dir
-
-
 def check_store(report_dir: str, name: str, port: int, zip_loc: str) -> int:
     """Store the results and assert the store command succeeds."""
-    command = [
-        "CodeChecker",
+    ret, stdout, stderr = run_codechecker([
         "store",
         report_dir,
         "-n",
@@ -182,21 +168,11 @@ def check_store(report_dir: str, name: str, port: int, zip_loc: str) -> int:
         f"--url=http://localhost:{port}/Default",
         "--zip-loc",
         zip_loc,
-    ]
-    print(f"Running: {' '.join(command)}")
-    result = subprocess.run(
-        command,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if result.returncode != 0:
-        print(
-            f"FAILED: CodeChecker store failed with exit code "
-            f"{result.returncode}"
-        )
-        print(f"stdout:\n{result.stdout}")
-        print(f"stderr:\n{result.stderr}")
+    ])
+    if ret != 0:
+        print(f"FAILED: CodeChecker store failed with exit code {ret}")
+        print(f"stdout:\n{stdout}")
+        print(f"stderr:\n{stderr}")
         return 1
     print("PASSED: CodeChecker store succeeded.")
     return 0
@@ -206,6 +182,7 @@ def main() -> int:
     """Entry point."""
     args = parse_args()
     report_dir = resolve_report_data(args.paths)
+    exit_code = 1
 
     # CodeChecker store writes a compressed file while assembling its upload.
     # By default that goes into the report directory, which lives in the
@@ -214,9 +191,10 @@ def main() -> int:
     with tempfile.TemporaryDirectory() as zip_loc:
         server = CodeCheckerServer()
         try:
-            return check_store(report_dir, args.name, server.port, zip_loc)
+            exit_code = check_store(report_dir, args.name, server.port, zip_loc)
         finally:
             server.stop_codechecker_server()
+        return exit_code
 
 
 if __name__ == "__main__":

@@ -36,12 +36,14 @@ Usage:
 
 import argparse
 import os
-import subprocess
 import sys
 import tempfile
 
-# Basename of the analysis output directory produced by codechecker_test.
-REPORT_DIR_NAME = "codechecker-files"
+# helpers is the ":helpers" py_library, imported as a top-level module at
+# runtime under Bazel. pylint runs outside Bazel and cannot resolve it
+# statically, so silence the false positive here.
+# pylint: disable=import-error
+from helpers import resolve_report_data, run_codechecker
 
 
 def parse_args() -> argparse.Namespace:
@@ -55,6 +57,8 @@ def parse_args() -> argparse.Namespace:
         choices=["parse", "parse_html"],
         help="Which parse check to run.",
     )
+    # This argument is also found in the store_check test
+    # pylint: disable=duplicate-code
     parser.add_argument(
         "paths",
         nargs="+",
@@ -62,37 +66,6 @@ def parse_args() -> argparse.Namespace:
         "the report directory is selected from them.",
     )
     return parser.parse_args()
-
-
-def resolve_report_data(paths: list[str]) -> str:
-    """Return the data subdirectory that CodeChecker parse consumes.
-
-    Bazel passes every output of the analysis target via $(rootpaths); the
-    report directory is the one ending in "codechecker-files", and the plist
-    reports live in its "data" subdirectory.
-    """
-    report_dirs = [p for p in paths if os.path.basename(p) == REPORT_DIR_NAME]
-    if not report_dirs:
-        print(f"FAILED: no {REPORT_DIR_NAME} directory in paths: {paths}")
-        sys.exit(1)
-    data_dir = os.path.join(report_dirs[0], "data")
-    if not os.path.isdir(data_dir):
-        print(f"FAILED: report data directory not found at {data_dir}")
-        sys.exit(1)
-    return data_dir
-
-
-def run_codechecker(arguments: list[str]) -> tuple[int, str, str]:
-    """Run a CodeChecker command and return (exit_code, stdout, stderr)."""
-    command = ["CodeChecker"] + arguments
-    print(f"Running: {' '.join(command)}")
-    result = subprocess.run(
-        command,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    return result.returncode, result.stdout, result.stderr
 
 
 def check_parse(report_dir: str) -> int:

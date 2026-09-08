@@ -18,6 +18,10 @@ load(
     "cc_library",
 )
 load(
+    "@rules_python//python:py_library.bzl",
+    "py_library",
+)
+load(
     "@rules_python//python:py_test.bzl",
     "py_test",
 )
@@ -62,6 +66,7 @@ py_test(
     local = True,
     main = "parse_check.py",
     tags = ["unit"],
+    deps = [":helpers"],
 )
 
 py_test(
@@ -75,6 +80,7 @@ py_test(
     local = True,
     main = "parse_check.py",
     tags = ["unit"],
+    deps = [":helpers"],
 )
 
 py_test(
@@ -86,4 +92,11 @@ py_test(
     local = True,
     main = "store_check.py",
     tags = ["unit"],
+    deps = [":helpers"],
+)
+
+py_library(
+    name = "helpers",
+    srcs = ["helpers.py"],
+    imports = ["."],
 )

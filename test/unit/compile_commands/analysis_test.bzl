@@ -410,3 +410,38 @@ def compile_flags_test_suite(name):
             ":" + name + "_quote_includes_test",
         ],
     )
+
+# =============================================================================
+# Record collection tests
+# =============================================================================
+
+def _records_of(env):
+    """Return the records of the written compile_commands.json"""
+    for action in analysistest.target_actions(env):
+        if action.mnemonic == "FileWrite":
+            return json.decode(action.content)
+    return []
+
+def _no_duplicate_records_test_impl(ctx):
+    """A source of a shared dependency is recorded once, not once per target."""
+    env = analysistest.begin(ctx)
+    records = _records_of(env)
+
+    asserts.true(env, len(records) > 0, "No records in compile_commands.json")
+
+    seen = []
+    duplicates = []
+    for record in records:
+        if record["file"] in seen:
+            duplicates.append(record["file"])
+        seen.append(record["file"])
+
+    asserts.true(
+        env,
+        len(duplicates) == 0,
+        "Every source should be recorded once, duplicated: %s" % duplicates,
+    )
+
+    return analysistest.end(env)
+
+no_duplicate_records_test = analysistest.make(_no_duplicate_records_test_impl)

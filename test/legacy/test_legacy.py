@@ -29,10 +29,10 @@ import unittest
 class TestBase(unittest.TestCase):
     """Unittest base abstract class"""
 
-    BAZEL_BIN_DIR = os.path.join("..", "..", "..", "bazel-bin", "test", "unit",
-                                 "legacy")
-    BAZEL_TESTLOGS_DIR = os.path.join("..", "..", "..", "bazel-testlogs",
-                                      "test", "unit", "legacy")
+    BAZEL_BIN_DIR = os.path.join(
+        "..", "..", "bazel-bin", "test", "legacy")
+    BAZEL_TESTLOGS_DIR = os.path.join(
+        "..", "..", "bazel-testlogs", "test", "legacy")
 
     @classmethod
     def setUpClass(cls):

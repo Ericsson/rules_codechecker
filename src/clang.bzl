@@ -257,25 +257,51 @@ def _rule_sources(ctx):
 
 def _toolchain_flags(ctx, action_name = ACTION_NAMES.cpp_compile):
     cc_toolchain = find_cpp_toolchain(ctx)
+
+    # The features of the rule select the flags of the toolchain, without them
+    # a feature gated flag, like a define, is missing from the analysis
     feature_configuration = cc_common.configure_features(
         ctx = ctx,
         cc_toolchain = cc_toolchain,
+        requested_features = (
+            ctx.rule.attr.features if hasattr(ctx.rule.attr, "features") else []
+        ),
     )
     compile_variables = cc_common.create_compile_variables(
         feature_configuration = feature_configuration,
         cc_toolchain = cc_toolchain,
-        user_compile_flags = ctx.fragments.cpp.cxxopts + ctx.fragments.cpp.copts,
     )
     flags = cc_common.get_memory_inefficient_command_line(
         feature_configuration = feature_configuration,
         action_name = action_name,
         variables = compile_variables,
     )
+
+    # The command line options of the build, the C and C++ options apply to
+    # their own language only
+    if action_name == ACTION_NAMES.c_compile:
+        flags = flags + ctx.fragments.cpp.conlyopts + ctx.fragments.cpp.copts
+    else:
+        flags = flags + ctx.fragments.cpp.cxxopts + ctx.fragments.cpp.copts
+
+    # The builtin include directories of the toolchain, without them clang
+    # does not find the standard headers. The GCC ones are left out, clang
+    # cannot parse their headers.
+    for include in cc_toolchain.built_in_include_directories:
+        if "/gcc/" not in include:
+            flags = flags + ["-isystem", include]
+
     compiler = cc_common.get_tool_for_action(
         feature_configuration = feature_configuration,
         action_name = action_name,
     ).split("/")[-1]
-    return flags + ["--driver-mode=" + compiler]
+
+    # A cross compiler has a target prefixed name, e.g. x86_64-wrs-linux-gcc,
+    # which clang-tidy does not accept as a driver mode. Without the option
+    # clang-tidy falls back to its default, the gcc style driver.
+    if compiler in ["flacc", "gcc", "g++"]:
+        flags = flags + ["--driver-mode=" + compiler]
+    return flags
 
 def _compile_args(compilation_context):
     compile_args = []

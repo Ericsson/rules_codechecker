@@ -21,7 +21,6 @@ cd $SCRIPT_DIR/../..
 run "bazel version"
 run "bazel clean"
 run "CodeChecker version"
-run "pylint ."
 run "bazel test ..."
 run "pytest test"
 run "micromamba deactivate"

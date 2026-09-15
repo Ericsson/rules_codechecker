@@ -3,7 +3,7 @@
 init-hook='import sys; import os; sys.path.append("test"); sys.path.append(os.getcwd())'
 # Check every directory, except the ones that are not ours
 recursive = yes
-ignore-patterns = .ci,bazel-*
+ignore-patterns = .ci,bazel-*,venv
 
 [FORMAT]
 max-line-length=80

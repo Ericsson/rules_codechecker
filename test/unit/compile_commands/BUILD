@@ -13,6 +13,7 @@
 # limitations under the License.
 
 load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//:defs.bzl", "compile_commands")
 load(
     ":analysis_test.bzl",
     "compile_flags_test_suite",
@@ -20,6 +21,7 @@ load(
     "defines_from_impl_deps_test",
     "includes_from_impl_deps_test",
     "local_defines_in_impl_deps_test",
+    "no_duplicate_records_test",
     "no_duplicates_test",
     "quote_includes_from_deps_test",
     "system_includes_from_impl_deps_test",
@@ -219,4 +221,46 @@ compile_flags_test_suite(name = "compile_flags_tests")
 no_duplicates_test(
     name = "no_duplicates",
     target_under_test = ":compile_flags_tests_with_dep_includes",
+)
+
+# =============================================================================
+# Record collection
+# =============================================================================
+
+# Three libraries sharing one dependency: its source is reachable from every
+# one of them, therefore it must not be recorded three times
+cc_library(
+    name = "records_shared",
+    srcs = ["testdata/bar.cc"],
+    hdrs = ["testdata/bar.h"],
+    tags = ["manual"],
+)
+
+cc_library(
+    name = "records_first",
+    srcs = ["testdata/foo.cc"],
+    hdrs = ["testdata/foo.h"],
+    tags = ["manual"],
+    deps = [":records_shared"],
+)
+
+cc_library(
+    name = "records_second",
+    srcs = ["testdata/bar.c"],
+    tags = ["manual"],
+    deps = [":records_shared"],
+)
+
+compile_commands(
+    name = "records",
+    tags = ["manual"],
+    targets = [
+        ":records_first",
+        ":records_second",
+    ],
+)
+
+no_duplicate_records_test(
+    name = "no_duplicate_records",
+    target_under_test = ":records",
 )

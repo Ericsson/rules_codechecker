@@ -409,17 +409,19 @@ def compile_commands_impl(ctx):
       )
     """
 
-    # Collect source files and compilation database
+    # Collect all source files, compilation database and headers
     source_files = []
     compilation_db = []
     headers = []
     for target in ctx.attr.targets:
-        src = target[SourceFilesInfo].transitive_source_files
-        source_files += src.to_list()
-        cdb = target[SourceFilesInfo].compilation_db
-        compilation_db += cdb.to_list()
-        hdr = target[SourceFilesInfo].headers
-        headers += hdr.to_list()
+        source_files.append(target[SourceFilesInfo].transitive_source_files)
+        compilation_db.append(target[SourceFilesInfo].compilation_db)
+        headers.append(target[SourceFilesInfo].headers)
+
+    # Merge and flatten records to avoid duplications
+    source_files = depset(transitive = source_files).to_list()
+    compilation_db = depset(transitive = compilation_db).to_list()
+    headers = depset(transitive = headers).to_list()
 
     # Check that compilation database is not empty
     if not len(compilation_db):

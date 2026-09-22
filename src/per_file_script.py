@@ -22,7 +22,7 @@ import os
 import re
 import shutil
 import subprocess
-import sys
+from common import fail
 
 
 @dataclass
@@ -214,19 +214,11 @@ def _run_codechecker(cfg: Config) -> None:
     except subprocess.CalledProcessError as e:
         log(cfg, e.output.decode() if e.output else "")
         if e.returncode == 1 or e.returncode >= 128:
-            _display_error(cfg, e.returncode)
-
-
-def _display_error(cfg: Config, ret_code: int) -> None:
-    """
-    Display the log file, and exit with 1
-    """
-    # Log and exit on error
-    print("===-----------------------------------------------------===")
-    print(f"[ERROR]: CodeChecker returned with {ret_code}!")
-    with open(cfg.log_file, "r", encoding="utf-8") as log_file:
-        print(log_file.read())
-    sys.exit(1)
+            fail(
+                cfg.log_file,
+                f"CodeChecker failed with return code {e.returncode}\n",
+                e.returncode,
+            )
 
 
 def _move_output_files(cfg: Config):

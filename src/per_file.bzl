@@ -70,12 +70,15 @@ def _run_code_checker(
 
     codechecker_metadata = ctx.actions.declare_file(codechecker_metadata_file_name)
 
+    py_toolchain = ctx.toolchains["@rules_python//python:toolchain_type"]
+    py_interpreter_dir = py_toolchain.py3_runtime.interpreter.dirname
+
     if "--ctu" in options:
-        inputs = [
+        inputs = depset([
             compile_commands_json,
             config_file,
             config,
-        ] + sources_and_headers
+        ] + sources_and_headers, transitive = [py_toolchain.py3_runtime.files])
     else:
         # NOTE: we collect only headers, so CTU may not work!
         headers = depset(transitive = target[SourceFilesInfo].headers.to_list())
@@ -84,7 +87,7 @@ def _run_code_checker(
             config_file,
             src,
             config,
-        ], transitive = [headers])
+        ], transitive = [headers, py_toolchain.py3_runtime.files])
 
     outputs = [
         clang_tidy_plist,
@@ -134,6 +137,9 @@ def _run_code_checker(
             "--analyzer_executables",
             analyzer_executables,
         ],
+        env = {
+            "PATH": info.fake_path.dirname + ":" + py_interpreter_dir,
+        },
         mnemonic = "CodeChecker",
         progress_message = "CodeChecker analyze {}".format(src.short_path),
     )
@@ -307,5 +313,8 @@ per_file_test = rule(
         "test_script": "%{name}/test_script.sh",
     },
     test = True,
-    toolchains = ["//:toolchain_type"],
+    toolchains = [
+        "//:toolchain_type",
+        "@rules_python//python:toolchain_type",
+    ],
 )

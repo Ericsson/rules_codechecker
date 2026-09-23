@@ -96,6 +96,8 @@ def _codechecker_impl(ctx):
         info = ctx.attr.toolchain[platform_common.ToolchainInfo].codecheckerinfo
     else:
         info = ctx.toolchains["//:toolchain_type"].codecheckerinfo
+    py_toolchain = ctx.toolchains["@rules_python//python:toolchain_type"]
+    py_interpreter_dir = py_toolchain.py3_runtime.interpreter.dirname
 
     codechecker_files = ctx.actions.declare_directory(ctx.label.name + "/codechecker-files")
     codechecker_script = ctx.attr._codechecker_script[DefaultInfo].files_to_run
@@ -122,11 +124,14 @@ def _codechecker_impl(ctx):
     ] + source_files
 
     ctx.actions.run(
-        inputs = depset(input_files),
+        inputs = depset(input_files, transitive = [py_toolchain.py3_runtime.files]),
         tools = [info.runfiles, codechecker_script],
         outputs = [codechecker_files, ctx.outputs.codechecker_log],
         executable = codechecker_script,
         arguments = [arguments],
+        env = {
+            "PATH": info.fake_path.dirname + ":" + py_interpreter_dir,
+        },
         mnemonic = "CodeChecker",
         progress_message = "CodeChecker %s" % str(ctx.label),
         # use_default_shell_env = True,
@@ -202,6 +207,7 @@ codechecker = rule(
     },
     toolchains = [
         "//:toolchain_type",
+        "@rules_python//python:toolchain_type",
     ],
 )
 
@@ -314,6 +320,7 @@ _codechecker_test = rule(
     },
     toolchains = [
         "//:toolchain_type",
+        "@rules_python//python:toolchain_type",
     ],
     test = True,
 )

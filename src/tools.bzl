@@ -21,6 +21,18 @@ def _codechecker_local_repository_impl(repository_ctx):
     codechecker_bin_path = repository_ctx.which("CodeChecker")
     if not codechecker_bin_path:
         fail("ERROR! CodeChecker is not detected")
+    result = repository_ctx.execute(["CodeChecker", "version"])
+    if result.return_code != 0:
+        fail("Failed to query CodeChecker version")
+    output = result.stdout.strip()
+    codechecker_version = None
+    for line in output.split("\n"):
+        if "Base package version |" in line:
+            codechecker_version = line.split("|")[1].strip()
+            break
+
+    if codechecker_version == None:
+        fail("CodeChecker version could not be parsed!")
     clang_bin_path = repository_ctx.which("clang")
     if not clang_bin_path:
         fail("ERROR! Clang is not detected")
@@ -32,6 +44,7 @@ def _codechecker_local_repository_impl(repository_ctx):
     defs += "CLANG_BIN_PATH = '{}'\n".format(clang_bin_path)
     defs += "CLANG_TIDY_BIN_PATH = '{}'\n".format(clang_tidy_bin_path)
     defs += "BAZEL_VERSION = '{}'\n".format(native.bazel_version)
+    defs += "CODECHECKER_VERSION = '{}'\n".format(codechecker_version)
     repository_ctx.file(
         repository_ctx.path("defs.bzl"),
         content = defs,

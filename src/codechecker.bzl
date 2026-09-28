@@ -16,6 +16,7 @@
 Rulesets for running codechecker in a single Bazel job.
 """
 
+load("@default_codechecker_tools//:defs.bzl", "CODECHECKER_VERSION")
 load(
     "codechecker_config.bzl",
     "codechecker_config_internal",
@@ -143,6 +144,13 @@ def _codechecker_impl(ctx):
     run_files = [
         codechecker_files,
     ] + source_files
+
+    #--ctu analysis with bazel ruleset was fixed in version 6.25.0, on older versions it will not work
+    if "--ctu" in ctx.attr.analyze:
+        major = int(CODECHECKER_VERSION.split(".")[0])
+        minor = int(CODECHECKER_VERSION.split(".")[1])
+        if major < 6 or (major == 6 and minor < 25):
+            fail("--ctu is not supported on CodeChecker versions older than 6.25.0")
 
     # Return all files
     return [

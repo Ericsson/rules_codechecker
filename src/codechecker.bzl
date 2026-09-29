@@ -145,13 +145,6 @@ def _codechecker_impl(ctx):
         codechecker_files,
     ] + source_files
 
-    #--ctu analysis with bazel ruleset was fixed in version 6.25.0, on older versions it will not work
-    if "--ctu" in ctx.attr.analyze:
-        major = int(CODECHECKER_VERSION.split(".")[0])
-        minor = int(CODECHECKER_VERSION.split(".")[1])
-        if major < 6 or (major == 6 and minor < 25):
-            fail("--ctu is not supported on CodeChecker versions older than 6.25.0")
-
     # Return all files
     return [
         DefaultInfo(
@@ -359,9 +352,18 @@ def codechecker_test(
     Returns:
         none
     """
+
     codechecker_tags = [] + tags
     if "codechecker" not in tags:
         codechecker_tags.append("codechecker")
+
+    #--ctu analysis with bazel ruleset was fixed in version 6.25.0, on older versions it will not work
+    if "--ctu" in analyze:
+        major = int(CODECHECKER_VERSION.split(".")[0])
+        minor = int(CODECHECKER_VERSION.split(".")[1])
+        if major < 6 or (major == 6 and minor < 25):
+            fail("--ctu is not supported on CodeChecker versions older than 6.25.0")
+
     if per_file:
         per_file_test(
             name = name,

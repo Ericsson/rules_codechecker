@@ -26,9 +26,17 @@ def _codechecker_local_repository_impl(repository_ctx):
         fail("Failed to query CodeChecker version")
     output = result.stdout.strip()
     codechecker_version = None
-    for line in output.split("\n"):
-        if "Base package version |" in line:
-            codechecker_version = line.split("|")[1].strip()
+    for line in output.split("\n")[1:]:
+        clean_line = ""
+        for char in line.elems():
+            if char.isdigit() or char == ".":
+                clean_line += char
+            elif len(clean_line.split(".")) == 3:
+                break
+            else:
+                clean_line = ""
+        if len(clean_line.split(".")) == 3:
+            codechecker_version = clean_line
             break
 
     if codechecker_version == None:

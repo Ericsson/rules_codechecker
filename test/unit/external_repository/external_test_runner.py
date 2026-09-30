@@ -26,7 +26,6 @@ import re
 import shutil
 import subprocess
 import sys
-import tempfile
 
 MODULE_BAZEL_CONTENT = """\
 \"\"\"Test workspace for external repository integration test.\"\"\"
@@ -139,12 +138,6 @@ def parse_args():
         help="Extra flags to pass to bazel (after --)",
     )
     parser.add_argument(
-        "--expected_exit_code",
-        type=int,
-        default=0,
-        help="Expected exit code from the bazel command",
-    )
-    parser.add_argument(
         "--output_file",
         help="Relative path to output file to check (from workspace)",
     )
@@ -153,12 +146,6 @@ def parse_args():
         nargs="*",
         default=[],
         help="Regex patterns that must appear in the output file",
-    )
-    parser.add_argument(
-        "--srcs",
-        nargs="*",
-        default=[],
-        help="Source files to copy into the workspace root",
     )
     return parser.parse_args()
 
@@ -169,12 +156,6 @@ def resolve_repo_root(module_bazel_path):
     return os.path.dirname(resolved)
 
 
-def copy_file(src, dst):
-    """Copy a file, creating parent directories as needed."""
-    os.makedirs(os.path.dirname(dst), exist_ok=True)
-    shutil.copy2(src, dst)
-
-
 def write_file(path, content):
     """Write content to a file, creating parent directories."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -182,32 +163,18 @@ def write_file(path, content):
         f.write(content)
 
 
-def setup_workspace(tmpdir, repo_root, srcs):
+def setup_workspace(tmpdir, repo_root):
     """Set up the temporary workspace with all needed files."""
     # Write MODULE.bazel
     module_content = MODULE_BAZEL_CONTENT.format(repo_root=repo_root)
     write_file(os.path.join(tmpdir, "MODULE.bazel"), module_content)
 
-    # Write empty WORKSPACE
-    write_file(
-        os.path.join(tmpdir, "WORKSPACE"),
-        "# This file is mandatory for old Bazel versions\n",
-    )
-
     # Write BUILD
     write_file(os.path.join(tmpdir, "BUILD"), BUILD_CONTENT)
 
-    # Copy source files into workspace root
-    for src_path in srcs:
-        real_src = os.path.realpath(src_path)
-        basename = os.path.basename(real_src)
-        copy_file(real_src, os.path.join(tmpdir, basename))
-
     # Write third_party/my_lib files
     tp_dir = os.path.join(tmpdir, "third_party", "my_lib")
-    write_file(
-        os.path.join(tp_dir, "BUILD"), THIRD_PARTY_BUILD_CONTENT
-    )
+    write_file(os.path.join(tp_dir, "BUILD"), THIRD_PARTY_BUILD_CONTENT)
     write_file(
         os.path.join(tp_dir, "MODULE.bazel"),
         THIRD_PARTY_MODULE_CONTENT,
@@ -220,9 +187,7 @@ def setup_workspace(tmpdir, repo_root, srcs):
     # Copy .bazelversion if it exists -- bazelisk support
     bazelversion = os.path.join(repo_root, ".bazelversion")
     if os.path.exists(bazelversion):
-        shutil.copy2(
-            bazelversion, os.path.join(tmpdir, ".bazelversion")
-        )
+        shutil.copy2(bazelversion, os.path.join(tmpdir, ".bazelversion"))
 
 
 def run_bazel(tmpdir, action, target, extra_flags):
@@ -231,8 +196,6 @@ def run_bazel(tmpdir, action, target, extra_flags):
         "bazel",
         action,
         target,
-        "--experimental_cc_implementation_deps",
-        "--enable_bzlmod",
     ] + extra_flags
     print(f"Running: {' '.join(cmd)}")
     print(f"In directory: {tmpdir}")
@@ -270,10 +233,7 @@ def check_output_file(tmpdir, output_file, patterns):
 
     for pattern in patterns:
         if not re.search(pattern, content):
-            print(
-                f"FAIL: Pattern not found in {output_file}: "
-                f"{pattern}"
-            )
+            print(f"FAIL: Pattern not found in {output_file}: " f"{pattern}")
             print(f"File content:\n{content}")
             sys.exit(1)
         print(f"PASS: Found pattern: {pattern}")
@@ -296,36 +256,27 @@ def main():
     repo_root = resolve_repo_root(args.repo_root)
     print(f"Resolved repo root: {repo_root}")
 
-    tmpdir = tempfile.mkdtemp(prefix="external_test_")
-    print(f"Created temp workspace: {tmpdir}")
+    # Create the workspace next to the source files, in the runfiles directory.
+    tmpdir = os.path.dirname(os.path.abspath(__file__))
+    print(f"Using workspace: {tmpdir}")
 
     try:
-        setup_workspace(tmpdir, repo_root, args.srcs)
+        setup_workspace(tmpdir, repo_root)
 
-        result = run_bazel(
-            tmpdir, args.action, args.target, args.extra_flags
-        )
+        result = run_bazel(tmpdir, args.action, args.target, args.extra_flags)
 
-        if result.returncode != args.expected_exit_code:
-            print(
-                f"FAIL: Expected exit code {args.expected_exit_code}, "
-                f"got {result.returncode}"
-            )
+        if result.returncode != 0:
+            print(f"FAIL: Expected exit code 0, got {result.returncode}")
             sys.exit(1)
-        print(
-            f"PASS: Exit code matches expected: "
-            f"{args.expected_exit_code}"
-        )
+        print("PASS: Exit code matches expected: 0")
 
         if args.output_file and args.contains:
-            check_output_file(
-                tmpdir, args.output_file, args.contains
-            )
+            check_output_file(tmpdir, args.output_file, args.contains)
 
         print("ALL CHECKS PASSED")
     finally:
+        # Shut down the inner bazel server to release locks on its output base.
         cleanup(tmpdir)
-        shutil.rmtree(tmpdir, ignore_errors=True)
 
 
 if __name__ == "__main__":

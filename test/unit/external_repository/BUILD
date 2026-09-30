@@ -19,10 +19,17 @@ load(
 
 exports_files([
     "external_test_runner.py",
-    "main.cc",
-    "intermediate.cpp",
-    "intermediate.h",
 ])
+
+# Source files made available to the inner build via the test runfiles
+filegroup(
+    name = "external_test_srcs",
+    srcs = [
+        "intermediate.cpp",
+        "intermediate.h",
+        "main.cc",
+    ],
+)
 
 external_test(
     name = "compile_commands_isystem_test",

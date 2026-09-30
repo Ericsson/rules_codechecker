@@ -22,34 +22,28 @@ Each external_test() generates a py_test that:
 
 Example:
     external_test(
-        name = "codechecker_external_deps_test",
-        target = ":codechecker_external_deps",
-    )
-
-    external_test(
         name = "compile_commands_test",
-        action = "build",
         target = ":compile_commands_isystem",
+        action = "build",
+        extra_flags = ["--features=external_include_paths"],
         output_file = "bazel-bin/compile_commands_isystem/compile_commands.json",
         contains = ["-isystem external/external_lib"],
+        tags = ["manual"],
+        size = "large",
     )
 """
 
 load("@rules_python//python:py_test.bzl", "py_test")
 
-# Source files that get copied into the generated workspace root
-_SRCS = [
-    "//test/unit/external_repository:main.cc",
-    "//test/unit/external_repository:intermediate.cpp",
-    "//test/unit/external_repository:intermediate.h",
-]
+# Source files made available to the inner build via the test runfiles,
+# alongside the runner. Declared as a filegroup in the BUILD file.
+_SRCS = "//test/unit/external_repository:external_test_srcs"
 
 def external_test(
         name,
         target,
         action = "test",
         extra_flags = [],
-        expected_exit_code = 0,
         output_file = None,
         contains = None,
         tags = [],
@@ -62,7 +56,6 @@ def external_test(
         target: Bazel target to act on (e.g. ":codechecker_external_deps").
         action: Bazel action to run (default: "test").
         extra_flags: Additional flags to pass to the bazel command.
-        expected_exit_code: Expected exit code (default: 0).
         output_file: Optional relative path to an output file to check.
         contains: Optional list of regex patterns to find in the output file.
         tags: Additional test tags.
@@ -81,14 +74,7 @@ def external_test(
         action,
         "--target",
         target,
-        "--expected_exit_code",
-        str(expected_exit_code),
     ]
-
-    # Source files
-    python_args.append("--srcs")
-    for src in _SRCS:
-        python_args.append("$(rootpath {})".format(src))
 
     # Output file assertions
     if output_file:
@@ -107,7 +93,7 @@ def external_test(
         srcs = ["//test/unit/external_repository:external_test_runner.py"],
         main = "//test/unit/external_repository:external_test_runner.py",
         args = python_args,
-        data = _SRCS + ["//:MODULE.bazel"],
+        data = [_SRCS, "//:MODULE.bazel"],
         # No other way to ensure integrated bazel can find the repository
         local = True,
         size = size,

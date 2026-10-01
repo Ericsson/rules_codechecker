@@ -30,7 +30,6 @@ def resolve_report_data(paths: list[str]) -> str:
     report directory is the one ending in "codechecker-files", and the plist
     reports live in its "data" subdirectory.
     """
-    # pylint: disable=duplicate-code
     report_dirs = [p for p in paths if os.path.basename(p) == REPORT_DIR_NAME]
     if not report_dirs:
         print(f"FAILED: no {REPORT_DIR_NAME} directory in paths: {paths}")
@@ -44,7 +43,6 @@ def resolve_report_data(paths: list[str]) -> str:
 
 def run_codechecker(arguments: list[str]) -> tuple[int, str, str]:
     """Run a CodeChecker command and return (exit_code, stdout, stderr)."""
-    # pylint: disable=duplicate-code
     command = ["CodeChecker"] + arguments
     print(f"Running: {' '.join(command)}")
     result = subprocess.run(

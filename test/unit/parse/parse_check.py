@@ -38,11 +38,6 @@ import argparse
 import os
 import sys
 import tempfile
-
-# helpers is the ":helpers" py_library, imported as a top-level module at
-# runtime under Bazel. pylint runs outside Bazel and cannot resolve it
-# statically, so silence the false positive here.
-# pylint: disable=import-error
 from helpers import resolve_report_data, run_codechecker
 
 

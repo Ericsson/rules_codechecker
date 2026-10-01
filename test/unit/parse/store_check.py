@@ -40,11 +40,6 @@ import time
 import urllib
 import urllib.error
 import urllib.request
-
-# helpers is the ":helpers" py_library, imported as a top-level module at
-# runtime under Bazel. pylint runs outside Bazel and cannot resolve it
-# statically, so silence the false positive here.
-# pylint: disable=import-error
 from helpers import resolve_report_data, run_codechecker
 
 
@@ -93,7 +88,7 @@ class CodeCheckerServer:
         self.start_codechecker_server()
 
     def __del__(self):
-        self.stop_codechecker_server()
+        self._stop_codechecker_server()
 
     def start_codechecker_server(self):
         """
@@ -122,12 +117,11 @@ class CodeCheckerServer:
         ), "Failed to start CodeChecker server"
         self.running = True
 
-    def stop_codechecker_server(self):
+    def _stop_codechecker_server(self):
         """
         Stops the CodeChecker server started by start_codechecker_server
         """
-        # Idempotent: the object is also stopped from __del__, so avoid
-        # killing the process or removing the workspace twice.
+        # Avoid killing the process or removing the workspace twice.
         if not self.running:
             return
         os.kill(self.server_process.pid, signal.SIGTERM)
@@ -188,10 +182,7 @@ def main() -> int:
     # NOTE: the --zip-loc flag is only available since CodeChecker 6.27.0.
     with tempfile.TemporaryDirectory() as zip_loc:
         server = CodeCheckerServer()
-        try:
-            exit_code = check_store(report_dir, args.name, server.port, zip_loc)
-        finally:
-            server.stop_codechecker_server()
+        exit_code = check_store(report_dir, args.name, server.port, zip_loc)
         return exit_code
 
 

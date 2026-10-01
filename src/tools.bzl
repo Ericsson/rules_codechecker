@@ -21,24 +21,12 @@ def _codechecker_local_repository_impl(repository_ctx):
     codechecker_bin_path = repository_ctx.which("CodeChecker")
     if not codechecker_bin_path:
         fail("ERROR! CodeChecker is not detected")
-    result = repository_ctx.execute(["CodeChecker", "version"])
+    result = repository_ctx.execute(["CodeChecker", "version", "-o", "json"])
     if result.return_code != 0:
         fail("Failed to query CodeChecker version")
-    output = result.stdout.strip()
-    codechecker_version = None
-    for line in output.split("\n")[1:]:
-        clean_line = ""
-        for char in line.elems():
-            if char.isdigit() or char == ".":
-                clean_line += char
-            elif len(clean_line.split(".")) == 3:
-                break
-            else:
-                clean_line = ""
-        if len(clean_line.split(".")) == 3:
-            codechecker_version = clean_line
-            break
-
+    version_output = result.stdout.strip()
+    full_version_data = json.decode(version_output)
+    codechecker_version = full_version_data.get("analyzer", {}).get("base_package_version")
     if codechecker_version == None:
         fail("CodeChecker version could not be parsed!")
     clang_bin_path = repository_ctx.which("clang")

@@ -163,11 +163,9 @@ def check_store(report_dir: str, name: str, port: int, zip_loc: str) -> int:
     ret, stdout, stderr = run_codechecker([
         "store",
         report_dir,
-        "-n",
-        name,
+        "-n", name,
         f"--url=http://localhost:{port}/Default",
-        "--zip-loc",
-        zip_loc,
+        "--zip-loc", zip_loc,
     ])
     if ret != 0:
         print(f"FAILED: CodeChecker store failed with exit code {ret}")

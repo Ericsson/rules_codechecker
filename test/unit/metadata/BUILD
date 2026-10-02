@@ -61,10 +61,9 @@ unit_test(
 
 unit_test(
     name = "per_file_metadata_test",
-    contains = [r"\"action_num\": 1,"],
+    contains = [r"\"action_num\": 2,"],
     data = [":per_file_multiple_source"],
     files = [
-        "test/unit/metadata/per_file_multiple_source/data/test-unit-metadata-main.cc_metadata.json",
-        "test/unit/metadata/per_file_multiple_source/data/test-unit-metadata-other.cc_metadata.json",
+        "test/unit/metadata/per_file_multiple_source/data/metadata.json",
     ],
 )

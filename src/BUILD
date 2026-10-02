@@ -21,6 +21,13 @@ py_binary(
 )
 
 py_binary(
+    name = "metadata_merge",
+    srcs = ["metadata_merge.py"],
+    # Bazel 6 won't see this otherwise
+    visibility = ["//visibility:public"],
+)
+
+py_binary(
     name = "codechecker_script",
     srcs = ["codechecker_script.py"],
     visibility = ["//visibility:public"],

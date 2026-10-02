@@ -99,10 +99,15 @@ def _run_code_checker(
     analyzer_executables = "clangsa:" + info.clangsa.path + \
                            ";clang-tidy:" + info.clang_tidy.path
 
+    # Convert the list of "NAME=value" strings into a dict.
+    # Entries without "=" are ignored.
+    env = {}
+    for entry in env_vars:
+        name, sep, value = entry.partition("=")
+        if sep:
+            env[name] = value
+
     # Action to run CodeChecker for a file
-    # env_vars are unused for now, since
-    # use_default_shell_env and env are incompatible
-    # TODO: use env for environment variables, instead of passing it as argument
     ctx.actions.run(
         inputs = inputs,
         outputs = outputs,
@@ -135,6 +140,7 @@ def _run_code_checker(
             analyzer_executables,
         ],
         mnemonic = "CodeChecker",
+        env = env,
         progress_message = "CodeChecker analyze {}".format(src.short_path),
     )
     return outputs

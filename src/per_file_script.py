@@ -188,25 +188,23 @@ def _run_codechecker(cfg: Config) -> None:
         + [absolute_path]
     )
     log(cfg, f"CodeChecker command: {' '.join(codechecker_cmd)}\n")
+
+    cc_env = _get_codechecker_env(cfg)
+    log(cfg, "===---------------------------------------------===\n")
+    log(cfg, "               CodeChecker environment             \n")
+    log(cfg, "===---------------------------------------------===\n")
+    for key in sorted(cc_env):
+        log(cfg, f"{key}={cc_env[key]}\n")
+
     log(cfg, "===---------------------------------------------===\n")
     log(cfg, "               CodeChecker error log               \n")
     log(cfg, "===---------------------------------------------===\n")
-
-    result = subprocess.run(
-        ["echo", "$PATH"],
-        shell=True,
-        env=_get_codechecker_env(cfg),
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    log(cfg, result.stdout)
 
     try:
         with open(cfg.log_file, "a", encoding="utf-8") as log_file:
             subprocess.run(
                 codechecker_cmd,
-                env=_get_codechecker_env(cfg),
+                env=cc_env,
                 stdout=log_file,
                 stderr=log_file,
                 check=True,

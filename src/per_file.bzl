@@ -60,11 +60,11 @@ def _run_code_checker(
     codechecker_log = ctx.actions.declare_file(codechecker_log_file_name)
 
     # Create skipfile
-    config = ctx.actions.declare_file(
+    skipfile = ctx.actions.declare_file(
         "{}/{}_skipfile".format(*file_name_params),
     )
     ctx.actions.write(
-        output = config,
+        output = skipfile,
         content = "\n".join(ctx.attr.skip),
     )
 
@@ -74,7 +74,7 @@ def _run_code_checker(
         inputs = [
             compile_commands_json,
             config_file,
-            config,
+            skipfile,
         ] + sources_and_headers
     else:
         # NOTE: we collect only headers, so CTU may not work!
@@ -83,7 +83,7 @@ def _run_code_checker(
             compile_commands_json,
             config_file,
             src,
-            config,
+            skipfile,
         ], transitive = [headers])
 
     outputs = [
@@ -126,7 +126,7 @@ def _run_code_checker(
             "--log",
             codechecker_log.path,
             "--skip",
-            config.path,
+            skipfile.path,
             "--metadata",
             codechecker_metadata.path,
             "--analyzer_plists",

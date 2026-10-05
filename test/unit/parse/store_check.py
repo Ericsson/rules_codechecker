@@ -1,4 +1,4 @@
-# Copyright 2023 Ericsson AB
+# Copyright 2026 Ericsson AB
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,19 +13,34 @@
 # limitations under the License.
 
 """
-Codechecker server functionality, and related functions
+Self-contained store verification script for Bazel py_test targets.
+
+Starts its own CodeChecker server on a free port, stores the report files
+produced by a codechecker_test target (supplied as a data dependency), and
+asserts that the store command succeeds. The server is always torn down and
+its temporary workspace removed, even on failure.
+
+The embedded CodeCheckerServer helper (and its supporting functions) is a copy
+of test/common/codechecker_server.py so that this test is self-contained and
+does not depend on test/common.
+
+Usage:
+    python store_check.py --name unit_test_bazel <rootpaths...>
 """
 
+import argparse
 import os
 import shutil
 import signal
 import socket
 import subprocess
+import sys
 import tempfile
 import time
 import urllib
-import urllib.request
 import urllib.error
+import urllib.request
+from helpers import resolve_report_data, run_codechecker
 
 
 def _get_free_port():
@@ -73,11 +88,11 @@ class CodeCheckerServer:
         self.start_codechecker_server()
 
     def __del__(self):
-        self.stop_codechecker_server()
+        self._stop_codechecker_server()
 
     def start_codechecker_server(self):
         """
-        Starts a CodeChecker server instance on a free port 
+        Starts a CodeChecker server instance on a free port
         This server must be shutdown with stop_codechecker_sever
         """
         if self.running:
@@ -102,12 +117,74 @@ class CodeCheckerServer:
         ), "Failed to start CodeChecker server"
         self.running = True
 
-    def stop_codechecker_server(self):
+    def _stop_codechecker_server(self):
         """
         Stops the CodeChecker server started by start_codechecker_server
         """
+        # Avoid killing the process or removing the workspace twice.
+        if not self.running:
+            return
         os.kill(self.server_process.pid, signal.SIGTERM)
         self.server_process.wait()
         self.running = False
         self.devnull.close()
         shutil.rmtree(self.temp_workspace)
+
+
+def parse_args() -> argparse.Namespace:
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Verify CodeChecker store behavior."
+    )
+    parser.add_argument(
+        "--name",
+        default="unit_test_bazel",
+        help="Project name to store the results under.",
+    )
+    # This argument is also found in the parse_check test
+    # pylint: disable=duplicate-code
+    parser.add_argument(
+        "paths",
+        nargs="+",
+        help="Runfiles paths of the analysis target ($(rootpaths ...)); "
+        "the report directory is selected from them.",
+    )
+    return parser.parse_args()
+
+
+def check_store(report_dir: str, name: str, port: int, zip_loc: str) -> int:
+    """Store the results and assert the store command succeeds."""
+    ret, stdout, stderr = run_codechecker([
+        "store",
+        report_dir,
+        "-n", name,
+        f"--url=http://localhost:{port}/Default",
+        "--zip-loc", zip_loc,
+    ])
+    if ret != 0:
+        print(f"FAILED: CodeChecker store failed with exit code {ret}")
+        print(f"stdout:\n{stdout}")
+        print(f"stderr:\n{stderr}")
+        return 1
+    print("PASSED: CodeChecker store succeeded.")
+    return 0
+
+
+def main() -> int:
+    """Entry point."""
+    args = parse_args()
+    report_dir = resolve_report_data(args.paths)
+    exit_code = 1
+
+    # CodeChecker store writes a compressed file while assembling its upload.
+    # By default that goes into the report directory, which lives in the
+    # read-only Bazel runfiles tree, so point --zip-loc at a writable dir.
+    # NOTE: the --zip-loc flag is only available since CodeChecker 6.27.0.
+    with tempfile.TemporaryDirectory() as zip_loc:
+        server = CodeCheckerServer()
+        exit_code = check_store(report_dir, args.name, server.port, zip_loc)
+        return exit_code
+
+
+if __name__ == "__main__":
+    sys.exit(main())

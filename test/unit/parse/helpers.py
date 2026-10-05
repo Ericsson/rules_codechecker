@@ -20,25 +20,33 @@ import os
 import subprocess
 import sys
 
-# Basename of the analysis output directory produced by codechecker_test.
-REPORT_DIR_NAME = "codechecker-files"
+# Basename of the directory holding the analyzer result files
+REPORT_DIR_NAME = "data"
+
 
 def resolve_report_data(paths: list[str]) -> str:
-    """Return the data subdirectory that CodeChecker parse consumes.
+    """Return the report directory that CodeChecker parse/store consume.
 
-    Bazel passes every output of the analysis target via $(rootpaths); the
-    report directory is the one ending in "codechecker-files", and the plist
-    reports live in its "data" subdirectory.
+    Bazel passes every output of the analysis target via $(rootpaths). The
+    reports live in a directory named "data"; depending on the rule it is
+    either passed directly as a directory artifact (monolithic) or implied by
+    the individual report files inside it (per-file).
     """
-    report_dirs = [p for p in paths if os.path.basename(p) == REPORT_DIR_NAME]
-    if not report_dirs:
-        print(f"FAILED: no {REPORT_DIR_NAME} directory in paths: {paths}")
-        sys.exit(1)
-    data_dir = os.path.join(report_dirs[0], "data")
-    if not os.path.isdir(data_dir):
-        print(f"FAILED: report data directory not found at {data_dir}")
-        sys.exit(1)
-    return data_dir
+    for path in paths:
+        # Monolithic passes the "codechecker-files" directory artifact; its
+        # reports live in the "data" subdirectory.
+        if os.path.isdir(os.path.join(path, REPORT_DIR_NAME)):
+            return os.path.join(path, REPORT_DIR_NAME)
+        # Per-file passes individual report files, e.g. .../data/foo.plist;
+        # derive the enclosing "data" directory from them.
+        parent = os.path.dirname(path)
+        if os.path.basename(parent) == REPORT_DIR_NAME and os.path.isdir(
+            parent
+        ):
+            return parent
+
+    print(f"FAILED: no {REPORT_DIR_NAME} report directory in paths: {paths}")
+    sys.exit(1)
 
 
 def run_codechecker(arguments: list[str]) -> tuple[int, str, str]:

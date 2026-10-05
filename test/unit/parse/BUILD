@@ -44,6 +44,15 @@ codechecker_test(
     ],
 )
 
+codechecker_test(
+    name = "per_file_data",
+    per_file = True,
+    tags = ["manual"],
+    targets = [
+        "c_target",
+    ],
+)
+
 # codechecker_data is a test target, so its own $(rootpaths) resolve to the
 # test launcher. This plain filegroup re-exports the analysis output files,
 # letting the tests receive their paths from Bazel and pick the report
@@ -53,6 +62,19 @@ filegroup(
     testonly = True,
     srcs = [":codechecker_data"],
     tags = ["manual"],
+)
+
+filegroup(
+    name = "per_file_report_files",
+    testonly = True,
+    srcs = [":per_file_data"],
+    tags = ["manual"],
+)
+
+py_library(
+    name = "helpers",
+    srcs = ["helpers.py"],
+    imports = ["."],
 )
 
 py_test(
@@ -95,8 +117,42 @@ py_test(
     deps = [":helpers"],
 )
 
-py_library(
-    name = "helpers",
-    srcs = ["helpers.py"],
-    imports = ["."],
+py_test(
+    name = "per_file_parse_test",
+    srcs = ["parse_check.py"],
+    args = [
+        "--mode=parse",
+        "$(rootpaths :per_file_report_files)",
+    ],
+    data = [":per_file_report_files"],
+    local = True,
+    main = "parse_check.py",
+    tags = ["unit"],
+    deps = [":helpers"],
+)
+
+py_test(
+    name = "per_file_parse_html_test",
+    srcs = ["parse_check.py"],
+    args = [
+        "--mode=parse_html",
+        "$(rootpaths :per_file_report_files)",
+    ],
+    data = [":per_file_report_files"],
+    local = True,
+    main = "parse_check.py",
+    tags = ["unit"],
+    deps = [":helpers"],
+)
+
+py_test(
+    name = "per_file_store_test",
+    size = "large",
+    srcs = ["store_check.py"],
+    args = ["$(rootpaths :per_file_report_files)"],
+    data = [":per_file_report_files"],
+    local = True,
+    main = "store_check.py",
+    tags = ["unit"],
+    deps = [":helpers"],
 )

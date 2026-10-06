@@ -85,11 +85,6 @@ class TestBase(unittest.TestCase):
 class TestBasic(TestBase):
     """Basic tests"""
 
-    def setUp(self):
-        """Before every test: clean Bazel cache"""
-        super().setUp()
-        self.check_command("bazel clean")
-
     def test_bazel_test_all(self):
         """Test: bazel test ..."""
         self.check_command("bazel test ...")

@@ -103,6 +103,7 @@ def _run_code_checker(
     # env_vars are unused for now, since
     # use_default_shell_env and env are incompatible
     # TODO: use env for environment variables, instead of passing it as argument
+    py_toolchain = ctx.toolchains["@rules_python//python:toolchain_type"]
     ctx.actions.run(
         inputs = inputs,
         outputs = outputs,
@@ -110,6 +111,7 @@ def _run_code_checker(
         tools = [
             info.runfiles,
             ctx.attr._per_file_script[DefaultInfo].files_to_run,
+            py_toolchain.py3_runtime.files,
         ],
         arguments = [
             "--codechecker",
@@ -307,5 +309,8 @@ per_file_test = rule(
         "test_script": "%{name}/test_script.sh",
     },
     test = True,
-    toolchains = ["//:toolchain_type"],
+    toolchains = [
+        "//:toolchain_type",
+        "@rules_python//python:toolchain_type",
+    ],
 )

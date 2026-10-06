@@ -70,10 +70,15 @@ def _codechecker_impl(ctx):
 
     # Convert flacc calls to clang in compile_commands.json
     # and save to codechecker_commands.json
+    py_toolchain = ctx.toolchains["@rules_python//python:toolchain_type"]
     ctx.actions.run(
         inputs = [ctx.outputs.compile_commands],
         outputs = [ctx.outputs.codechecker_commands],
         executable = ctx.executable._compile_commands_filter,
+        tools = [
+            ctx.attr._compile_commands_filter[DefaultInfo].files_to_run,
+            py_toolchain.py3_runtime.files,
+        ],
         arguments = [
             # "-v",  # -vv for debug
             "--input=" + ctx.outputs.compile_commands.path,
@@ -122,9 +127,14 @@ def _codechecker_impl(ctx):
         config_file,
     ] + source_files
 
+    py_toolchain = ctx.toolchains["@rules_python//python:toolchain_type"]
     ctx.actions.run(
         inputs = depset(input_files),
-        tools = [info.runfiles, codechecker_script],
+        tools = [
+            info.runfiles,
+            codechecker_script,
+            py_toolchain.py3_runtime.files,
+        ],
         outputs = [codechecker_files, ctx.outputs.codechecker_log],
         executable = codechecker_script,
         arguments = [arguments],
@@ -203,6 +213,7 @@ codechecker = rule(
     },
     toolchains = [
         "//:toolchain_type",
+        "@rules_python//python:toolchain_type",
     ],
 )
 
@@ -315,6 +326,7 @@ _codechecker_test = rule(
     },
     toolchains = [
         "//:toolchain_type",
+        "@rules_python//python:toolchain_type",
     ],
     test = True,
 )

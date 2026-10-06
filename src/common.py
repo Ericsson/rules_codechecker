@@ -11,6 +11,24 @@ import sys
 import os
 import re
 
+def setup_logging(verbosity, codechecker_log):
+    """Setup logging parameters for execution session"""
+    if verbosity == "INFO":
+        log_level = logging.INFO
+    elif verbosity == "WARN":
+        log_level = logging.WARN
+    else:
+        log_level = logging.DEBUG
+    log_format = "[codechecker] %(levelname)5s: %(message)s"
+
+    if codechecker_log:
+        logging.basicConfig(
+            filename=codechecker_log, level=log_level, format=log_format
+        )
+    else:
+        logging.basicConfig(level=log_level, format=log_format)
+
+
 def build_env(env, log, clang, clang_tidy):
     """Return environment"""
     new_env = os.environ.copy()

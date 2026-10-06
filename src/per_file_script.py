@@ -22,7 +22,7 @@ import os
 import re
 import shutil
 import subprocess
-from common import fail
+from common import fail, setup_logging
 
 
 @dataclass
@@ -40,6 +40,7 @@ class Config:  # pylint: disable=too-many-instance-attributes
     metadata_file: str
     analyzer_plist_paths: list
     analyzer_executables_env_var: str
+    verbosity: str
 
 
 def parse_args(argv=None):
@@ -51,6 +52,7 @@ def parse_args(argv=None):
     parser.add_argument(
         "--codechecker", required=True, help="Path to CodeChecker binary"
     )
+    parser.add_argument("--verbosity", default="INFO", help="Log level")
     parser.add_argument(
         "--commands", required=True, help="Path to compile_commands.json"
     )
@@ -106,6 +108,7 @@ def parse_args(argv=None):
         metadata_file=args.metadata,
         analyzer_plist_paths=analyzer_plist_paths,
         analyzer_executables_env_var=analyzer_executables_env_var,
+        verbosity=args.verbosity,
     )
 
 
@@ -292,6 +295,7 @@ def main():
     Main function of CodeChecker wrapper
     """
     cfg = parse_args()
+    setup_logging(cfg.verbosity, cfg.log_file)
     _create_compile_commands_json_with_absolute_paths(cfg)
     _run_codechecker(cfg)
     _move_output_files(cfg)

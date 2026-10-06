@@ -21,7 +21,15 @@ import logging
 import os
 import plistlib
 import re
-from common import fail, parse, check_results, stage, execute, build_env
+from common import (
+    fail,
+    parse,
+    check_results,
+    stage,
+    execute,
+    build_env,
+    setup_logging,
+)
 
 START_PATH = r"\/(?:(?!\.\s+)\S)+"
 BAZEL_PATHS = {
@@ -61,24 +69,6 @@ def parse_args(argv=None):
     if args.clang_tidy:
         args.clang_tidy = os.path.realpath(args.clang_tidy)
     return args
-
-
-def setup(verbosity, codechecker_log):
-    """Setup logging parameters for execution session"""
-    if verbosity == "INFO":
-        log_level = logging.INFO
-    elif verbosity == "WARN":
-        log_level = logging.WARN
-    else:
-        log_level = logging.DEBUG
-    log_format = "[codechecker] %(levelname)5s: %(message)s"
-
-    if codechecker_log:
-        logging.basicConfig(
-            filename=codechecker_log, level=log_level, format=log_format
-        )
-    else:
-        logging.basicConfig(level=log_level, format=log_format)
 
 
 def input_data(args):
@@ -274,7 +264,7 @@ def test(args):
 def main():
     """Main function"""
     args = parse_args()
-    setup(args.verbosity, args.log)
+    setup_logging(args.verbosity, args.log)
     input_data(args)
     try:
         if args.mode == "Run":

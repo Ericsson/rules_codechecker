@@ -121,13 +121,22 @@ def _codechecker_impl(ctx):
         config_file,
     ] + source_files
 
+    py_toolchain = ctx.toolchains["@rules_python//python:toolchain_type"]
+    py_interpreter_dir = py_toolchain.py3_runtime.interpreter.dirname
+
     ctx.actions.run(
         inputs = depset(input_files),
-        tools = [info.runfiles, codechecker_script],
+        tools = [
+            info.runfiles,
+            codechecker_script,
+            py_toolchain.py3_runtime.files,
+        ],
         outputs = [codechecker_files, ctx.outputs.codechecker_log],
         executable = codechecker_script,
         arguments = [arguments],
         mnemonic = "CodeChecker",
+        # TODO: remove /bin when dirname is available hermetically
+        env = {"PATH": py_interpreter_dir + ":/bin"},
         progress_message = "CodeChecker %s" % str(ctx.label),
     )
 
@@ -201,6 +210,7 @@ codechecker = rule(
     },
     toolchains = [
         "//:toolchain_type",
+        "@rules_python//python:toolchain_type",
     ],
 )
 
@@ -313,6 +323,7 @@ _codechecker_test = rule(
     },
     toolchains = [
         "//:toolchain_type",
+        "@rules_python//python:toolchain_type",
     ],
     test = True,
 )

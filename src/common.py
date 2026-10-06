@@ -44,10 +44,11 @@ def build_env(env, log, clang, clang_tidy):
         if "=" not in entry:
             fail(log, f"Environment entry is not KEY=VALUE: {entry}")
         key, value = entry.split("=", 1)
-        new_env[key] = value
-    # Note: This is a workaround, CodeChecker requires the PATH to be set
-    if "PATH" not in new_env:
-        new_env["PATH"] = "/bin"
+        if key == "PATH" and new_env.get("PATH"):
+            # Merge with the existing PATH instead of overwriting it
+            new_env["PATH"] = value + os.pathsep + new_env["PATH"]
+        else:
+            new_env[key] = value
     if new_env.get("CC_ANALYZERS_FROM_PATH"):
         logging.debug("CC_ANALYZERS_FROM_PATH is set: use analyzers from PATH")
     elif new_env.get("CC_ANALYZER_BIN"):

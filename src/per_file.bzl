@@ -96,6 +96,9 @@ def _run_code_checker(
     analyzer_output_paths = "clangsa," + clangsa_plist.path + \
                             ";clang-tidy," + clang_tidy_plist.path
 
+    py_toolchain = ctx.toolchains["@rules_python//python:toolchain_type"]
+    py_interpreter_dir = py_toolchain.py3_runtime.interpreter.dirname
+
     # Action to run CodeChecker for a file
     ctx.actions.run(
         inputs = inputs,
@@ -104,6 +107,7 @@ def _run_code_checker(
         tools = [
             info.runfiles,
             ctx.attr._per_file_script[DefaultInfo].files_to_run,
+            py_toolchain.py3_runtime.files,
         ],
         arguments = [
             "--mode=Run",
@@ -132,6 +136,8 @@ def _run_code_checker(
             info.clang_tidy.path,
         ] + [arg for e in env_vars for arg in ("--env", e)],
         mnemonic = "CodeChecker",
+        # TODO: remove /bin when dirname is available hermetically
+        env = {"PATH": py_interpreter_dir + ":/bin"},
         progress_message = "CodeChecker analyze {}".format(src.short_path),
     )
     return outputs
@@ -237,6 +243,9 @@ def _per_file_impl(ctx):
     txt_parse = ctx.outputs.result_txt
     codechecker_parse_log = ctx.outputs.codechecker_parse_log
 
+    py_toolchain = ctx.toolchains["@rules_python//python:toolchain_type"]
+    py_interpreter_dir = py_toolchain.py3_runtime.interpreter.dirname
+
     ctx.actions.run(
         inputs = all_files + [config_file],
         outputs = [html_parse_dir, codechecker_parse_log, json_parse, txt_parse],
@@ -262,6 +271,8 @@ def _per_file_impl(ctx):
             info.clang_tidy.path,
         ] + [arg for e in env_vars for arg in ("--env", e)],
         mnemonic = "CodeCheckerParse",
+        # TODO: remove /bin when dirname is available hermetically
+        env = {"PATH": py_interpreter_dir + ":/bin"},
         progress_message = "CodeChecker parse %s" % str(ctx.label),
     )
 
@@ -348,5 +359,8 @@ per_file_test = rule(
         "test_script": "%{name}/test_script.sh",
     },
     test = True,
-    toolchains = ["//:toolchain_type"],
+    toolchains = [
+        "//:toolchain_type",
+        "@rules_python//python:toolchain_type",
+    ],
 )

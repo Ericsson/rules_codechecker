@@ -187,7 +187,10 @@ def _run_codechecker(cfg: Config) -> None:
         + ["--config", cfg.config_file]
         + [absolute_path]
     )
-    log(cfg, f"CodeChecker command: {' '.join(codechecker_cmd)}\n")
+
+    cc_env = _get_codechecker_env(cfg)
+    env_prefix = " ".join(f"{key}={cc_env[key]}" for key in sorted(cc_env))
+    log(cfg, f"CodeChecker command: {env_prefix} {' '.join(codechecker_cmd)}\n")
     log(cfg, "===---------------------------------------------===\n")
     log(cfg, "               CodeChecker error log               \n")
     log(cfg, "===---------------------------------------------===\n")

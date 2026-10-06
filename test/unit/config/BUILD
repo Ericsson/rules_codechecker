@@ -98,6 +98,29 @@ unit_test(
     files = "test/unit/config/codechecker_env/codechecker.log",
 )
 
+codechecker_test(
+    name = "per_file_env",
+    config = "config_env",
+    per_file = True,
+    tags = ["manual"],
+    targets = [
+        "test_zero",
+    ],
+)
+
+unit_test(
+    name = "per_file_env_test",
+    contains = [
+        "CC_TEST_VAR=42",
+        "CC_TEST_PATH=/tmp/first:/tmp/second",
+        "CC_TEST_FLAGS=-DFIRST=1 -DSECOND=2",
+        "CC_TEST_PAIRS=VAR1=1; VAR2=2",
+        "CC_TEST_LIST=1; 2; 3;",
+    ],
+    data = [":per_file_env"],
+    files = "test/unit/config/per_file_env/data/test-unit-config-zero_div.cc_codechecker.log",
+)
+
 # None of these codechecker rules should find any issues
 codechecker(
     name = "codechecker_json",

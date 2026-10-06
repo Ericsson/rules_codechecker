@@ -104,8 +104,8 @@ def parse_args(argv=None):
         metadata_file=args.metadata,
         analyzer_plist_paths=analyzer_plist_paths,
         verbosity=args.verbosity,
-        clang=args.clang,
-        clang_tidy=args.clang_tidy,
+        clang=os.path.realpath(args.clang),
+        clang_tidy=os.path.realpath(args.clang_tidy),
     )
 
 

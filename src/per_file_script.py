@@ -29,6 +29,7 @@ from common import fail, setup_logging, build_env
 class Config:  # pylint: disable=too-many-instance-attributes
     """Configuration parsed from command-line arguments."""
 
+    execution_mode: str
     codechecker_bin: str
     compile_commands: str
     codechecker_args: str
@@ -49,7 +50,7 @@ def parse_args(argv=None):
     parser = argparse.ArgumentParser(
         description="CodeChecker per-file analysis wrapper"
     )
-
+    parser.add_argument("--mode", required=True, help="Execution mode")
     parser.add_argument(
         "--codechecker", required=True, help="Path to CodeChecker binary"
     )
@@ -93,6 +94,7 @@ def parse_args(argv=None):
     ]
 
     return Config(
+        execution_mode=args.mode,
         codechecker_bin=os.path.realpath(args.codechecker),
         compile_commands=args.commands,
         codechecker_args=args.analyze,
@@ -282,9 +284,15 @@ def main():
     """
     cfg = parse_args()
     setup_logging(cfg.verbosity, cfg.log_file)
-    _create_compile_commands_json_with_absolute_paths(cfg)
-    _run_codechecker(cfg)
-    _move_output_files(cfg)
+    if cfg.execution_mode == "Run":
+        _create_compile_commands_json_with_absolute_paths(cfg)
+        _run_codechecker(cfg)
+        _move_output_files(cfg)
+    else:
+        fail(
+            cfg.log_file,
+            f"Wrong codechecker script mode: {cfg.execution_mode}",
+        )
 
 
 if __name__ == "__main__":

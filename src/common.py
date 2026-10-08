@@ -30,7 +30,15 @@ def setup_logging(verbosity, codechecker_log):
 
 
 def build_env(env, log, clang, clang_tidy):
-    """Return environment"""
+    """
+    Return environment to run codechecker in.
+
+    Args:
+        env (list): Environment variables
+        log (str): Path to the log file
+        clang (str): Path to the clang executable
+        clang_tidy (str): Path to the clang-tidy executable
+    """
     new_env = os.environ.copy()
     for entry in env:
         if "=" not in entry:
@@ -53,7 +61,15 @@ def build_env(env, log, clang, clang_tidy):
 
 
 def execute(codechecker_log, cmd, env=None, codes=None):
-    """Execute CodeChecker commands"""
+    """
+    Execute CodeChecker commands
+
+    Args:
+        codechecker_log (str): Path to the log file
+        cmd (str): Command to execute
+        env (dict): Environment variables
+        codes (list): List of expected exit codes
+    """
     if codes is None:
         codes = [0]
     with subprocess.Popen(
@@ -117,15 +133,30 @@ def stage(title, method="info"):
     getattr(logging, method)("### " + title)
     separator(method)
 
+
 # pylint: disable=too-many-arguments,too-many-positional-arguments
-def parse(output_dir, codechecker, config, env, log, clang, clang_tidy):
-    """Run CodeChecker parse commands"""
+def parse(
+    input_dir, output_dir, codechecker, config, env, log, clang, clang_tidy
+):
+    """
+    Run CodeChecker parse commands
+
+    Args:
+        input_dir (str): Path to the input directory
+        output_dir (str): Path to the output directory
+        codechecker (str): Path to the CodeChecker binary
+        config (str): Path to the CodeChecker configuration file
+        env (list): Environment variables
+        log (str): Path to the log file
+        clang (str): Path to the clang executable
+        clang_tidy (str): Path to the clang-tidy executable
+    """
     stage("CodeChecker parse:")
     env = build_env(env, log, clang, clang_tidy)
     logging.info("CodeChecker parse -e json")
     codechecker_parse = (
         f"{codechecker} parse --config "
-        f"{config} {output_dir}/data"
+        f"{config} {input_dir}"
     )
     # Save results to JSON file
     command = (
@@ -147,7 +178,14 @@ def parse(output_dir, codechecker, config, env, log, clang, clang_tidy):
 
 
 def check_results(output_dir, log, severities):
-    """Check/verify CodeChecker results"""
+    """
+    Filter CodeChecker results by severity level, fail on provided severities.
+
+    Args:
+        output_dir (str): Path to the output directory
+        log (str): Path to the log file
+        severities (str): Comma separated list of defect severities to fail on
+    """
     stage("Checking result:")
     # Get results file and read it
     result_file = output_dir + "/result.txt"

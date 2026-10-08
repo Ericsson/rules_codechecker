@@ -245,13 +245,14 @@ def run(args):
     prepare(args.output)
     analyze(args)
     parse(
-        args.output,
-        args.codechecker,
-        args.config,
-        args.env,
-        args.log,
-        args.clang,
-        args.clang_tidy,
+        input_dir=args.output,
+        output_dir=args.output,
+        codechecker=args.codechecker,
+        config=args.config,
+        env=args.env,
+        log=args.log,
+        clang=args.clang,
+        clang_tidy=args.clang_tidy,
     )
     update_file_paths(args.output)
 

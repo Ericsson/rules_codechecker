@@ -114,6 +114,7 @@ def _run_code_checker(
             ctx.attr._per_file_script[DefaultInfo].files_to_run,
         ],
         arguments = [
+            "--mode=Run",
             "--codechecker",
             info.codechecker.path,
             "--commands",

@@ -23,9 +23,13 @@ import shutil
 import subprocess
 from dataclasses import dataclass
 from common import (
-    check_results, fail, parse, setup_logging, build_env
+    check_results,
+    export_results,
+    fail,
+    parse,
+    setup_logging,
+    build_env,
 )
-
 
 @dataclass
 class Config:  # pylint: disable=too-many-instance-attributes
@@ -310,6 +314,7 @@ def main():
             clang_tidy=cfg.clang_tidy,
         )
     elif cfg.execution_mode == "Test":
+        export_results(cfg.data_dir)
         check_results(cfg.data_dir, cfg.log_file, cfg.severities)
     else:
         fail(

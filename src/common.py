@@ -6,6 +6,7 @@ and "codechecker_script.py" files.
 
 import logging
 import shlex
+import shutil
 import subprocess
 import sys
 import os
@@ -229,3 +230,25 @@ def check_results(output_dir, log, severities):
         logging.info("No defects found by CodeChecker")
     else:
         fail(log, f"CodeChecker found defects:\n{conclusion}")
+
+def export_results(output_dir):
+    """
+    Export CodeChecker parse results into bazel-testlogs.
+
+    Copies the whole parsed results directory (result.txt, result.json,
+    and the HTML report) to $TEST_UNDECLARED_OUTPUTS_DIR.
+    Bazel archives that directory into
+    bazel-testlogs/<package>/<test>/test.outputs/outputs.zip.
+    This zip is always downloaded from remote executors.
+
+    Args:
+        parsed_dir (str): Path to the parsed results directory
+    """
+    testlogs_dir = os.environ.get("TEST_UNDECLARED_OUTPUTS_DIR")
+    if testlogs_dir:
+        parsed_dir = output_dir + "/report"
+        result_json = output_dir + "/result.json"
+        result_txt = output_dir + "/result.txt"
+        shutil.copytree(parsed_dir, testlogs_dir, dirs_exist_ok=True)
+        shutil.copyfile(result_json, testlogs_dir + "/result.json")
+        shutil.copyfile(result_txt, testlogs_dir + "/result.txt")

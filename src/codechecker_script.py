@@ -29,6 +29,7 @@ from common import (
     execute,
     build_env,
     setup_logging,
+    export_results,
 )
 
 START_PATH = r"\/(?:(?!\.\s+)\S)+"
@@ -270,6 +271,7 @@ def main():
         if args.mode == "Run":
             run(args)
         elif args.mode == "Test":
+            export_results(args.output)
             test(args)
         else:
             fail(args.log, f"Wrong codechecker script mode: {args.mode}")

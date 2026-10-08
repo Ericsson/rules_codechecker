@@ -22,13 +22,14 @@ import os
 import re
 import shutil
 import subprocess
-import sys
+from common import fail, setup_logging, build_env
 
 
 @dataclass
 class Config:  # pylint: disable=too-many-instance-attributes
     """Configuration parsed from command-line arguments."""
 
+    execution_mode: str
     codechecker_bin: str
     compile_commands: str
     codechecker_args: str
@@ -39,7 +40,9 @@ class Config:  # pylint: disable=too-many-instance-attributes
     skip_file: str
     metadata_file: str
     analyzer_plist_paths: list
-    analyzer_executables_env_var: str
+    verbosity: str
+    clang: str
+    clang_tidy: str
 
 
 def parse_args(argv=None):
@@ -47,10 +50,11 @@ def parse_args(argv=None):
     parser = argparse.ArgumentParser(
         description="CodeChecker per-file analysis wrapper"
     )
-
+    parser.add_argument("--mode", required=True, help="Execution mode")
     parser.add_argument(
         "--codechecker", required=True, help="Path to CodeChecker binary"
     )
+    parser.add_argument("--verbosity", default="INFO", help="Log level")
     parser.add_argument(
         "--commands", required=True, help="Path to compile_commands.json"
     )
@@ -75,9 +79,12 @@ def parse_args(argv=None):
         help="Semicolon-separated list of analyzer,plist_path pairs",
     )
     parser.add_argument(
-        "--analyzer_executables",
-        default="",
-        help="Semicolon-separated list of name:path pairs",
+        "--clang",
+        help="Path for clang executable",
+    )
+    parser.add_argument(
+        "--clang_tidy",
+        help="Path for clang-tidy executable",
     )
 
     args = parser.parse_args(argv)
@@ -85,16 +92,9 @@ def parse_args(argv=None):
     analyzer_plist_paths = [
         item.split(",") for item in args.analyzer_plists.split(";")
     ]
-    analyzer_executables_env_var = ";".join(
-        f"{name}:{os.path.realpath(path)}"
-        for name, path in [
-            pair.split(":", 1)
-            for pair in args.analyzer_executables.split(";")
-            if pair
-        ]
-    )
 
     return Config(
+        execution_mode=args.mode,
         codechecker_bin=os.path.realpath(args.codechecker),
         compile_commands=args.commands,
         codechecker_args=args.analyze,
@@ -105,7 +105,9 @@ def parse_args(argv=None):
         skip_file=args.skip,
         metadata_file=args.metadata,
         analyzer_plist_paths=analyzer_plist_paths,
-        analyzer_executables_env_var=analyzer_executables_env_var,
+        verbosity=args.verbosity,
+        clang=os.path.realpath(args.clang),
+        clang_tidy=os.path.realpath(args.clang_tidy),
     )
 
 
@@ -160,19 +162,6 @@ def _create_compile_commands_json_with_absolute_paths(cfg: Config):
         new_file.write(new_content)
 
 
-def _get_codechecker_env(cfg: Config) -> dict[str, str]:
-    """
-    Returns the environment for running CodeChecker
-    """
-    cc_env = os.environ.copy()
-    # Note: This is a workaround, CodeChecker requires the PATH to be set
-    if "PATH" not in cc_env:
-        cc_env["PATH"] = "/bin"
-    # Overwrite analyzer paths
-    cc_env["CC_ANALYZER_BIN"] = cfg.analyzer_executables_env_var
-    return cc_env
-
-
 def _run_codechecker(cfg: Config) -> None:
     """
     Runs CodeChecker analyze
@@ -188,7 +177,7 @@ def _run_codechecker(cfg: Config) -> None:
         + [absolute_path]
     )
 
-    cc_env = _get_codechecker_env(cfg)
+    cc_env = build_env("", cfg.log_file, cfg.clang, cfg.clang_tidy)
     env_prefix = " ".join(f"{key}={cc_env[key]}" for key in sorted(cc_env))
     log(cfg, f"CodeChecker command: {env_prefix} {' '.join(codechecker_cmd)}\n")
     log(cfg, "===---------------------------------------------===\n")
@@ -198,7 +187,8 @@ def _run_codechecker(cfg: Config) -> None:
     result = subprocess.run(
         ["echo", "$PATH"],
         shell=True,
-        env=_get_codechecker_env(cfg),
+        # Env vars are set in bazel
+        env=build_env("", cfg.log_file, cfg.clang, cfg.clang_tidy),
         capture_output=True,
         text=True,
         check=False,
@@ -209,7 +199,8 @@ def _run_codechecker(cfg: Config) -> None:
         with open(cfg.log_file, "a", encoding="utf-8") as log_file:
             subprocess.run(
                 codechecker_cmd,
-                env=_get_codechecker_env(cfg),
+                # Env vars are set in bazel
+                env=build_env("", cfg.log_file, cfg.clang, cfg.clang_tidy),
                 stdout=log_file,
                 stderr=log_file,
                 check=True,
@@ -217,19 +208,11 @@ def _run_codechecker(cfg: Config) -> None:
     except subprocess.CalledProcessError as e:
         log(cfg, e.output.decode() if e.output else "")
         if e.returncode == 1 or e.returncode >= 128:
-            _display_error(cfg, e.returncode)
-
-
-def _display_error(cfg: Config, ret_code: int) -> None:
-    """
-    Display the log file, and exit with 1
-    """
-    # Log and exit on error
-    print("===-----------------------------------------------------===")
-    print(f"[ERROR]: CodeChecker returned with {ret_code}!")
-    with open(cfg.log_file, "r", encoding="utf-8") as log_file:
-        print(log_file.read())
-    sys.exit(1)
+            fail(
+                cfg.log_file,
+                f"CodeChecker failed with return code {e.returncode}\n",
+                e.returncode,
+            )
 
 
 def _move_output_files(cfg: Config):
@@ -300,9 +283,16 @@ def main():
     Main function of CodeChecker wrapper
     """
     cfg = parse_args()
-    _create_compile_commands_json_with_absolute_paths(cfg)
-    _run_codechecker(cfg)
-    _move_output_files(cfg)
+    setup_logging(cfg.verbosity, cfg.log_file)
+    if cfg.execution_mode == "Run":
+        _create_compile_commands_json_with_absolute_paths(cfg)
+        _run_codechecker(cfg)
+        _move_output_files(cfg)
+    else:
+        fail(
+            cfg.log_file,
+            f"Wrong codechecker script mode: {cfg.execution_mode}",
+        )
 
 
 if __name__ == "__main__":

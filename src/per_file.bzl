@@ -96,9 +96,6 @@ def _run_code_checker(
     analyzer_output_paths = "clangsa," + clangsa_plist.path + \
                             ";clang-tidy," + clang_tidy_plist.path
 
-    analyzer_executables = "clangsa:" + info.clangsa.path + \
-                           ";clang-tidy:" + info.clang_tidy.path
-
     # Convert the list of "NAME=value" strings into a dict.
     # Entries without "=" are ignored.
     env = {}
@@ -117,6 +114,7 @@ def _run_code_checker(
             ctx.attr._per_file_script[DefaultInfo].files_to_run,
         ],
         arguments = [
+            "--mode=Run",
             "--codechecker",
             info.codechecker.path,
             "--commands",
@@ -136,8 +134,10 @@ def _run_code_checker(
             codechecker_metadata.path,
             "--analyzer_plists",
             analyzer_output_paths,
-            "--analyzer_executables",
-            analyzer_executables,
+            "--clang",
+            info.clangsa.path,
+            "--clang_tidy",
+            info.clang_tidy.path,
         ],
         mnemonic = "CodeChecker",
         env = env,

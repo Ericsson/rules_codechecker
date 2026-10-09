@@ -64,7 +64,7 @@ unit_test(
     contains = [r"\"action_num\": 1,"],
     data = [":per_file_multiple_source"],
     files = [
-        "test/unit/metadata/per_file_multiple_source/data/test-unit-metadata-main.cc_metadata.json",
-        "test/unit/metadata/per_file_multiple_source/data/test-unit-metadata-other.cc_metadata.json",
+        "test/unit/metadata/per_file_multiple_source/codechecker-files/data/test-unit-metadata-main.cc_metadata.json",
+        "test/unit/metadata/per_file_multiple_source/codechecker-files/data/test-unit-metadata-other.cc_metadata.json",
     ],
 )

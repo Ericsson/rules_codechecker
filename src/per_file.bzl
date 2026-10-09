@@ -47,7 +47,7 @@ def _run_code_checker(
         compilation_context,
         sources_and_headers):
     # Define Plist and log file names
-    data_dir = ctx.attr.name + "/data"
+    data_dir = ctx.attr.name + "/codechecker-files/data"
     file_name_params = (data_dir, src.path.replace("/", "-"))
     clang_tidy_plist_file_name = "{}/{}_clang-tidy.plist".format(*file_name_params)
     clangsa_plist_file_name = "{}/{}_clangsa.plist".format(*file_name_params)
@@ -243,8 +243,8 @@ def _per_file_impl(ctx):
             # ls -la $DATA_DIR/data
             # find $DATA_DIR/data -name *.plist -exec sed -i -e "s|<string>.*execroot/codechecker_bazel/|<string>|g" {{}} \\;
             # cat $DATA_DIR/data/test-src-lib.cc_clangsa.plist
-            echo "Running: CodeChecker parse $DATA_DIR/data"
-            $(realpath {codechecker}) parse $DATA_DIR/data
+            echo "Running: CodeChecker parse $DATA_DIR/codechecker-files/data"
+            $(realpath {codechecker}) parse $DATA_DIR/codechecker-files/data
         """.format(dirname = ctx.outputs.test_script.short_path, codechecker = info.codechecker.short_path),
     )
     files = depset(

@@ -22,9 +22,7 @@ import re
 import shutil
 import subprocess
 from dataclasses import dataclass
-# pylint outside bazel cannot follow the dependency graph
-# This should be removed when pylint is integrated into bazel
-from common import (  # pylint: disable=no-name-in-module
+from common import (
     fail, parse, setup_logging, build_env
 )
 

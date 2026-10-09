@@ -239,21 +239,18 @@ def _per_file_impl(ctx):
 
     # Parse action: collect all plists into a directory and run
     # CodeChecker parse to produce result.txt, result.json, HTML report
-    codechecker_files = ctx.actions.declare_directory(
-        ctx.label.name + "/parse",
+    html_parse_dir = ctx.actions.declare_directory(
+        ctx.label.name + "/report",
     )
+    json_parse = ctx.actions.declare_file(ctx.label.name + "/result.json")
+    txt_parse = ctx.actions.declare_file(ctx.label.name + "/result.txt")
     codechecker_parse_log = ctx.actions.declare_file(
         ctx.label.name + "/codechecker_parse.log",
     )
 
-    # Build arguments for the parse action
-    # The data dir is where the per-file analyze actions put their plists
-    # All plists are in <name>/data/, derive path from first plist
-    #data_dir_path = plist_and_metadata_files[0].dirname if plist_and_metadata_files else ""
-
     ctx.actions.run(
         inputs = all_files + [config_file],
-        outputs = [codechecker_files, codechecker_parse_log],
+        outputs = [html_parse_dir, codechecker_parse_log, json_parse, txt_parse],
         executable = per_file_script,
         tools = [
             info.runfiles,
@@ -265,7 +262,7 @@ def _per_file_impl(ctx):
             "--codechecker",
             info.codechecker.path,
             "--data_dir",
-            codechecker_files.path,
+            html_parse_dir.path + "/..",
             "--log",
             codechecker_parse_log.path,
             "--config",
@@ -280,7 +277,7 @@ def _per_file_impl(ctx):
         progress_message = "CodeChecker parse %s" % str(ctx.label),
     )
 
-    all_files += [codechecker_files, codechecker_parse_log]
+    all_files += [html_parse_dir, codechecker_parse_log]
 
     ctx.actions.write(
         output = ctx.outputs.test_script,

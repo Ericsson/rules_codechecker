@@ -277,7 +277,7 @@ def _per_file_impl(ctx):
         progress_message = "CodeChecker parse %s" % str(ctx.label),
     )
 
-    all_files += [html_parse_dir, codechecker_parse_log]
+    all_files += [html_parse_dir, codechecker_parse_log, json_parse, txt_parse]
 
     ctx.actions.write(
         output = ctx.outputs.test_script,

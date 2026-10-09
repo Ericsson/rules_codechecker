@@ -47,7 +47,7 @@ def _run_code_checker(
         compilation_context,
         sources_and_headers):
     # Define Plist and log file names
-    data_dir = ctx.attr.name + "/data"
+    data_dir = ctx.attr.name + "/codechecker-files/data"
     file_name_params = (data_dir, src.path.replace("/", "-"))
     clang_tidy_plist_file_name = "{}/{}_clang-tidy.plist".format(*file_name_params)
     clangsa_plist_file_name = "{}/{}_clangsa.plist".format(*file_name_params)

@@ -136,14 +136,13 @@ def stage(title, method="info"):
 
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def parse(
-    input_dir, output_dir, codechecker, config, env, log, clang, clang_tidy
+    input_dir, codechecker, config, env, log, clang, clang_tidy
 ):
     """
     Run CodeChecker parse commands
 
     Args:
         input_dir (str): Path to the input directory
-        output_dir (str): Path to the output directory
         codechecker (str): Path to the CodeChecker binary
         config (str): Path to the CodeChecker configuration file
         env (list): Environment variables
@@ -160,18 +159,18 @@ def parse(
     )
     # Save results to JSON file
     command = (
-        f"{codechecker_parse} --export=json > " f"{output_dir}/result.json"
+        f"{codechecker_parse} --export=json > " f"{input_dir}/result.json"
     )
     execute(log, command, env=env, codes=[0, 2])
     # Save results as HTML report
     logging.info("CodeChecker parse -e html")
     command = (
-        codechecker_parse + " --export=html --output=" + output_dir + "/report"
+        codechecker_parse + " --export=html --output=" + input_dir + "/report"
     )
     execute(log, command, env=env, codes=[0, 2])
     # Save results to text file
     logging.info("CodeChecker parse to text result")
-    result_file = output_dir + "/result.txt"
+    result_file = input_dir + "/result.txt"
     command = codechecker_parse + " > " + result_file
     execute(log, command, env=env, codes=[0, 2])
     logging.info("Result:\n\n%s\n", read_file(log, result_file))

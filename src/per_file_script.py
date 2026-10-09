@@ -298,8 +298,7 @@ def main():
         with open(cfg.log_file, "a", encoding="utf-8"):
             pass
         parse(
-            input_dir=cfg.data_dir + "/..",
-            output_dir=cfg.data_dir,
+            input_dir=cfg.data_dir,
             codechecker=cfg.codechecker_bin,
             config=cfg.config_file,
             env="",

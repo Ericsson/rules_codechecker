@@ -2,21 +2,10 @@
 
 ## Running Tests
 
-Our projects use both **`bazel tests`** and **`pytest`**.
+Our projects uses **`bazel tests`**.
 You can run bazel tests with: `bazel test //...`.
-For more verbosity in python tests use **`-vvv`** or **`--log-cli-level=DEBUG`** for pytest.
-
-### To run all python tests, use one of the following command:
-* **Using Pytest:**
-    ```bash
-    pytest unit -vvv
-    ```
-
-* **Using Unittest:**
-    ```bash
-    python3 -m unittest discover unit -vvv
-    ```
-
+We have some legacy tests that you can run with `pytest`.
+For more verbosity in legacy tests use **`--log-cli-level=DEBUG`**.
 
 ## Adding New Tests,
 

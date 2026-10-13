@@ -357,14 +357,12 @@ def codechecker_test(
     if "codechecker" not in tags:
         codechecker_tags.append("codechecker")
 
-    #--ctu analysis with bazel ruleset was fixed in version 6.25.0, on older versions it will not work
-    if "--ctu" in analyze:
-        major = int(CODECHECKER_VERSION.split(".")[0])
-        minor = int(CODECHECKER_VERSION.split(".")[1])
-        if major < 6 or (major == 6 and minor < 25):
-            fail("--ctu is not supported on CodeChecker versions older than 6.25.0")
-
     if per_file:
+        if "--ctu" in analyze:
+            major = int(CODECHECKER_VERSION.split(".")[0])
+            minor = int(CODECHECKER_VERSION.split(".")[1])
+            if major < 6 or (major == 6 and minor < 25):
+                fail("Running per_file with --ctu is not supported on CodeChecker versions older than 6.25.0")
         per_file_test(
             name = name,
             platform = platform,

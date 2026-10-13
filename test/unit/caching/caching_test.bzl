@@ -65,10 +65,7 @@ def caching_test(
             str(expected_action_count),
         ],
         local = True,
-        # Each test runs a nested Bazel invocation, so it needs a second
-        # thread. Declaring 2 CPUs makes Bazel reserve the capacity instead of
-        # overpacking the machine.
-        tags = ["unit", "cpu:2"] + tags,
+        tags = ["unit"] + tags,
         size = size,
         **kwargs
     )

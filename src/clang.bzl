@@ -215,33 +215,27 @@ def _run_analyzer(
     )
     return outfile
 
-def check_valid_file_type(src):
+def is_compilable_source(src):
     """
-    Checks if the file is a cpp related file.
+    Checks if the file is a compilable C or C++ translation unit.
 
-    Returns True if the file type matches one of the permitted
-    srcs file types for C and C++ header/source files.
+    Headers are not compiled on their own, so the analyzer must not be invoked
+    on them. Only translation units get an analysis action; headers reach the
+    analyzer through the sources that include them.
     Args:
-        src: Path of a single source file.
+        src: A single source File.
     Returns:
         Boolean value.
     """
-    permitted_file_types = [
+    compilable_file_types = [
         ".c",
         ".cc",
         ".cpp",
         ".cxx",
         ".c++",
         ".C",
-        ".h",
-        ".hh",
-        ".hpp",
-        ".hxx",
-        ".inc",
-        ".inl",
-        ".H",
     ]
-    for file_type in permitted_file_types:
+    for file_type in compilable_file_types:
         if src.basename.endswith(file_type):
             return True
     return False
@@ -251,7 +245,7 @@ def _rule_sources(ctx):
     if hasattr(ctx.rule.attr, "srcs"):
         for src in ctx.rule.attr.srcs:
             for file in src.files.to_list():
-                if file.is_source and check_valid_file_type(file):
+                if file.is_source and is_compilable_source(file):
                     srcs.append(file)
     return srcs
 
@@ -327,11 +321,16 @@ def _safe_flags(flags):
         "-fno-canonical-system-headers",
         "-fstack-usage",
         "-analyze-and-compile",
-        "-O3",
-        "-O4",
     ]
-
-    return [flag for flag in flags if flag not in unsupported_flags]
+    supported_flags = []
+    for flag in flags:
+        if flag == "-O4":
+            # Clang has no -O4; it is the highest GCC level.
+            # Replace it with -O3, the highest level clang understands.
+            supported_flags.append("-O3")
+        elif flag not in unsupported_flags:
+            supported_flags.append(flag)
+    return supported_flags
 
 def _valid_for_clang_tidy(target, ctx):
     # if not a C/C++ target, we are not interested

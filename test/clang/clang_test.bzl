@@ -140,3 +140,47 @@ conlyopts_test = analysistest.make(
         "//command_line_option:conlyopt": ["-DFROM_CONLYOPT=1"],
     },
 )
+
+def _optlevel_test_impl(ctx):
+    """Clang has no -O4; the build -O4 is mapped to -O3, the clang maximum"""
+    env = analysistest.begin(ctx)
+    arguments = _clang_arguments(env)
+
+    asserts.true(
+        env,
+        "-O4" not in arguments,
+        "Clang does not understand -O4, it must not be passed: %s" % arguments,
+    )
+    asserts.true(
+        env,
+        "-O3" in arguments,
+        "The build -O4 should be mapped to -O3: %s" % arguments,
+    )
+
+    return analysistest.end(env)
+
+optlevel_test = analysistest.make(
+    _optlevel_test_impl,
+    config_settings = {
+        "//command_line_option:copt": ["-O4"],
+    },
+)
+
+def _header_in_srcs_test_impl(ctx):
+    """A header in srcs is not analyzed, only translation units are"""
+    env = analysistest.begin(ctx)
+    analyzed = [
+        argument
+        for argument in _clang_arguments(env)
+        if argument.endswith(".h")
+    ]
+
+    asserts.true(
+        env,
+        len(analyzed) == 0,
+        "A header in srcs must not be analyzed: %s" % analyzed,
+    )
+
+    return analysistest.end(env)
+
+header_in_srcs_test = analysistest.make(_header_in_srcs_test_impl)

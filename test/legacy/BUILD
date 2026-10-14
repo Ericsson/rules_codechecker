@@ -283,3 +283,72 @@ codechecker_test(
         "test_fail",
     ],
 )
+
+# Verify that :codechecker_fail detects expected findings
+# NOTE: this test depends on :codechecker_fail and produced log
+sh_test(
+    name = "test_codechecker_findings",
+    srcs = ["check.sh"],
+    args = [
+        "$(location :codechecker_fail/codechecker.log)",
+        "clang-diagnostic-unused-variable\\\\s+\\\\|\\\\s+MEDIUM\\\\s+\\\\|\\\\s+1",
+        "core.NullDereference\\\\s+\\\\|\\\\s+HIGH\\\\s+\\\\|\\\\s+1",
+        "deadcode.DeadStores\\\\s+\\\\|\\\\s+LOW\\\\s+\\\\|\\\\s+1",
+        "lib.cc\\\\s+\\\\|\\\\s+3",
+    ],
+    data = [":codechecker_fail/codechecker.log"],
+)
+
+# Verify that :codechecker_ctu contain expected entries
+# NOTE: this test depends on :codechecker_ctu and produced output
+sh_test(
+    name = "test_codechecker_ctu",
+    srcs = ["check.sh"],
+    args = [
+        "$(location :codechecker_ctu/codechecker.log)",
+        "// CTU example",
+    ],
+    data = [":codechecker_ctu/codechecker.log"],
+)
+
+# Verify that :compile_commands_pass contain expected entries
+# NOTE: this test depends on :compile_commands_pass and produced output
+sh_test(
+    name = "test_compile_commands",
+    srcs = ["check.sh"],
+    args = [
+        "$(location :compile_commands_pass)",
+        "pass\\\\.cc",
+        "/gcc",
+    ],
+    data = [":compile_commands_pass"],
+)
+
+# TODO: per_file should produce the same codechecker.log
+# Verify that :code_checker_fail with per_file detects expected findings
+sh_test(
+    name = "test_code_checker_findings",
+    srcs = ["check.sh"],
+    args = [
+        "$(location :code_checker_fail/codechecker.log)",
+        "clang-diagnostic-unused-variable\\\\s+\\\\|\\\\s+MEDIUM\\\\s+\\\\|\\\\s+1",
+        "core.NullDereference\\\\s+\\\\|\\\\s+HIGH\\\\s+\\\\|\\\\s+1",
+        "deadcode.DeadStores\\\\s+\\\\|\\\\s+LOW\\\\s+\\\\|\\\\s+1",
+        "lib.cc\\\\s+\\\\|\\\\s+3",
+    ],
+    data = [":code_checker_fail/codechecker.log"],
+    tags = ["manual"],  # FIXME: remove "manual" to enable this test when ready
+)
+
+# TODO: per_file should produce the same codechecker.log
+# Verify that :code_checker_ctu with per_file contain expected entries
+sh_test(
+    name = "test_code_checker_ctu",
+    srcs = ["check.sh"],
+    args = [
+        "$(location :code_checker_ctu/codechecker.log)",
+        "// CTU example",
+    ],
+    data = [":code_checker_ctu/codechecker.log"],
+    tags = ["manual"],  # FIXME: remove "manual" to enable this test when ready
+)

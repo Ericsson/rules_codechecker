@@ -152,14 +152,13 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def check_store(report_dir: str, name: str, port: int, zip_loc: str) -> int:
+def check_store(report_dir: str, name: str, port: int) -> int:
     """Store the results and assert the store command succeeds."""
     ret, stdout, stderr = run_codechecker([
         "store",
         report_dir,
         "-n", name,
         f"--url=http://localhost:{port}/Default",
-        "--zip-loc", zip_loc,
     ])
     if ret != 0:
         print(f"FAILED: CodeChecker store failed with exit code {ret}")
@@ -177,12 +176,20 @@ def main() -> int:
     exit_code = 1
 
     # CodeChecker store writes a compressed file while assembling its upload.
-    # By default that goes into the report directory, which lives in the
-    # read-only Bazel runfiles tree, so point --zip-loc at a writable dir.
-    # NOTE: the --zip-loc flag is only available since CodeChecker 6.27.0.
-    with tempfile.TemporaryDirectory() as zip_loc:
+    # All directories are read-only Bazel runfiles tree and must not be changed.
+    # So we copy reports into writable temporary directory to store from there.
+    # NOTE: --zip-loc also works, but it only exists from CodeChecker 6.27.0
+    # while copying works on every version.
+    with tempfile.TemporaryDirectory() as tmp:
+        writable_dir = os.path.join(tmp, "data")
+        shutil.copytree(report_dir, writable_dir)
+        # All Bazel outputs are read-only, so make the whole copy writable
+        os.chmod(writable_dir, 0o755)
+        for root, dirs, files in os.walk(writable_dir):
+            for entry in dirs + files:
+                os.chmod(os.path.join(root, entry), 0o755)
         server = CodeCheckerServer()
-        exit_code = check_store(report_dir, args.name, server.port, zip_loc)
+        exit_code = check_store(writable_dir, args.name, server.port)
         return exit_code
 
 

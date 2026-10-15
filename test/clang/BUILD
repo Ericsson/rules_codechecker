@@ -21,6 +21,8 @@ load(
     "copts_test",
     "cxxopts_not_in_c_test",
     "cxxopts_test",
+    "header_in_srcs_test",
+    "optlevel_test",
 )
 
 # Defect free libraries: the tests check how the analysis is invoked
@@ -36,6 +38,16 @@ cc_library(
     tags = ["manual"],
 )
 
+# A header in srcs must not get its own analysis action
+cc_library(
+    name = "header_lib",
+    srcs = [
+        "clean.cc",
+        "clean.h",
+    ],
+    tags = ["manual"],
+)
+
 clang_tidy_test(
     name = "cpp_analysis",
     tags = ["manual"],
@@ -46,6 +58,12 @@ clang_tidy_test(
     name = "c_analysis",
     tags = ["manual"],
     targets = [":c_lib"],
+)
+
+clang_tidy_test(
+    name = "header_analysis",
+    tags = ["manual"],
+    targets = [":header_lib"],
 )
 
 builtin_includes_test(
@@ -71,4 +89,14 @@ conlyopts_test(
 cxxopts_not_in_c_test(
     name = "cxxopts_not_in_c",
     target_under_test = ":c_analysis",
+)
+
+optlevel_test(
+    name = "optlevel",
+    target_under_test = ":cpp_analysis",
+)
+
+header_in_srcs_test(
+    name = "header_in_srcs",
+    target_under_test = ":header_analysis",
 )

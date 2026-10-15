@@ -15,7 +15,7 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("//:defs.bzl", "clang_tidy_test")
 load(
-    ":clang_test.bzl",
+    ":test.bzl",
     "builtin_includes_test",
     "conlyopts_test",
     "copts_test",

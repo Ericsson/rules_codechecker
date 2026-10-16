@@ -244,9 +244,7 @@ def _per_file_impl(ctx):
     )
     json_parse = ctx.outputs.result_json
     txt_parse = ctx.outputs.result_txt
-    codechecker_parse_log = ctx.actions.declare_file(
-        ctx.label.name + "/codechecker_parse.log",
-    )
+    codechecker_parse_log = ctx.outputs.codechecker_parse_log
 
     ctx.actions.run(
         inputs = all_files + [config_file],
@@ -353,6 +351,7 @@ per_file_test = rule(
         ),
     } | version_specific_attributes(),
     outputs = {
+        "codechecker_parse_log": "%{name}/codechecker_parse.txt",
         "compile_commands": "%{name}/compile_commands.json",
         "result_json": "%{name}/result.json",
         "result_txt": "%{name}/result.txt",

@@ -329,13 +329,13 @@ sh_test(
     name = "test_code_checker_findings",
     srcs = ["check.sh"],
     args = [
-        "$(location :code_checker_fail/result.txt)",
+        "$(location :code_checker_fail/codechecker_parse.txt)",
         "clang-diagnostic-unused-variable\\\\s+\\\\|\\\\s+MEDIUM\\\\s+\\\\|\\\\s+1",
         "core.NullDereference\\\\s+\\\\|\\\\s+HIGH\\\\s+\\\\|\\\\s+1",
         "deadcode.DeadStores\\\\s+\\\\|\\\\s+LOW\\\\s+\\\\|\\\\s+1",
         "lib.cc\\\\s+\\\\|\\\\s+3",
     ],
-    data = [":code_checker_fail/result.txt"],
+    data = [":code_checker_fail/codechecker_parse.txt"],
 )
 
 # Verify that :code_checker_ctu with per_file contain expected entries
@@ -343,8 +343,8 @@ sh_test(
     name = "test_code_checker_ctu",
     srcs = ["check.sh"],
     args = [
-        "$(location :code_checker_ctu/result.txt)",
+        "$(location :code_checker_ctu/codechecker_parse.txt)",
         "// CTU example",
     ],
-    data = [":code_checker_ctu/result.txt"],
+    data = [":code_checker_ctu/codechecker_parse.txt"],
 )

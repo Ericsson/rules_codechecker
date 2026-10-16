@@ -138,7 +138,7 @@ unit_test(
     ],
     data = [":per_file_genrule_header"],
     excludes = "genrule_source.cc",
-    files = "test/unit/generated_files/per_file_genrule_header/data/test-unit-generated_files-genrule_header_consumer.cc_clangsa.plist",
+    files = "test/unit/generated_files/per_file_genrule_header/codechecker-files/data/test-unit-generated_files-genrule_header_consumer.cc_clangsa.plist",
 )
 
 unit_test(
@@ -148,7 +148,7 @@ unit_test(
         "core.DivideZero",
     ],
     data = [":per_file_genrule_source"],
-    files = "test/unit/generated_files/per_file_genrule_source/data/bazel-out-k8-fastbuild-bin-test-unit-generated_files-genrule_source.cc_clangsa.plist",
+    files = "test/unit/generated_files/per_file_genrule_source/codechecker-files/data/bazel-out-k8-fastbuild-bin-test-unit-generated_files-genrule_source.cc_clangsa.plist",
 )
 
 unit_test(

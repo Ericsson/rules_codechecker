@@ -103,7 +103,7 @@ unit_test(
     contains = ["analyzed skip2.cc successfully"],
     data = [":per_file_skipfile_exact_file_path"],
     excludes = ["analyzed skip.cc successfully"],
-    files = ["test/unit/skip/per_file_skipfile_exact_file_path/data/*.log"],
+    files = ["test/unit/skip/per_file_skipfile_exact_file_path/codechecker-files/data/*.log"],
     require_patterns_in_each_file = False,
 )
 
@@ -112,7 +112,7 @@ unit_test(
     contains = ["analyzed skip2.cc successfully"],
     data = [":per_file_skipfile_folder_skip_path"],
     excludes = ["analyzed skip.cc successfully"],
-    files = ["test/unit/skip/per_file_skipfile_folder_skip_path/data/*.log"],
+    files = ["test/unit/skip/per_file_skipfile_folder_skip_path/codechecker-files/data/*.log"],
     require_patterns_in_each_file = False,
 )
 
@@ -121,6 +121,6 @@ unit_test(
     contains = ["analyzed skip.cc successfully"],
     data = [":per_file_skipfile_both_files_except_one"],
     excludes = ["analyzed skip2.cc successfully"],
-    files = ["test/unit/skip/per_file_skipfile_both_files_except_one/data/*.log"],
+    files = ["test/unit/skip/per_file_skipfile_both_files_except_one/codechecker-files/data/*.log"],
     require_patterns_in_each_file = False,
 )

@@ -118,7 +118,7 @@ unit_test(
         "CC_TEST_LIST=1; 2; 3;",
     ],
     data = [":per_file_env"],
-    files = "test/unit/config/per_file_env/data/test-unit-config-zero_div.cc_codechecker.log",
+    files = "test/unit/config/per_file_env/codechecker-files/data/test-unit-config-zero_div.cc_codechecker.log",
 )
 
 # None of these codechecker rules should find any issues

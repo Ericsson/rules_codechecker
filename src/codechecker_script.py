@@ -246,7 +246,6 @@ def run(args):
     analyze(args)
     parse(
         input_dir=args.output,
-        output_dir=args.output,
         codechecker=args.codechecker,
         config=args.config,
         env=args.env,

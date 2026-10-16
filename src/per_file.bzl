@@ -207,6 +207,7 @@ def _per_file_impl(ctx):
         info = ctx.attr.toolchain[platform_common.ToolchainInfo].codecheckerinfo
     else:
         info = ctx.toolchains["//:toolchain_type"].codecheckerinfo
+
     for target in ctx.attr.targets:
         if not CcInfo in target:
             continue
@@ -235,29 +236,82 @@ def _per_file_impl(ctx):
                         sources_and_headers,
                     )
                     all_files += outputs
+
+    # Parse action: collect all plists into a directory and run
+    # CodeChecker parse to produce result.txt, result.json, HTML report
+    html_parse_dir = ctx.actions.declare_directory(
+        ctx.label.name + "/report",
+    )
+    json_parse = ctx.actions.declare_file(ctx.label.name + "/result.json")
+    txt_parse = ctx.actions.declare_file(ctx.label.name + "/result.txt")
+    codechecker_parse_log = ctx.actions.declare_file(
+        ctx.label.name + "/codechecker_parse.log",
+    )
+
+    ctx.actions.run(
+        inputs = all_files + [config_file],
+        outputs = [html_parse_dir, codechecker_parse_log, json_parse, txt_parse],
+        executable = per_file_script,
+        tools = [
+            info.runfiles,
+            ctx.attr._per_file_script[DefaultInfo].files_to_run,
+        ],
+        arguments = [
+            "--mode",
+            "Parse",
+            "--codechecker",
+            info.codechecker.path,
+            "--data_dir",
+            html_parse_dir.path + "/..",
+            "--log",
+            codechecker_parse_log.path,
+            "--config",
+            config_file.path,
+            "--clang",
+            info.clangsa.path,
+            "--clang_tidy",
+            info.clang_tidy.path,
+        ],
+        mnemonic = "CodeCheckerParse",
+        use_default_shell_env = True,
+        progress_message = "CodeChecker parse %s" % str(ctx.label),
+    )
+
+    all_files += [html_parse_dir, codechecker_parse_log, json_parse, txt_parse]
+
+    launcher = ctx.actions.declare_file(ctx.label.name + "_launcher.sh")
     ctx.actions.write(
-        output = ctx.outputs.test_script,
+        output = launcher,
+        content = """#!/bin/bash
+            exec {tool} --mode=Test \
+            --data_dir '{codechecker_files}' --severities '{severities}' \
+            --clang '{clang}' --clang_tidy '{clang_tidy}'
+            """.format(
+            tool = per_file_script.executable.short_path,
+            codechecker_files = html_parse_dir.short_path + "/..",
+            severities = " ".join(ctx.attr.severities),
+            clang = info.clangsa.short_path,
+            clang_tidy = info.clang_tidy.short_path,
+        ),
         is_executable = True,
-        content = """
-            DATA_DIR=$(dirname {dirname})
-            # ls -la $DATA_DIR/data
-            # find $DATA_DIR/data -name *.plist -exec sed -i -e "s|<string>.*execroot/codechecker_bazel/|<string>|g" {{}} \\;
-            # cat $DATA_DIR/data/test-src-lib.cc_clangsa.plist
-            echo "Running: CodeChecker parse $DATA_DIR/data"
-            $(realpath {codechecker}) parse $DATA_DIR/data
-        """.format(dirname = ctx.outputs.test_script.short_path, codechecker = info.codechecker.short_path),
     )
-    files = depset(
-        direct = all_files,
-    )
+
+    # Return test script and all required files
     run_files = [
-        ctx.outputs.test_script,
+        launcher,
     ] + info.runfiles.to_list() + all_files
+    all_runfiles = ctx.runfiles(files = run_files)
+
+    # Add runfiles from the py_binary target (for common.py etc.)
+    all_runfiles = all_runfiles.merge(
+        ctx.attr._per_file_script[DefaultInfo].default_runfiles,
+    )
+
     return [
         DefaultInfo(
-            files = files,
-            runfiles = ctx.runfiles(files = run_files),
-            executable = ctx.outputs.test_script,
+            files = depset(all_files),
+            runfiles = all_runfiles,
+            executable = launcher,
         ),
     ]
 
@@ -283,6 +337,10 @@ per_file_test = rule(
         "platform": attr.string(
             default = "",  #"@platforms//os:linux",
             doc = "Platform to build for",
+        ),
+        "severities": attr.string_list(
+            default = ["HIGH"],
+            doc = "List of defect severities: HIGH, MEDIUM, LOW, STYLE etc",
         ),
         "skip": attr.string_list(
             default = [],
@@ -310,7 +368,6 @@ per_file_test = rule(
     } | version_specific_attributes(),
     outputs = {
         "compile_commands": "%{name}/compile_commands.json",
-        "test_script": "%{name}/test_script.sh",
     },
     test = True,
     toolchains = ["//:toolchain_type"],

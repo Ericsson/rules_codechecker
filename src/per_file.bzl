@@ -242,8 +242,8 @@ def _per_file_impl(ctx):
     html_parse_dir = ctx.actions.declare_directory(
         ctx.label.name + "/report",
     )
-    json_parse = ctx.actions.declare_file(ctx.label.name + "/result.json")
-    txt_parse = ctx.actions.declare_file(ctx.label.name + "/result.txt")
+    json_parse = ctx.outputs.result_json
+    txt_parse = ctx.outputs.result_txt
     codechecker_parse_log = ctx.actions.declare_file(
         ctx.label.name + "/codechecker_parse.log",
     )
@@ -354,6 +354,8 @@ per_file_test = rule(
     } | version_specific_attributes(),
     outputs = {
         "compile_commands": "%{name}/compile_commands.json",
+        "result_json": "%{name}/result.json",
+        "result_txt": "%{name}/result.txt",
         "test_script": "%{name}/test_script.sh",
     },
     test = True,

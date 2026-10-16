@@ -9,7 +9,8 @@ import shlex
 import subprocess
 import sys
 import os
-import re
+import json
+
 
 def setup_logging(verbosity, codechecker_log):
     """Setup logging parameters for execution session"""
@@ -53,9 +54,7 @@ def build_env(env, log, clang, clang_tidy):
     elif new_env.get("CC_ANALYZER_BIN"):
         logging.debug("CC_ANALYZER_BIN is set by the configuration")
     else:
-        new_env["CC_ANALYZER_BIN"] = (
-            f"clangsa:{clang};clang-tidy:{clang_tidy}"
-        )
+        new_env["CC_ANALYZER_BIN"] = f"clangsa:{clang};clang-tidy:{clang_tidy}"
     logging.debug("env: %s", str(new_env))
     return new_env
 
@@ -154,10 +153,7 @@ def parse(
     stage("CodeChecker parse:")
     env = build_env(env, log, clang, clang_tidy)
     logging.info("CodeChecker parse -e json")
-    codechecker_parse = (
-        f"{codechecker} parse --config "
-        f"{config} {input_dir}"
-    )
+    codechecker_parse = f"{codechecker} parse --config " f"{config} {input_dir}"
     # Save results to JSON file
     command = (
         f"{codechecker_parse} --export=json > " f"{output_dir}/result.json"
@@ -188,21 +184,22 @@ def check_results(output_dir, log, severities):
     """
     stage("Checking result:")
     # Get results file and read it
-    result_file = output_dir + "/result.txt"
     logging.info("Find CodeChecker results in bazel-bin")
     logging.info("      all artifacts: %s/", output_dir)
     logging.info("      HTML report:   %s/report/index.html", output_dir)
-    logging.info("      result file:   %s", result_file)
-    results = read_file(log, result_file)
-    logging.info("Results: \n\n%s\n", results)
+    logging.info("      result file:   %s/result.txt", output_dir)
+    report_data = json.loads(read_file(log, output_dir + "/result.json"))
+    logging.info(
+        "Results: \n\n%s\n", read_file(log, output_dir + "/result.txt")
+    )
+    reports = report_data.get("reports", [])
     # Collect defect severities to detect
     if severities is None:
         fail(
             log,
-            "CodeChecker defect severities are invalid: "
-            f"{str(severities)}",
+            "CodeChecker defect severities are invalid: " f"{str(severities)}",
         )
-    severities = shlex.split(severities) # pyright: ignore[reportArgumentType]
+    severities = shlex.split(severities)  # pyright: ignore[reportArgumentType]
     # Add HIGH severity by default
     if not severities:
         severities.append("HIGH")
@@ -212,12 +209,16 @@ def check_results(output_dir, log, severities):
     logging.debug("Severities: %s", str(severities))
     issues = dict.fromkeys(severities, 0)
     logging.debug("Issues: %s", str(issues))
-    # Grep results for defects according to severities
-    for issue in issues:
-        found = re.findall(rf"^{issue} .* (\d+)", results, re.M)
-        defects = sum(int(number) for number in found)
-        logging.debug("   %s : %s = %d", issue, str(found), defects)
-        issues[issue] = defects
+    for report in reports:
+        severity = report.get("severity")
+        if severity in issues:
+            issues[severity] += 1
+            checker = report.get("checker_name", "unknown")
+            location = report.get("file", {}).get("path", "unknown")
+            line = report.get("line", "?")
+            logging.debug(
+                "   %s : %s = %d:%d", severity, checker, location, line
+            )
     logging.info("Defects: %s", str(issues))
     # Check collected defects
     passed = True

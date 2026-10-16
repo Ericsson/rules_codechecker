@@ -427,14 +427,29 @@ compile_info_aspect = aspect(
 def _clang_test(ctx, tool):
     all_files = []
     all_headers_list = []
+
+    # A source file can be reached through several of the analyzed targets.
+    # When the arguments are identical the analysis is the same, so it is run once.
+    # When they differ (e.g. the targets use different copts) each variant is kept,
+    # with a distinct label so the report file names do not collide.
+    seen = {}
     for target in ctx.attr.targets:
         if CompileInfo in target:
             if hasattr(target[CompileInfo], "arguments"):
                 srcs = target[CompileInfo].arguments.keys()
                 headers = target[CompileInfo].headers
-                all_files += srcs
                 for src in srcs:
                     arguments = target[CompileInfo].arguments[src]
+                    variants = seen.setdefault(src, [])
+                    if arguments in variants:
+                        # Same source, same arguments: already analyzed.
+                        continue
+                    label = ctx.attr.name
+                    if variants:
+                        # Same source, different arguments:
+                        # change report file name of this additional variant.
+                        label = "%s.%d" % (ctx.attr.name, len(variants))
+                    variants.append(arguments)
                     report = tool(
                         ctx,
                         ctx.attr.executable,
@@ -443,7 +458,7 @@ def _clang_test(ctx, tool):
                         headers,
                         src,
                         arguments,
-                        ctx.attr.name,
+                        label,
                     )
                     all_files.append(report)
                     all_headers_list.extend(headers.to_list())

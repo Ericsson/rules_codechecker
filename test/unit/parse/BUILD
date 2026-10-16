@@ -113,7 +113,13 @@ py_test(
     data = [":report_files"],
     local = True,
     main = "store_check.py",
-    tags = ["unit"],
+    tags = [
+        # The store test runs a CodeChecker server alongside the store client.
+        # Running it alongside other tests often make this test fail
+        # due to the codechecker server timing out.
+        "cpu:2",
+        "unit",
+    ],
     deps = [":helpers"],
 )
 
@@ -153,6 +159,12 @@ py_test(
     data = [":per_file_report_files"],
     local = True,
     main = "store_check.py",
-    tags = ["unit"],
+    tags = [
+        # The store test runs a CodeChecker server alongside the store client.
+        # Running it alongside other tests often make this test fail
+        # due to the codechecker server timing out.
+        "cpu:2",
+        "unit",
+    ],
     deps = [":helpers"],
 )

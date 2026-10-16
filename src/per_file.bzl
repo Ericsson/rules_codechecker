@@ -207,6 +207,7 @@ def _per_file_impl(ctx):
         info = ctx.attr.toolchain[platform_common.ToolchainInfo].codecheckerinfo
     else:
         info = ctx.toolchains["//:toolchain_type"].codecheckerinfo
+
     for target in ctx.attr.targets:
         if not CcInfo in target:
             continue
@@ -235,6 +236,47 @@ def _per_file_impl(ctx):
                         sources_and_headers,
                     )
                     all_files += outputs
+
+    # Parse action: collect all plists into a directory and run
+    # CodeChecker parse to produce result.txt, result.json, HTML report
+    html_parse_dir = ctx.actions.declare_directory(
+        ctx.label.name + "/report",
+    )
+    json_parse = ctx.outputs.result_json
+    txt_parse = ctx.outputs.result_txt
+    codechecker_parse_log = ctx.outputs.codechecker_parse_log
+
+    ctx.actions.run(
+        inputs = all_files + [config_file],
+        outputs = [html_parse_dir, codechecker_parse_log, json_parse, txt_parse],
+        executable = per_file_script,
+        tools = [
+            info.runfiles,
+            ctx.attr._per_file_script[DefaultInfo].files_to_run,
+        ],
+        arguments = [
+            "--mode",
+            "Parse",
+            "--codechecker",
+            info.codechecker.path,
+            "--data_dir",
+            html_parse_dir.path + "/..",
+            "--log",
+            codechecker_parse_log.path,
+            "--config",
+            config_file.path,
+            "--clang",
+            info.clangsa.path,
+            "--clang_tidy",
+            info.clang_tidy.path,
+        ],
+        mnemonic = "CodeCheckerParse",
+        use_default_shell_env = True,
+        progress_message = "CodeChecker parse %s" % str(ctx.label),
+    )
+
+    all_files += [html_parse_dir, codechecker_parse_log, json_parse, txt_parse]
+
     ctx.actions.write(
         output = ctx.outputs.test_script,
         is_executable = True,
@@ -309,7 +351,10 @@ per_file_test = rule(
         ),
     } | version_specific_attributes(),
     outputs = {
+        "codechecker_parse_log": "%{name}/codechecker_parse.txt",
         "compile_commands": "%{name}/compile_commands.json",
+        "result_json": "%{name}/result.json",
+        "result_txt": "%{name}/result.txt",
         "test_script": "%{name}/test_script.sh",
     },
     test = True,

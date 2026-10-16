@@ -324,31 +324,27 @@ sh_test(
     data = [":compile_commands_pass"],
 )
 
-# TODO: per_file should produce the same codechecker.log
 # Verify that :code_checker_fail with per_file detects expected findings
 sh_test(
     name = "test_code_checker_findings",
     srcs = ["check.sh"],
     args = [
-        "$(location :code_checker_fail/codechecker.log)",
+        "$(location :code_checker_fail/codechecker_parse.txt)",
         "clang-diagnostic-unused-variable\\\\s+\\\\|\\\\s+MEDIUM\\\\s+\\\\|\\\\s+1",
         "core.NullDereference\\\\s+\\\\|\\\\s+HIGH\\\\s+\\\\|\\\\s+1",
         "deadcode.DeadStores\\\\s+\\\\|\\\\s+LOW\\\\s+\\\\|\\\\s+1",
         "lib.cc\\\\s+\\\\|\\\\s+3",
     ],
-    data = [":code_checker_fail/codechecker.log"],
-    tags = ["manual"],  # FIXME: remove "manual" to enable this test when ready
+    data = [":code_checker_fail/codechecker_parse.txt"],
 )
 
-# TODO: per_file should produce the same codechecker.log
 # Verify that :code_checker_ctu with per_file contain expected entries
 sh_test(
     name = "test_code_checker_ctu",
     srcs = ["check.sh"],
     args = [
-        "$(location :code_checker_ctu/codechecker.log)",
+        "$(location :code_checker_ctu/codechecker_parse.txt)",
         "// CTU example",
     ],
-    data = [":code_checker_ctu/codechecker.log"],
-    tags = ["manual"],  # FIXME: remove "manual" to enable this test when ready
+    data = [":code_checker_ctu/codechecker_parse.txt"],
 )

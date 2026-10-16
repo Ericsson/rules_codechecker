@@ -17,12 +17,14 @@ Codechecker wrapper script for per-file analysis
 """
 
 import argparse
-from dataclasses import dataclass
 import os
 import re
 import shutil
 import subprocess
-from common import fail, setup_logging, build_env
+from dataclasses import dataclass
+from common import (
+    fail, parse, setup_logging, build_env
+)
 
 
 @dataclass
@@ -52,30 +54,30 @@ def parse_args(argv=None):
     )
     parser.add_argument("--mode", required=True, help="Execution mode")
     parser.add_argument(
-        "--codechecker", required=True, help="Path to CodeChecker binary"
+        "--codechecker", required=False, help="Path to CodeChecker binary"
     )
     parser.add_argument("--verbosity", default="INFO", help="Log level")
     parser.add_argument(
-        "--commands", required=True, help="Path to compile_commands.json"
+        "--commands", required=False, help="Path to compile_commands.json"
     )
     parser.add_argument(
         "--analyze", default="", help="CodeChecker analyze arguments"
     )
-    parser.add_argument("--config", required=True, help="Path to config file")
+    parser.add_argument("--config", required=False, help="Path to config file")
     parser.add_argument(
         "--data_dir", required=True, help="Output directory for CodeChecker"
     )
     parser.add_argument(
-        "--file", required=True, help="Path to the file to be analyzed"
+        "--file", required=False, help="Path to the file to be analyzed"
     )
-    parser.add_argument("--log", required=True, help="Path to the log file")
-    parser.add_argument("--skip", required=True, help="Path to the skip file")
+    parser.add_argument("--log", required=False, help="Path to the log file")
+    parser.add_argument("--skip", required=False, help="Path to the skip file")
     parser.add_argument(
-        "--metadata", required=True, help="Path to the metadata file"
+        "--metadata", required=False, help="Path to the metadata file"
     )
     parser.add_argument(
         "--analyzer_plists",
-        required=True,
+        required=False,
         help="Semicolon-separated list of analyzer,plist_path pairs",
     )
     parser.add_argument(
@@ -89,13 +91,15 @@ def parse_args(argv=None):
 
     args = parser.parse_args(argv)
 
-    analyzer_plist_paths = [
-        item.split(",") for item in args.analyzer_plists.split(";")
-    ]
+    analyzer_plist_paths = []
+    if args.analyzer_plists:
+        analyzer_plist_paths = [
+            item.split(",") for item in args.analyzer_plists.split(";")
+        ]
 
     return Config(
         execution_mode=args.mode,
-        codechecker_bin=os.path.realpath(args.codechecker),
+        codechecker_bin=os.path.realpath(args.codechecker or "/"),
         compile_commands=args.commands,
         codechecker_args=args.analyze,
         config_file=args.config,
@@ -288,6 +292,18 @@ def main():
         _create_compile_commands_json_with_absolute_paths(cfg)
         _run_codechecker(cfg)
         _move_output_files(cfg)
+    elif cfg.execution_mode == "Parse":
+        with open(cfg.log_file, "a", encoding="utf-8"):
+            pass
+        parse(
+            input_dir=cfg.data_dir,
+            codechecker=cfg.codechecker_bin,
+            config=cfg.config_file,
+            env="",
+            log=cfg.log_file,
+            clang=cfg.clang,
+            clang_tidy=cfg.clang_tidy,
+        )
     else:
         fail(
             cfg.log_file,

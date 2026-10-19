@@ -281,14 +281,11 @@ def _per_file_impl(ctx):
         output = launcher,
         content = """#!/bin/bash
             exec {tool} --mode=Test \
-            --data_dir '{codechecker_files}' --severities '{severities}' \
-            --clang '{clang}' --clang_tidy '{clang_tidy}'
+            --data_dir '{codechecker_files}' --severities '{severities}'
             """.format(
             tool = per_file_script.executable.short_path,
             codechecker_files = html_parse_dir.short_path + "/..",
             severities = " ".join(ctx.attr.severities),
-            clang = info.clangsa.short_path,
-            clang_tidy = info.clang_tidy.short_path,
         ),
         is_executable = True,
     )

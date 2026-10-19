@@ -86,10 +86,12 @@ def parse_args(argv=None):
     )
     parser.add_argument(
         "--clang",
+        required=False,
         help="Path for clang executable",
     )
     parser.add_argument(
         "--clang_tidy",
+        required=False,
         help="Path for clang-tidy executable",
     )
 
@@ -115,8 +117,8 @@ def parse_args(argv=None):
         metadata_file=args.metadata,
         analyzer_plist_paths=analyzer_plist_paths,
         verbosity=args.verbosity,
-        clang=os.path.realpath(args.clang),
-        clang_tidy=os.path.realpath(args.clang_tidy),
+        clang=os.path.realpath(args.clang or "/"),
+        clang_tidy=os.path.realpath(args.clang_tidy or "/"),
     )
 
 

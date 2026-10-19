@@ -271,7 +271,6 @@ def _per_file_impl(ctx):
             info.clang_tidy.path,
         ],
         mnemonic = "CodeCheckerParse",
-        use_default_shell_env = True,
         progress_message = "CodeChecker parse %s" % str(ctx.label),
     )
 

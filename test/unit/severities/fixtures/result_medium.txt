@@ -1,0 +1,39 @@
+[INFO 2026-10-19 11:38] - Using '/usr/lib/llvm-18/bin/clang' for analyzer 'clangsa'
+[INFO 2026-10-19 11:38] - Using '/usr/lib/llvm-18/bin/clang-tidy' for analyzer 'clang-tidy'
+[MEDIUM] test/unit/severities/medium.cc:20:9: unused variable 'unused' [clang-diagnostic-unused-variable]
+    int unused = 42;
+        ^
+
+Found 1 defect(s) in medium.cc
+
+
+----==== Severity Statistics ====----
+----------------------------
+Severity | Number of reports
+----------------------------
+MEDIUM   |                 1
+----------------------------
+----=================----
+
+----==== Checker Statistics ====----
+---------------------------------------------------------------
+Checker name                     | Severity | Number of reports
+---------------------------------------------------------------
+clang-diagnostic-unused-variable | MEDIUM   |                 1
+---------------------------------------------------------------
+----=================----
+
+----==== File Statistics ====----
+-----------------------------
+File name | Number of reports
+-----------------------------
+medium.cc |                 1
+-----------------------------
+----=================----
+
+----======== Summary ========----
+---------------------------------------------
+Number of processed analyzer result files | 2
+Number of analyzer reports                | 1
+---------------------------------------------
+----=================----

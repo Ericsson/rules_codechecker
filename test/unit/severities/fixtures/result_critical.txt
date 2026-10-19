@@ -1,0 +1,39 @@
+[INFO 2026-10-19 13:28] - Using '/usr/lib/llvm-18/bin/clang' for analyzer 'clangsa'
+[INFO 2026-10-19 13:28] - Using '/usr/lib/llvm-18/bin/clang-tidy' for analyzer 'clang-tidy'
+[CRITICAL] test/unit/severities/critical.cc:20:12: cannot initialize return object of type 'int *' with an lvalue of type 'int' [clang-diagnostic-error]
+    return local;  // error: cannot initialize return object of type 'int *'
+           ^
+
+Found 1 defect(s) in critical.cc
+
+
+----==== Severity Statistics ====----
+----------------------------
+Severity | Number of reports
+----------------------------
+CRITICAL |                 1
+----------------------------
+----=================----
+
+----==== Checker Statistics ====----
+-----------------------------------------------------
+Checker name           | Severity | Number of reports
+-----------------------------------------------------
+clang-diagnostic-error | CRITICAL |                 1
+-----------------------------------------------------
+----=================----
+
+----==== File Statistics ====----
+-------------------------------
+File name   | Number of reports
+-------------------------------
+critical.cc |                 1
+-------------------------------
+----=================----
+
+----======== Summary ========----
+---------------------------------------------
+Number of processed analyzer result files | 2
+Number of analyzer reports                | 1
+---------------------------------------------
+----=================----

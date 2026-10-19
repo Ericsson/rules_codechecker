@@ -74,14 +74,14 @@ codechecker_test(
 unit_test(
     name = "codechecker_json_test",
     data = [":codechecker_json_ctu"],
+    # TODO: Change to 'contains'
     excludes = ["core.DivideZero"],
-    files = "test/unit/ctu_config/codechecker_json_ctu/**/*.plist",
+    files = "test/unit/ctu_config/codechecker_json_ctu/codechecker_parse.txt",
 )
 
 unit_test(
     name = "codechecker_bzl_test",
     contains = ["core.DivideZero"],
     data = [":codechecker_bzl"],
-    files = "test/unit/ctu_config/codechecker_bzl/**/*.plist",
-    require_patterns_in_each_file = False,
+    files = "test/unit/ctu_config/codechecker_bzl/codechecker_parse.txt",
 )

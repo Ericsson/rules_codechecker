@@ -16,14 +16,15 @@
 Macro for testing common.check_results() severity filtering.
 
 Each severities_test() generates a local py_test that runs
-common.check_results() on a real CodeChecker result.txt and asserts
-whether the given severities (or checker names) make the analysis pass or
-fail.
+common.check_results() on a result.txt produced by a codechecker_test
+"producer" (see producers/BUILD) and asserts whether the given severities (or
+checker names) make the analysis pass or fail. Using a producer means the test
+always runs against freshly generated analyzer output.
 
 Example:
     severities_test(
-        name = "high_defect_fails",
-        file = "result_single_high.txt",
+        name = "high_severity_fails_on_high_defect",
+        producer = "producers:high",
         severities = ["HIGH"],
         expect = "fail",
     )
@@ -33,17 +34,19 @@ load("@rules_python//python:py_test.bzl", "py_test")
 
 def severities_test(
         name,
-        file,
+        producer,
         expect,
         severities = None,
         tags = [],
         size = "small",
         **kwargs):
-    """Generate a py_test driving common.check_results() on one fixture.
+    """Generate a py_test driving common.check_results() on a producer's output.
 
     Args:
         name: Test name.
-        file: result.txt fixture (a data dependency of the test).
+        producer: Label of a per_file codechecker_test whose generated
+                  result.txt is checked. Its "<producer>/result.txt" output is
+                  read by the test.
         expect: Expected outcome, either "pass" (no defects of the requested
                 severities) or "fail" (defects found).
         severities: List of severities and/or checker (bug) names to fail on,
@@ -61,8 +64,15 @@ def severities_test(
         fail("severities_test severities must be a list or None, got: " +
              str(severities))
 
+    # The producer label may be written relative to this package,
+    # e.g. "producers:high", but we need an absolute label.
+    if producer.startswith("//") or producer.startswith("@"):
+        result_txt = "%s/result.txt" % producer
+    else:
+        result_txt = "//%s/%s/result.txt" % (native.package_name(), producer)
+
     args = [
-        "--file=$(location {})".format(file),
+        "--file=$(location {})".format(result_txt),
         "--expect={}".format(expect),
     ]
 
@@ -75,7 +85,7 @@ def severities_test(
         srcs = ["severities_check.py"],
         main = "severities_check.py",
         args = args,
-        data = [file],
+        data = [result_txt],
         local = True,
         tags = ["unit"] + tags,
         size = size,

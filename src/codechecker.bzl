@@ -81,7 +81,6 @@ def _codechecker_impl(ctx):
         ],
         mnemonic = "CodeCheckerFilter",
         progress_message = "Filtering %s" % str(ctx.label),
-        # use_default_shell_env = True,
     )
 
     # Create CodeChecker skip (ignore) file
@@ -130,7 +129,6 @@ def _codechecker_impl(ctx):
         arguments = [arguments],
         mnemonic = "CodeChecker",
         progress_message = "CodeChecker %s" % str(ctx.label),
-        # use_default_shell_env = True,
     )
 
     # List all files required at build step

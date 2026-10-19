@@ -48,8 +48,30 @@ codechecker_config(
     config_file = "json_config_ctu_file",
 )
 
+#Monolithic
 codechecker_test(
-    name = "codechecker_json_ctu",
+    name = "codechecker_ctu_json",
+    config = "json_config_ctu",
+    tags = ["manual"],
+    targets = [
+        "test_div_zero",
+    ],
+)
+
+codechecker_test(
+    name = "codechecker_ctu_analyze",
+    analyze = [
+        "--ctu",
+    ],
+    tags = ["manual"],
+    targets = [
+        "test_div_zero",
+    ],
+)
+
+#Per_file
+codechecker_test(
+    name = "per_file_codechecker_ctu_json",
     config = "json_config_ctu",
     per_file = True,
     tags = ["manual"],
@@ -59,7 +81,7 @@ codechecker_test(
 )
 
 codechecker_test(
-    name = "codechecker_bzl",
+    name = "per_file_codechecker_ctu_analyze",
     analyze = [
         "--ctu",
     ],
@@ -70,18 +92,34 @@ codechecker_test(
     ],
 )
 
-#The --ctu coming from the json, should also find the div_zero error, this test passing means it is not working properly
+#Monolithic
 unit_test(
-    name = "codechecker_json_test",
-    data = [":codechecker_json_ctu"],
-    # TODO: Change to 'contains'
-    excludes = ["core.DivideZero"],
-    files = "test/unit/ctu/codechecker_json_ctu/codechecker_parse.txt",
+    name = "test_codechecker_ctu_json",
+    contains = ["core.DivideZero"],
+    data = [":codechecker_ctu_json"],
+    files = "test/unit/ctu/codechecker_ctu_json/codechecker.log",
 )
 
 unit_test(
-    name = "codechecker_bzl_test",
+    name = "test_codechecker_ctu_analyze",
     contains = ["core.DivideZero"],
-    data = [":codechecker_bzl"],
-    files = "test/unit/ctu/codechecker_bzl/codechecker_parse.txt",
+    data = [":codechecker_ctu_analyze"],
+    files = "test/unit/ctu/codechecker_ctu_analyze/codechecker.log",
+)
+
+#Per_file
+#The --ctu coming from the json, should also find the div_zero error, this test passing means it is not working properly
+unit_test(
+    name = "test_per_file_ctu_json",
+    data = [":per_file_codechecker_ctu_json"],
+    # TODO: Change to 'contains'
+    excludes = ["core.DivideZero"],
+    files = "test/unit/ctu/per_file_codechecker_ctu_json/codechecker_parse.txt",
+)
+
+unit_test(
+    name = "test_per_file_ctu_analyze",
+    contains = ["core.DivideZero"],
+    data = [":per_file_codechecker_ctu_analyze"],
+    files = "test/unit/ctu/per_file_codechecker_ctu_analyze/codechecker_parse.txt",
 )

@@ -297,12 +297,13 @@ def _toolchain_flags(ctx, action_name = ACTION_NAMES.cpp_compile):
         flags = flags + ["--driver-mode=" + compiler]
     return flags
 
-def _compile_args(compilation_context):
+def _compile_args(compilation_context, local_defines = True):
     compile_args = []
     for define in compilation_context.defines.to_list():
         compile_args.append("-D" + define)
-    for define in compilation_context.local_defines.to_list():
-        compile_args.append("-D" + define)
+    if local_defines:
+        for define in compilation_context.local_defines.to_list():
+            compile_args.append("-D" + define)
     for include in compilation_context.framework_includes.to_list():
         compile_args.append("-F" + include)
     for include in compilation_context.includes.to_list():
@@ -312,6 +313,26 @@ def _compile_args(compilation_context):
     for include in compilation_context.system_includes.to_list():
         compile_args.append("-isystem " + include)
     return compile_args
+
+def _implementation_deps_contexts(ctx):
+    """
+    Returns the compilation contexts of the private dependencies.
+
+    Unlike deps, implementation_deps of a cc_library are private and do not
+    propagate into the CcInfo of the target, although the sources of the target
+    are compiled with them. Their contexts are therefore collected separately.
+    Args:
+        ctx: The context of the aspect.
+    Returns:
+        List of compilation contexts.
+    """
+    if not hasattr(ctx.rule.attr, "implementation_deps"):
+        return []
+    return [
+        dep[CcInfo].compilation_context
+        for dep in ctx.rule.attr.implementation_deps
+        if CcInfo in dep
+    ]
 
 def _safe_flags(flags):
     # Some flags might be used by GCC, but not understood by Clang.
@@ -401,6 +422,14 @@ def _compile_info_aspect_impl(target, ctx):
         # them here would analyze a transitive source with the wrong flags.
         srcs = _rule_sources(ctx)
         compile_args = _compile_args(compilation_context)
+
+        # The private dependencies are not in the CcInfo of the target,
+        # their include paths and headers would be missing from the analysis
+        for private_context in _implementation_deps_contexts(ctx):
+            headers += private_context.headers.to_list()
+            for arg in _compile_args(private_context, local_defines = False):
+                if arg not in compile_args:
+                    compile_args.append(arg)
         for src in srcs:
             flags = c_flags if src.extension in ["c", "C"] else cxx_flags
             arguments[src] = compile_args + flags

@@ -274,7 +274,7 @@ _codechecker_test = rule(
         ),
         "severities": attr.string_list(
             default = ["HIGH"],
-            doc = "List of defect severities: HIGH, MEDIUM, LOW, STYLE etc",
+            doc = "List of defect severities or checker names: HIGH, MEDIUM, LOW, STYLE etc",
         ),
         "skip": attr.string_list(
             default = [],

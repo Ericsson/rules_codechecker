@@ -179,7 +179,8 @@ def check_results(output_dir, log, severities):
     Args:
         output_dir (str): Path to the output directory
         log (str): Path to the log file
-        severities (str): Comma separated list of defect severities to fail on
+        severities (str): Comma separated list of defect severities 
+                          or checker names to fail on.
     """
     stage("Checking result:")
     # Get results file and read it
@@ -210,13 +211,17 @@ def check_results(output_dir, log, severities):
     logging.debug("Issues: %s", str(issues))
     for report in reports:
         severity = report.get("severity")
-        if severity in issues:
-            issues[severity] += 1
-            checker = report.get("checker_name", "unknown")
-            location = report.get("file", {}).get("path", "unknown")
-            line = report.get("line", "?")
+        checker_name = report.get("checker_name", "unknown")
+        if severity in issues or checker_name in issues:
+            # We need to increment the key that was actually found.
+            matched_key = severity if severity in issues else checker_name
+            issues[matched_key] += 1
             logging.debug(
-                "   %s : %s = %d:%d", severity, checker, location, line
+                "   %s : %s = %d:%d",
+                severity,
+                checker_name,
+                report.get("file", {}).get("path", "unknown"),
+                report.get("line", "?"),
             )
     logging.info("Defects: %s", str(issues))
     # Check collected defects

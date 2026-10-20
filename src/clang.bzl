@@ -383,13 +383,6 @@ def _process_all_deps(ctx, arguments, headers):
     #                 if hasattr(dep[CompileInfo], "headers"):
     #                     headers += dep[CompileInfo].headers.to_list()
 
-def _get_sources(ctx):
-    sources = _rule_sources(ctx)
-    arguments = {src: [] for src in sources}
-    headers = []
-    _process_all_deps(ctx, arguments, headers)
-    return arguments.keys()
-
 def _compile_info_aspect_impl(target, ctx):
     arguments = {}
     headers = []
@@ -401,7 +394,12 @@ def _compile_info_aspect_impl(target, ctx):
         rule_flags = ctx.rule.attr.copts if hasattr(ctx.rule.attr, "copts") else []
         c_flags = _safe_flags(_toolchain_flags(ctx, ACTION_NAMES.c_compile) + rule_flags)  # + ["-xc"]
         cxx_flags = _safe_flags(_toolchain_flags(ctx, ACTION_NAMES.cpp_compile) + rule_flags)  # + ["-xc++"]
-        srcs = _get_sources(ctx)
+
+        # Only this target's own sources get this target's arguments. The
+        # sources of the dependencies are already in arguments, merged by
+        # _process_all_deps with the arguments of their own target; overwriting
+        # them here would analyze a transitive source with the wrong flags.
+        srcs = _rule_sources(ctx)
         compile_args = _compile_args(compilation_context)
         for src in srcs:
             flags = c_flags if src.extension in ["c", "C"] else cxx_flags

@@ -29,13 +29,11 @@ load(
 cc_library(
     name = "cpp_lib",
     srcs = ["clean.cc"],
-    tags = ["manual"],
 )
 
 cc_library(
     name = "c_lib",
     srcs = ["clean.c"],
-    tags = ["manual"],
 )
 
 # A header in srcs must not get its own analysis action
@@ -45,7 +43,6 @@ cc_library(
         "clean.cc",
         "clean.h",
     ],
-    tags = ["manual"],
 )
 
 clang_tidy_test(

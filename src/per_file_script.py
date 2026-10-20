@@ -46,6 +46,7 @@ class Config:  # pylint: disable=too-many-instance-attributes
     verbosity: str
     clang: str
     clang_tidy: str
+    env: list
 
 
 def parse_args(argv=None):
@@ -94,6 +95,10 @@ def parse_args(argv=None):
         required=False,
         help="Path for clang-tidy executable",
     )
+    parser.add_argument(
+        "--env", action="append", default=[],
+        help="Environment variable, as KEY=VALUE",
+    )
 
     args = parser.parse_args(argv)
 
@@ -119,6 +124,7 @@ def parse_args(argv=None):
         verbosity=args.verbosity,
         clang=os.path.realpath(args.clang or "/"),
         clang_tidy=os.path.realpath(args.clang_tidy or "/"),
+        env=args.env,
     )
 
 
@@ -188,7 +194,7 @@ def _run_codechecker(cfg: Config) -> None:
         + [absolute_path]
     )
 
-    cc_env = build_env("", cfg.log_file, cfg.clang, cfg.clang_tidy)
+    cc_env = build_env(cfg.env, cfg.log_file, cfg.clang, cfg.clang_tidy)
     env_prefix = " ".join(f"{key}={cc_env[key]}" for key in sorted(cc_env))
     log(cfg, f"CodeChecker command: {env_prefix} {' '.join(codechecker_cmd)}\n")
     log(cfg, "===---------------------------------------------===\n")
@@ -199,7 +205,7 @@ def _run_codechecker(cfg: Config) -> None:
         ["echo", "$PATH"],
         shell=True,
         # Env vars are set in bazel
-        env=build_env("", cfg.log_file, cfg.clang, cfg.clang_tidy),
+        env=build_env(cfg.env, cfg.log_file, cfg.clang, cfg.clang_tidy),
         capture_output=True,
         text=True,
         check=False,
@@ -211,7 +217,7 @@ def _run_codechecker(cfg: Config) -> None:
             subprocess.run(
                 codechecker_cmd,
                 # Env vars are set in bazel
-                env=build_env("", cfg.log_file, cfg.clang, cfg.clang_tidy),
+                env=build_env(cfg.env, cfg.log_file, cfg.clang, cfg.clang_tidy),
                 stdout=log_file,
                 stderr=log_file,
                 check=True,

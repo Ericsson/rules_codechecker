@@ -1,0 +1,125 @@
+# Copyright 2023 Ericsson AB
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# codechecker rules
+load(
+    "@rules_cc//cc:defs.bzl",
+    "cc_library",
+)
+load(
+    "//:defs.bzl",
+    "codechecker_config",
+    "codechecker_test",
+)
+load(
+    "//test/unit:unit_test.bzl",
+    "unit_test",
+)
+
+# C++ library containing a division by zero error, spread across 2 source files
+cc_library(
+    name = "test_div_zero",
+    srcs = [
+        "testdata/div_zero.c",
+        "testdata/helper.c",
+    ],
+    hdrs = ["testdata/header.h"],
+)
+
+# This config file should make the analyzer run with --ctu
+filegroup(
+    name = "json_config_ctu_file",
+    srcs = [":config_ctu.json"],
+)
+
+codechecker_config(
+    name = "json_config_ctu",
+    config_file = "json_config_ctu_file",
+)
+
+#Monolithic
+codechecker_test(
+    name = "codechecker_ctu_json",
+    config = "json_config_ctu",
+    tags = ["manual"],
+    targets = [
+        "test_div_zero",
+    ],
+)
+
+codechecker_test(
+    name = "codechecker_ctu_analyze",
+    analyze = [
+        "--ctu",
+    ],
+    tags = ["manual"],
+    targets = [
+        "test_div_zero",
+    ],
+)
+
+#Per_file
+codechecker_test(
+    name = "per_file_codechecker_ctu_json",
+    config = "json_config_ctu",
+    per_file = True,
+    tags = ["manual"],
+    targets = [
+        "test_div_zero",
+    ],
+)
+
+codechecker_test(
+    name = "per_file_codechecker_ctu_analyze",
+    analyze = [
+        "--ctu",
+    ],
+    per_file = True,
+    tags = ["manual"],
+    targets = [
+        "test_div_zero",
+    ],
+)
+
+#Monolithic
+unit_test(
+    name = "test_codechecker_ctu_json",
+    contains = ["core.DivideZero"],
+    data = [":codechecker_ctu_json"],
+    files = "test/unit/ctu/codechecker_ctu_json/codechecker.log",
+)
+
+unit_test(
+    name = "test_codechecker_ctu_analyze",
+    contains = ["core.DivideZero"],
+    data = [":codechecker_ctu_analyze"],
+    files = "test/unit/ctu/codechecker_ctu_analyze/codechecker.log",
+)
+
+#Per_file
+#The --ctu coming from the json, should also find the div_zero error, this test passing means it is not working properly
+unit_test(
+    name = "test_per_file_ctu_json",
+    data = [":per_file_codechecker_ctu_json"],
+    # TODO: Change to 'contains'
+    excludes = ["core.DivideZero"],
+    files = "test/unit/ctu/per_file_codechecker_ctu_json/codechecker_parse.txt",
+)
+
+unit_test(
+    name = "test_per_file_ctu_analyze",
+    contains = ["core.DivideZero"],
+    data = [":per_file_codechecker_ctu_analyze"],
+    files = "test/unit/ctu/per_file_codechecker_ctu_analyze/codechecker_parse.txt",
+)

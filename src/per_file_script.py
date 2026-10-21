@@ -23,7 +23,7 @@ import shutil
 import subprocess
 from dataclasses import dataclass
 from common import (
-    fail, parse, setup_logging, build_env
+    check_results, fail, parse, setup_logging, build_env
 )
 
 
@@ -32,6 +32,7 @@ class Config:  # pylint: disable=too-many-instance-attributes
     """Configuration parsed from command-line arguments."""
 
     execution_mode: str
+    severities: str
     codechecker_bin: str
     compile_commands: str
     codechecker_args: str
@@ -70,6 +71,9 @@ def parse_args(argv=None):
     parser.add_argument(
         "--file", required=False, help="Path to the file to be analyzed"
     )
+    parser.add_argument(
+        "--severities", required=False, help="Severities to check"
+    )
     parser.add_argument("--log", required=False, help="Path to the log file")
     parser.add_argument("--skip", required=False, help="Path to the skip file")
     parser.add_argument(
@@ -82,10 +86,12 @@ def parse_args(argv=None):
     )
     parser.add_argument(
         "--clang",
+        required=False,
         help="Path for clang executable",
     )
     parser.add_argument(
         "--clang_tidy",
+        required=False,
         help="Path for clang-tidy executable",
     )
 
@@ -99,6 +105,7 @@ def parse_args(argv=None):
 
     return Config(
         execution_mode=args.mode,
+        severities=args.severities,
         codechecker_bin=os.path.realpath(args.codechecker or "/"),
         compile_commands=args.commands,
         codechecker_args=args.analyze,
@@ -110,8 +117,8 @@ def parse_args(argv=None):
         metadata_file=args.metadata,
         analyzer_plist_paths=analyzer_plist_paths,
         verbosity=args.verbosity,
-        clang=os.path.realpath(args.clang),
-        clang_tidy=os.path.realpath(args.clang_tidy),
+        clang=os.path.realpath(args.clang or "/"),
+        clang_tidy=os.path.realpath(args.clang_tidy or "/"),
     )
 
 
@@ -304,6 +311,8 @@ def main():
             clang=cfg.clang,
             clang_tidy=cfg.clang_tidy,
         )
+    elif cfg.execution_mode == "Test":
+        check_results(cfg.data_dir, cfg.log_file, cfg.severities)
     else:
         fail(
             cfg.log_file,

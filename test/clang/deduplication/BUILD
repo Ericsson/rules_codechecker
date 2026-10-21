@@ -23,14 +23,12 @@ cc_library(
     name = "variant_a",
     srcs = ["shared.cc"],
     copts = ["-DVARIANT_A=1"],
-    tags = ["manual"],
 )
 
 cc_library(
     name = "variant_b",
     srcs = ["shared.cc"],
     copts = ["-DVARIANT_B=1"],
-    tags = ["manual"],
 )
 
 clang_tidy_test(

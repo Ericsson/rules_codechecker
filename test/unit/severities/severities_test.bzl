@@ -67,12 +67,12 @@ def severities_test(
     # The producer label may be written relative to this package,
     # e.g. "producers:high", but we need an absolute label.
     if producer.startswith("//") or producer.startswith("@"):
-        result_txt = "%s/result.txt" % producer
+        result_json = "%s/result.json" % producer
     else:
-        result_txt = "//%s/%s/result.txt" % (native.package_name(), producer)
+        result_json = "//%s/%s/result.json" % (native.package_name(), producer)
 
     args = [
-        "--file=$(location {})".format(result_txt),
+        "--file=$(location {})".format(result_json),
         "--expect={}".format(expect),
     ]
 
@@ -85,7 +85,7 @@ def severities_test(
         srcs = ["severities_check.py"],
         main = "severities_check.py",
         args = args,
-        data = [result_txt],
+        data = [result_json],
         local = True,
         tags = ["unit"] + tags,
         size = size,

@@ -8,6 +8,7 @@ CodeCheckerInfo = provider(
         "clang_tidy": "clang-tidy executable",
         "clangsa": "Clang executable",
         "codechecker": "CodeChecker executable",
+        "dirname": "Dirname executable",
         "runfiles": "Depset of files needed to run the tools: the three executables " +
                     "plus their transitive data_runfiles. Pass to `tools` in " +
                     "ctx.actions.run and include in test runfiles.",
@@ -20,6 +21,7 @@ def _codechecker_toolchain_impl(ctx):
             ctx.executable.codechecker,
             ctx.executable.clangsa,
             ctx.executable.clang_tidy,
+            ctx.executable.dirname,
         ],
         transitive = [
             # We also collect files necessary for these programs to run.
@@ -28,6 +30,7 @@ def _codechecker_toolchain_impl(ctx):
             ctx.attr.codechecker[DefaultInfo].data_runfiles.files,
             ctx.attr.clangsa[DefaultInfo].data_runfiles.files,
             ctx.attr.clang_tidy[DefaultInfo].data_runfiles.files,
+            ctx.attr.dirname[DefaultInfo].data_runfiles.files,
         ],
     )
     toolchain_info = platform_common.ToolchainInfo(
@@ -35,6 +38,7 @@ def _codechecker_toolchain_impl(ctx):
             codechecker = ctx.executable.codechecker,
             clang_tidy = ctx.executable.clang_tidy,
             clangsa = ctx.executable.clangsa,
+            dirname = ctx.executable.dirname,
             runfiles = runfiles,
         ),
     )
@@ -58,6 +62,12 @@ codechecker_toolchain = rule(
         "codechecker": attr.label(
             default = "@default_codechecker_tools//:CodeChecker",
             doc = "Executable target for `CodeChecker`.",
+            executable = True,
+            cfg = "exec",
+        ),
+        "dirname": attr.label(
+            default = "@default_codechecker_tools//:dirname",
+            doc = "Executable target for dirname",
             executable = True,
             cfg = "exec",
         ),

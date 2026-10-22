@@ -67,9 +67,9 @@ def severities_test(
     # The producer label may be written relative to this package,
     # e.g. "producers:high", but we need an absolute label.
     if producer.startswith("//") or producer.startswith("@"):
-        result_txt = "%s/result.txt" % producer
+        result_txt = "%s/codechecker-files/result.txt" % producer
     else:
-        result_txt = "//%s/%s/result.txt" % (native.package_name(), producer)
+        result_txt = "//%s/%s/codechecker-files/result.txt" % (native.package_name(), producer)
 
     args = [
         "--file=$(location {})".format(result_txt),

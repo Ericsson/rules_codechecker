@@ -47,7 +47,7 @@ def _run_code_checker(
         compilation_context,
         sources_and_headers):
     # Define Plist and log file names
-    data_dir = ctx.attr.name + "/data"
+    data_dir = ctx.attr.name + "/codechecker-files/data"
     file_name_params = (data_dir, src.path.replace("/", "-"))
     clang_tidy_plist_file_name = "{}/{}_clang-tidy.plist".format(*file_name_params)
     clangsa_plist_file_name = "{}/{}_clangsa.plist".format(*file_name_params)
@@ -240,7 +240,7 @@ def _per_file_impl(ctx):
     # Parse action: collect all plists into a directory and run
     # CodeChecker parse to produce result.txt, result.json, HTML report
     html_parse_dir = ctx.actions.declare_directory(
-        ctx.label.name + "/report",
+        ctx.label.name + "/codechecker-files/report",
     )
     json_parse = ctx.outputs.result_json
     txt_parse = ctx.outputs.result_txt
@@ -361,10 +361,10 @@ per_file_test = rule(
         ),
     } | version_specific_attributes(),
     outputs = {
-        "codechecker_parse_log": "%{name}/codechecker_parse.txt",
+        "codechecker_parse_log": "%{name}/codechecker-files/codechecker_parse.txt",
         "compile_commands": "%{name}/compile_commands.json",
-        "result_json": "%{name}/result.json",
-        "result_txt": "%{name}/result.txt",
+        "result_json": "%{name}/codechecker-files/result.json",
+        "result_txt": "%{name}/codechecker-files/result.txt",
     },
     test = True,
     toolchains = ["//:toolchain_type"],

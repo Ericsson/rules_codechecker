@@ -114,12 +114,12 @@ unit_test(
     data = [":per_file_codechecker_ctu_json"],
     # TODO: Change to 'contains'
     excludes = ["core.DivideZero"],
-    files = "test/unit/ctu/per_file_codechecker_ctu_json/codechecker_parse.txt",
+    files = "test/unit/ctu/per_file_codechecker_ctu_json/codechecker-files/codechecker_parse.txt",
 )
 
 unit_test(
     name = "test_per_file_ctu_analyze",
     contains = ["core.DivideZero"],
     data = [":per_file_codechecker_ctu_analyze"],
-    files = "test/unit/ctu/per_file_codechecker_ctu_analyze/codechecker_parse.txt",
+    files = "test/unit/ctu/per_file_codechecker_ctu_analyze/codechecker-files/codechecker_parse.txt",
 )

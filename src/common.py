@@ -30,7 +30,7 @@ def setup_logging(verbosity, codechecker_log):
         logging.basicConfig(level=log_level, format=log_format)
 
 
-def build_env(env, log, clang, clang_tidy):
+def build_env(env, log, clang, clang_tidy, fallback_path="/bin"):
     """
     Return environment to run codechecker in.
 
@@ -39,6 +39,11 @@ def build_env(env, log, clang, clang_tidy):
         log (str): Path to the log file
         clang (str): Path to the clang executable
         clang_tidy (str): Path to the clang-tidy executable
+        fallback_path (str): PATH written into the environment when it has
+                             none. The analysis uses tools from outside of
+                             Bazel, so it cannot run without a PATH. Until the
+                             tools are hermetic this lets the rule take them
+                             from PATH as a temporary measure.
     """
     new_env = os.environ.copy()
     for entry in env:
@@ -46,9 +51,11 @@ def build_env(env, log, clang, clang_tidy):
             fail(log, f"Environment entry is not KEY=VALUE: {entry}")
         key, value = entry.split("=", 1)
         new_env[key] = value
-    # Note: This is a workaround, CodeChecker requires the PATH to be set
+    # CodeChecker and the analyzers still find their tools on PATH, so the
+    # analysis cannot run without one. Until the toolchain provides the tools
+    # hermetically we fall back to taking them from PATH.
     if "PATH" not in new_env:
-        new_env["PATH"] = "/bin"
+        new_env["PATH"] = fallback_path
     if new_env.get("CC_ANALYZERS_FROM_PATH"):
         logging.debug("CC_ANALYZERS_FROM_PATH is set: use analyzers from PATH")
     elif new_env.get("CC_ANALYZER_BIN"):
@@ -135,7 +142,8 @@ def stage(title, method="info"):
 
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def parse(
-    input_dir, codechecker, config, env, log, clang, clang_tidy
+    input_dir, codechecker, config, env, log, clang, clang_tidy,
+    fallback_path="/bin"
 ):
     """
     Run CodeChecker parse commands
@@ -148,9 +156,12 @@ def parse(
         log (str): Path to the log file
         clang (str): Path to the clang executable
         clang_tidy (str): Path to the clang-tidy executable
+        fallback_path (str): PATH written into the environment when it has
+                             none, so the parse step can still find its tools
+                             on PATH. Temporary until the tools are hermetic.
     """
     stage("CodeChecker parse:")
-    env = build_env(env, log, clang, clang_tidy)
+    env = build_env(env, log, clang, clang_tidy, fallback_path)
     logging.info("CodeChecker parse -e json")
     codechecker_parse = f"{codechecker} parse --config " f"{config} {input_dir}"
     # Save results to JSON file

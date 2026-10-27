@@ -60,6 +60,13 @@ def parse_args(argv=None):
     parser.add_argument("--env", action="append", default=[],
                         help="Environment variable, as KEY=VALUE")
     parser.add_argument("--severities", help="List of severities to fail on")
+    parser.add_argument(
+        "--fallback_path",
+        default="/bin",
+        help="PATH to fall back to when the environment has none, so the "
+             "analysis can still find its tools on PATH (temporary until "
+             "the tools are hermetic)",
+    )
     args = parser.parse_args(argv)
 
     # Tools are symlinks in the runfiles tree
@@ -100,7 +107,9 @@ def prepare(codechecker_files):
 def analyze(args):
     """Run CodeChecker analyze command"""
     stage("CodeChecker analyze:")
-    env = build_env(args.env, args.log, args.clang, args.clang_tidy)
+    env = build_env(
+        args.env, args.log, args.clang, args.clang_tidy, args.fallback_path
+    )
     output = execute(
         args.log,
         f"{args.codechecker} analyzers --details",
@@ -252,6 +261,7 @@ def run(args):
         log=args.log,
         clang=args.clang,
         clang_tidy=args.clang_tidy,
+        fallback_path=args.fallback_path,
     )
     update_file_paths(args.output)
 

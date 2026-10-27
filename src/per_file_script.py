@@ -47,6 +47,7 @@ class Config:  # pylint: disable=too-many-instance-attributes
     clang: str
     clang_tidy: str
     env: list
+    fallback_path: str
 
 
 def parse_args(argv=None):
@@ -99,6 +100,16 @@ def parse_args(argv=None):
         "--env", action="append", default=[],
         help="Environment variable, as KEY=VALUE",
     )
+    # This argument exists in the monolithic script too
+    # pylint: disable=duplicate-code
+    parser.add_argument(
+        "--fallback_path",
+        default="/bin",
+        help="PATH to fall back to when the environment has none, so the "
+             "analysis can still find its tools on PATH (temporary until "
+             "the tools are hermetic)",
+    )
+    # pylint: enable=duplicate-code
 
     args = parser.parse_args(argv)
 
@@ -125,6 +136,7 @@ def parse_args(argv=None):
         clang=os.path.realpath(args.clang or "/"),
         clang_tidy=os.path.realpath(args.clang_tidy or "/"),
         env=args.env,
+        fallback_path=args.fallback_path,
     )
 
 
@@ -194,7 +206,9 @@ def _run_codechecker(cfg: Config) -> None:
         + [absolute_path]
     )
 
-    cc_env = build_env(cfg.env, cfg.log_file, cfg.clang, cfg.clang_tidy)
+    cc_env = build_env(
+        cfg.env, cfg.log_file, cfg.clang, cfg.clang_tidy, cfg.fallback_path
+    )
     env_prefix = " ".join(f"{key}={cc_env[key]}" for key in sorted(cc_env))
     log(cfg, f"CodeChecker command: {env_prefix} {' '.join(codechecker_cmd)}\n")
     log(cfg, "===---------------------------------------------===\n")
@@ -205,7 +219,9 @@ def _run_codechecker(cfg: Config) -> None:
         ["echo", "$PATH"],
         shell=True,
         # Env vars are set in bazel
-        env=build_env(cfg.env, cfg.log_file, cfg.clang, cfg.clang_tidy),
+        env=build_env(
+            cfg.env, cfg.log_file, cfg.clang, cfg.clang_tidy, cfg.fallback_path
+        ),
         capture_output=True,
         text=True,
         check=False,
@@ -217,7 +233,13 @@ def _run_codechecker(cfg: Config) -> None:
             subprocess.run(
                 codechecker_cmd,
                 # Env vars are set in bazel
-                env=build_env(cfg.env, cfg.log_file, cfg.clang, cfg.clang_tidy),
+                env=build_env(
+                    cfg.env,
+                    cfg.log_file,
+                    cfg.clang,
+                    cfg.clang_tidy,
+                    cfg.fallback_path,
+                ),
                 stdout=log_file,
                 stderr=log_file,
                 check=True,
@@ -316,6 +338,7 @@ def main():
             log=cfg.log_file,
             clang=cfg.clang,
             clang_tidy=cfg.clang_tidy,
+            fallback_path=cfg.fallback_path,
         )
     elif cfg.execution_mode == "Test":
         check_results(cfg.data_dir, cfg.log_file, cfg.severities)

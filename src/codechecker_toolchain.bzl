@@ -8,6 +8,11 @@ CodeCheckerInfo = provider(
         "clang_tidy": "clang-tidy executable",
         "clangsa": "Clang executable",
         "codechecker": "CodeChecker executable",
+        "fallback_path": "PATH written into the environment when it has " +
+                         "none. The analysis uses tools from outside of " +
+                         "Bazel, so it cannot run without a PATH. Until the " +
+                         "tools are hermetic this lets the rule take them " +
+                         "from PATH as a temporary measure. ",
         "runfiles": "Depset of files needed to run the tools: the three executables " +
                     "plus their transitive data_runfiles. Pass to `tools` in " +
                     "ctx.actions.run and include in test runfiles.",
@@ -35,6 +40,7 @@ def _codechecker_toolchain_impl(ctx):
             codechecker = ctx.executable.codechecker,
             clang_tidy = ctx.executable.clang_tidy,
             clangsa = ctx.executable.clangsa,
+            fallback_path = ctx.attr.fallback_path,
             runfiles = runfiles,
         ),
     )
@@ -60,6 +66,14 @@ codechecker_toolchain = rule(
             doc = "Executable target for `CodeChecker`.",
             executable = True,
             cfg = "exec",
+        ),
+        "fallback_path": attr.string(
+            default = "/bin",
+            doc = "PATH written into the environment when it has " +
+                  "none. The analysis uses tools from outside of " +
+                  "Bazel, so it cannot run without a PATH. Until the " +
+                  "tools are hermetic this lets the rule take them " +
+                  "from PATH as a temporary measure. ",
         ),
     },
 )

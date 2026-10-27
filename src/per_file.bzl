@@ -95,14 +95,6 @@ def _run_code_checker(
     analyzer_output_paths = "clangsa," + clangsa_plist.path + \
                             ";clang-tidy," + clang_tidy_plist.path
 
-    # Convert the list of "NAME=value" strings into a dict.
-    # Entries without "=" are ignored.
-    env = {}
-    for entry in env_vars:
-        name, sep, value = entry.partition("=")
-        if sep:
-            env[name] = value
-
     # Action to run CodeChecker for a file
     ctx.actions.run(
         inputs = inputs,
@@ -139,9 +131,8 @@ def _run_code_checker(
             info.clangsa.path,
             "--clang_tidy",
             info.clang_tidy.path,
-        ],
+        ] + [arg for e in env_vars for arg in ("--env", e)],
         mnemonic = "CodeChecker",
-        env = env,
         progress_message = "CodeChecker analyze {}".format(src.short_path),
     )
     return outputs, codechecker_metadata
@@ -291,7 +282,7 @@ def _per_file_impl(ctx):
             info.clangsa.path,
             "--clang_tidy",
             info.clang_tidy.path,
-        ],
+        ] + [arg for e in env_vars for arg in ("--env", e)],
         mnemonic = "CodeCheckerParse",
         progress_message = "CodeChecker parse %s" % str(ctx.label),
     )

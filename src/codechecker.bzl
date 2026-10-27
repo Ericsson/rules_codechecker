@@ -111,6 +111,7 @@ def _codechecker_impl(ctx):
     arguments.add("--config=" + config_file.path)
     arguments.add("--output=" + codechecker_files.path)
     arguments.add("--log=" + ctx.outputs.codechecker_log.path)
+    arguments.add("--fallback_path=" + info.fallback_path)
     arguments.add_all(codechecker_env, format_each = "--env=%s")
     if ctx.attr.analyze:
         arguments.add("--analyze=" + " ".join(ctx.attr.analyze))

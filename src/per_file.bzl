@@ -103,6 +103,11 @@ def _run_code_checker(
         if sep:
             env[name] = value
 
+    py_toolchain = ctx.toolchains["@rules_python//python:toolchain_type"]
+    py_interpreter_dir = py_toolchain.py3_runtime.interpreter.dirname
+
+    env["PATH"] = (env.get("PATH", "") + ":" + py_interpreter_dir + ":" + info.dirname.dirname).lstrip(":")
+
     # Action to run CodeChecker for a file
     ctx.actions.run(
         inputs = inputs,
@@ -113,6 +118,7 @@ def _run_code_checker(
         tools = [
             info.runfiles,
             ctx.attr._per_file_script[DefaultInfo].files_to_run,
+            py_toolchain.py3_runtime.files,
         ],
         arguments = [
             "--mode=Run",
@@ -394,5 +400,8 @@ per_file_test = rule(
         "result_txt": "%{name}/codechecker-files/result.txt",
     },
     test = True,
-    toolchains = ["//:toolchain_type"],
+    toolchains = [
+        "//:toolchain_type",
+        "@rules_python//python:toolchain_type",
+    ],
 )

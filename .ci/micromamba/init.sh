@@ -231,6 +231,11 @@ function mm_main() {
     local this_dir env_name bazel_version codechecker_version force
     local env_file status
 
+    if [[ ! $this_file ]];then
+        echo "Script file could not be read from BASH_SOURCE, make sure to source the script from a bash shell!"
+        return 1
+    fi
+
     [[ "$this_file" == "$0" ]] && sourced=0
     this_dir="$( cd "$( dirname "$this_file" )" &> /dev/null && pwd )"
     mm_parse_args env_name bazel_version codechecker_version force \

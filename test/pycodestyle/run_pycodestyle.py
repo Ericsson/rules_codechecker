@@ -34,7 +34,9 @@ def main():
     root = os.path.dirname(os.path.realpath(workspace))
     print("Running Pycodestyle")
     print(f"Repository: {root}")
-    #TODO Either remove parse_argv and args in BUILD.bzl or the commented section
+    #TODO
+    #Either remove parse_argv and #args in BUILD.bzl
+    #or the commented section
     style = pycodestyle.StyleGuide(
             parse_argv=True
             #exclude=[

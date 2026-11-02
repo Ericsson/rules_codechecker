@@ -25,7 +25,7 @@ py_test(
     args = [
         "$(rootpath //:MODULE.bazel)",
         "--exclude '.svn','CVS','.bzr','.hg','.git','__pycache__','.tox','.ci'",
-        "--show-source"
+        "--show-source",
     ],
     data = [
         "//:MODULE.bazel",

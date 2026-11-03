@@ -20,14 +20,14 @@ exports_files(["requirements.txt"])
 # Pycodestyle comes from PyPI, see MODULE.bazel.
 py_test(
     name = "pycodestyle",
-    size = "medium",
+    size = "small",
     srcs = ["run_pycodestyle.py"],
     args = [
         "$(rootpath //:MODULE.bazel)",
-        "--exclude '.svn','CVS','.bzr','.hg','.git','__pycache__','.tox','.ci'",
-        "--show-source",
+        "--config $(location setup.cfg)",
     ],
     data = [
+        "setup.cfg",
         "//:MODULE.bazel",
     ],
     local = True,

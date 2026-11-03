@@ -32,10 +32,11 @@ def main():
         print(f"Workspace file is not in the runfiles: {workspace}")
         sys.exit(1)
     root = os.path.dirname(os.path.realpath(workspace))
+    print(sys.argv)
     print("Running Pycodestyle")
     print(f"Repository: {root}")
     style = pycodestyle.StyleGuide(
-            parse_argv=True
+            parse_argv=True,
             )
     style.input_dir(root)
 

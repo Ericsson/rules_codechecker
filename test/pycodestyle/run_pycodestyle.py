@@ -23,27 +23,19 @@ import pycodestyle
 
 
 def main():
-    """Run pycodestyle_test with the configuration of this package"""
+    """Run pycodestyle"""
     if len(sys.argv) < 2:
-        print("Usage: pycodestyle_test.py <workspace file> [pylint options]")
+        print("Usage: run_pycodestyle.py <workspace file> pycodestyle_args")
         sys.exit(1)
-    workspace= sys.argv[1]
+    workspace = sys.argv[1]
     if not os.path.exists(workspace):
         print(f"Workspace file is not in the runfiles: {workspace}")
         sys.exit(1)
     root = os.path.dirname(os.path.realpath(workspace))
     print("Running Pycodestyle")
     print(f"Repository: {root}")
-    #TODO
-    #Either remove parse_argv and #args in BUILD.bzl
-    #or the commented section
     style = pycodestyle.StyleGuide(
             parse_argv=True
-            #exclude=[
-            #         '.svn', 'CVS', '.bzr', '.hg',
-            #         '.git', '__pycache__', '.tox', '.ci'
-            #        ],
-            #show_source=True
             )
     style.input_dir(root)
 

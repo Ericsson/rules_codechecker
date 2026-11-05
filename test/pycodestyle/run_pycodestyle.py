@@ -35,9 +35,7 @@ def main():
     print(sys.argv)
     print("Running Pycodestyle")
     print(f"Repository: {root}")
-    style = pycodestyle.StyleGuide(
-            parse_argv=True,
-            )
+    style = pycodestyle.StyleGuide(parse_argv=True)
     style.input_dir(root)
 
 

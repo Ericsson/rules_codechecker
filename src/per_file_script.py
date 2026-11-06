@@ -192,6 +192,7 @@ def _run_codechecker(cfg: Config) -> None:
         + ["--skip", cfg.skip_file]
         + ["--config", cfg.config_file]
         + [absolute_path]
+        + ["-j 1"] # Analysis of a single file should use a single thread!
     )
 
     cc_env = build_env(cfg.env, cfg.log_file, cfg.clang, cfg.clang_tidy)

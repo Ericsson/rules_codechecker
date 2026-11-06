@@ -37,18 +37,6 @@ load(
     "per_file_test",
 )
 
-def _codechecker_resource_set(_os_name, input_count):
-    """
-    Requests thread count based on number of input files.
-
-    If requested thread count is higher than available
-    bazel schedules the job to run alone.
-    This may not work with remote machines.
-    """
-    return {
-        "cpu": input_count,  # analysis is run for most input files
-    }
-
 def get_platform_alias(platform):
     """
     Get platform alias for full platform names being used
@@ -141,7 +129,6 @@ def _codechecker_impl(ctx):
         arguments = [arguments],
         mnemonic = "CodeChecker",
         progress_message = "CodeChecker %s" % str(ctx.label),
-        resource_set = _codechecker_resource_set,
     )
 
     # List all files required at build step

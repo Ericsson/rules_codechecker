@@ -16,7 +16,7 @@
 Rulesets for running codechecker in a single Bazel job.
 """
 
-load("@default_codechecker_tools//:defs.bzl", "CODECHECKER_VERSION")
+load("@default_codechecker_tools//:defs.bzl", "CODECHECKER_FALLBACK_PATH", "CODECHECKER_VERSION")
 load(
     "codechecker_config.bzl",
     "codechecker_config_internal",
@@ -111,7 +111,7 @@ def _codechecker_impl(ctx):
     arguments.add("--config=" + config_file.path)
     arguments.add("--output=" + codechecker_files.path)
     arguments.add("--log=" + ctx.outputs.codechecker_log.path)
-    arguments.add("--fallback_path=" + info.fallback_path)
+    arguments.add("--fallback_path=" + CODECHECKER_FALLBACK_PATH)
     arguments.add_all(codechecker_env, format_each = "--env=%s")
     if ctx.attr.analyze:
         arguments.add("--analyze=" + " ".join(ctx.attr.analyze))

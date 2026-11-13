@@ -111,7 +111,10 @@ def parse_args(argv=None):
     return Config(
         execution_mode=args.mode,
         severities=args.severities,
-        codechecker_bin=os.path.realpath(args.codechecker or "/"),
+        # CodeChecker is a py_console_script_binary launcher that re-invokes
+        # itself and needs its adjacent "<launcher>.runfiles" tree, so keep its
+        # path intact (abspath, not realpath, which would detach the tree).
+        codechecker_bin=os.path.abspath(args.codechecker or "/"),
         compile_commands=args.commands,
         codechecker_args=args.analyze,
         config_file=args.config,
@@ -194,7 +197,8 @@ def _run_codechecker(cfg: Config) -> None:
         + [absolute_path]
     )
 
-    cc_env = build_env(cfg.env, cfg.log_file, cfg.clang, cfg.clang_tidy)
+    cc_env = build_env(cfg.env, cfg.log_file, cfg.clang, cfg.clang_tidy,
+                       cfg.codechecker_bin)
     env_prefix = " ".join(f"{key}={cc_env[key]}" for key in sorted(cc_env))
     log(cfg, f"CodeChecker command: {env_prefix} {' '.join(codechecker_cmd)}\n")
     log(cfg, "===---------------------------------------------===\n")
@@ -205,7 +209,8 @@ def _run_codechecker(cfg: Config) -> None:
         ["echo", "$PATH"],
         shell=True,
         # Env vars are set in bazel
-        env=build_env(cfg.env, cfg.log_file, cfg.clang, cfg.clang_tidy),
+        env=build_env(cfg.env, cfg.log_file, cfg.clang, cfg.clang_tidy,
+                      cfg.codechecker_bin),
         capture_output=True,
         text=True,
         check=False,
@@ -217,7 +222,8 @@ def _run_codechecker(cfg: Config) -> None:
             subprocess.run(
                 codechecker_cmd,
                 # Env vars are set in bazel
-                env=build_env(cfg.env, cfg.log_file, cfg.clang, cfg.clang_tidy),
+                env=build_env(cfg.env, cfg.log_file, cfg.clang,
+                              cfg.clang_tidy, cfg.codechecker_bin),
                 stdout=log_file,
                 stderr=log_file,
                 check=True,

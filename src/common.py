@@ -30,7 +30,41 @@ def setup_logging(verbosity, codechecker_log):
         logging.basicConfig(level=log_level, format=log_format)
 
 
-def build_env(env, log, clang, clang_tidy):
+def codechecker_bin_dir(codechecker):
+    """
+    Return the value for CC_BIN_DIR for a pip-provided CodeChecker.
+
+    A pip wheel keeps CodeChecker's data files (config, ld_logger, analyzer
+    configs ...) under ``share/codechecker`` next to a ``bin`` directory, and
+    CodeChecker finds them from ``CC_BIN_DIR`` (the parent of ``CC_BIN_DIR`` is
+    taken as the data files directory). Under Bazel the wheel data directory is
+    staged in the runfiles as ``<repo>/data/share/codechecker``; this returns
+    the matching ``.../data/share/codechecker/bin`` path so CodeChecker locates
+    its data files without relying on its own install-layout heuristics.
+
+    The executable is a py_console_script_binary launcher, so its runfiles tree
+    sits next to it as ``<codechecker>.runfiles``. If no wheel data directory is
+    found (e.g. a plain CodeChecker binary on PATH) None is returned and the
+    caller should leave CC_BIN_DIR untouched.
+
+    Args:
+        codechecker (str): Path to the CodeChecker executable.
+    Returns:
+        str or None: The CC_BIN_DIR value, or None when not applicable.
+    """
+    runfiles = codechecker + ".runfiles"
+    if not os.path.isdir(runfiles):
+        return None
+    for repo in os.listdir(runfiles):
+        data_dir = os.path.join(
+            runfiles, repo, "data", "share", "codechecker"
+        )
+        if os.path.isdir(os.path.join(data_dir, "config")):
+            return os.path.join(data_dir, "bin")
+    return None
+
+
+def build_env(env, log, clang, clang_tidy, codechecker=None):
     """
     Return environment to run codechecker in.
 
@@ -39,6 +73,8 @@ def build_env(env, log, clang, clang_tidy):
         log (str): Path to the log file
         clang (str): Path to the clang executable
         clang_tidy (str): Path to the clang-tidy executable
+        codechecker (str): Path to the CodeChecker executable, used to point
+            CodeChecker at the pip wheel data files via CC_BIN_DIR.
     """
     new_env = os.environ.copy()
     for entry in env:
@@ -46,9 +82,22 @@ def build_env(env, log, clang, clang_tidy):
             fail(log, f"Environment entry is not KEY=VALUE: {entry}")
         key, value = entry.split("=", 1)
         new_env[key] = value
-    # Note: This is a workaround, CodeChecker requires the PATH to be set
-    if "PATH" not in new_env:
-        new_env["PATH"] = "/bin"
+    # CodeChecker re-invokes itself via a "#!/usr/bin/env python3" launcher, so
+    # python3 must be on PATH. Use the hermetic interpreter running this script.
+    interpreter_dir = os.path.dirname(os.path.realpath(sys.executable))
+    existing_path = new_env.get("PATH", "")
+    new_env["PATH"] = (
+        interpreter_dir + os.pathsep + existing_path
+        if existing_path
+        else interpreter_dir
+    )
+    # Point the pip-provided CodeChecker at its wheel data files. CodeChecker
+    # derives its data files directory from CC_BIN_DIR, which the Bazel pip
+    # layout does not provide out of the box.
+    if codechecker and "CC_BIN_DIR" not in new_env:
+        bin_dir = codechecker_bin_dir(codechecker)
+        if bin_dir:
+            new_env["CC_BIN_DIR"] = bin_dir
     if new_env.get("CC_ANALYZERS_FROM_PATH"):
         logging.debug("CC_ANALYZERS_FROM_PATH is set: use analyzers from PATH")
     elif new_env.get("CC_ANALYZER_BIN"):
@@ -150,7 +199,7 @@ def parse(
         clang_tidy (str): Path to the clang-tidy executable
     """
     stage("CodeChecker parse:")
-    env = build_env(env, log, clang, clang_tidy)
+    env = build_env(env, log, clang, clang_tidy, codechecker)
     logging.info("CodeChecker parse -e json")
     codechecker_parse = f"{codechecker} parse --config " f"{config} {input_dir}"
     # Save results to JSON file

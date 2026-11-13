@@ -17,18 +17,27 @@ Toolchain setup for python and CodeChecker
 Provide tools used by more rulesets.
 """
 
+def _parse_codechecker_version(repository_ctx):
+    """Read the pinned CodeChecker version from the pip requirements input.
+
+    CodeChecker is provided hermetically through pip (see MODULE.bazel and
+    //src/codechecker_pip), so the version is the one pinned there, not
+    whatever happens to be on PATH.
+    """
+    content = repository_ctx.read(
+        Label("//src/codechecker_pip:requirements.in"),
+    )
+    for line in content.splitlines():
+        line = line.strip()
+        if line.startswith("codechecker==") or line.startswith("CodeChecker=="):
+            return line.split("==", 1)[1].strip()
+    fail("Could not find a pinned 'codechecker==' entry in requirements.in")
+
 def _codechecker_local_repository_impl(repository_ctx):
-    codechecker_bin_path = repository_ctx.which("CodeChecker")
-    if not codechecker_bin_path:
-        fail("ERROR! CodeChecker is not detected")
-    result = repository_ctx.execute(["CodeChecker", "version", "-o", "json"])
-    if result.return_code != 0:
-        fail("Failed to query CodeChecker version")
-    version_output = result.stdout.strip()
-    full_version_data = json.decode(version_output)
-    codechecker_version = full_version_data.get("analyzer", {}).get("base_package_version")
-    if codechecker_version == None:
-        fail("CodeChecker version could not be parsed!")
+    # CodeChecker is acquired through pip (see //src/codechecker_pip), so it is
+    # no longer required on PATH. Only the clang tools are discovered here; the
+    # CodeChecker version comes from the pinned pip requirement.
+    codechecker_version = _parse_codechecker_version(repository_ctx)
     clang_bin_path = repository_ctx.which("clang")
     if not clang_bin_path:
         fail("ERROR! Clang is not detected")
@@ -36,8 +45,7 @@ def _codechecker_local_repository_impl(repository_ctx):
     if not clang_tidy_bin_path:
         fail("ERROR! Clang-tidy is not detected")
 
-    defs = "CODECHECKER_BIN_PATH = '{}'\n".format(codechecker_bin_path)
-    defs += "CLANG_BIN_PATH = '{}'\n".format(clang_bin_path)
+    defs = "CLANG_BIN_PATH = '{}'\n".format(clang_bin_path)
     defs += "CLANG_TIDY_BIN_PATH = '{}'\n".format(clang_tidy_bin_path)
     defs += "BAZEL_VERSION = '{}'\n".format(native.bazel_version)
     defs += "CODECHECKER_VERSION = '{}'\n".format(codechecker_version)
@@ -47,18 +55,12 @@ def _codechecker_local_repository_impl(repository_ctx):
         executable = False,
     )
 
-    repository_ctx.symlink(codechecker_bin_path, "codechecker_bin")
     repository_ctx.symlink(clang_bin_path, "clang_bin")
     repository_ctx.symlink(clang_tidy_bin_path, "clang_tidy_bin")
 
     repository_ctx.file(
         repository_ctx.path("BUILD"),
         content = """
-filegroup(
-    name = "CodeChecker",
-    srcs = ["codechecker_bin"],
-    visibility = ["//visibility:public"],
-)
 filegroup(
     name = "clang",
     srcs = ["clang_bin"],

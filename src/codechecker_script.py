@@ -62,8 +62,12 @@ def parse_args(argv=None):
     parser.add_argument("--severities", help="List of severities to fail on")
     args = parser.parse_args(argv)
 
-    # Tools are symlinks in the runfiles tree
-    args.codechecker = os.path.realpath(args.codechecker)
+    # clang and clang-tidy are symlinks in the runfiles tree, resolve them to
+    # the real executables. CodeChecker is a py_console_script_binary launcher
+    # that re-invokes itself (analyze, analyzers, parse ...) by its own path
+    # and needs its adjacent "<launcher>.runfiles" tree, so it must NOT be
+    # resolved through realpath, which would detach it from that tree.
+    args.codechecker = os.path.abspath(args.codechecker)
     if args.clang:
         args.clang = os.path.realpath(args.clang)
     if args.clang_tidy:
@@ -100,7 +104,8 @@ def prepare(codechecker_files):
 def analyze(args):
     """Run CodeChecker analyze command"""
     stage("CodeChecker analyze:")
-    env = build_env(args.env, args.log, args.clang, args.clang_tidy)
+    env = build_env(args.env, args.log, args.clang, args.clang_tidy,
+                    args.codechecker)
     output = execute(
         args.log,
         f"{args.codechecker} analyzers --details",

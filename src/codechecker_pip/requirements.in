@@ -1,0 +1,7 @@
+# Top level requirement for the hermetic, pip-provided CodeChecker.
+#
+# The fully pinned closure lives in requirements.txt, regenerate it with:
+#   bazel run //src/codechecker_pip:requirements.update
+#
+# See //src/codechecker_pip:BUILD (compile_pip_requirements).
+codechecker==6.27.3

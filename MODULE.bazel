@@ -44,6 +44,21 @@ codechecker_extension = use_extension(
 )
 use_repo(codechecker_extension, "default_codechecker_tools")
 
+# CodeChecker is fetched from PyPI so the default toolchain can provide it
+# hermetically, without requiring CodeChecker to be installed on PATH.
+# The pinned closure lives in //src/codechecker_pip:requirements.txt,
+# regenerate it with: bazel run //src/codechecker_pip:requirements.update
+codechecker_pip = use_extension(
+    "@rules_python//python/extensions:pip.bzl",
+    "pip",
+)
+codechecker_pip.parse(
+    hub_name = "codechecker_deps",
+    python_version = "3.11",
+    requirements_lock = "//src/codechecker_pip:requirements.txt",
+)
+use_repo(codechecker_pip, "codechecker_deps")
+
 # Pylint is fetched from PyPI, so that the linter version is pinned and
 # independent of the environment. It is only used by //test/pylint.
 pip = use_extension(

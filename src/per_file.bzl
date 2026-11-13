@@ -102,8 +102,7 @@ def _run_code_checker(
         # cluttering the data folder
         outputs = outputs + [codechecker_metadata],
         executable = per_file_script,
-        tools = [
-            info.runfiles,
+        tools = info.runfiles + [
             ctx.attr._per_file_script[DefaultInfo].files_to_run,
         ],
         arguments = [
@@ -263,8 +262,7 @@ def _per_file_impl(ctx):
         inputs = all_files + [config_file],
         outputs = [html_parse_dir, codechecker_parse_log, json_parse, txt_parse],
         executable = per_file_script,
-        tools = [
-            info.runfiles,
+        tools = info.runfiles + [
             ctx.attr._per_file_script[DefaultInfo].files_to_run,
         ],
         arguments = [
@@ -303,11 +301,10 @@ def _per_file_impl(ctx):
         is_executable = True,
     )
 
-    # Return test script and all required files
-    run_files = [
-        launcher,
-    ] + info.runfiles.to_list() + all_files
-    all_runfiles = ctx.runfiles(files = run_files)
+    # The analysis already ran in the build phase; "bazel test" only reads the
+    # produced result files (check_results), so the test runfiles carry the
+    # analysis outputs and the launcher, not the analysis tools themselves.
+    all_runfiles = ctx.runfiles(files = [launcher] + all_files)
 
     # Add runfiles from the py_binary target (for common.py etc.)
     all_runfiles = all_runfiles.merge(

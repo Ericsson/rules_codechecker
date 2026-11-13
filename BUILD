@@ -27,12 +27,14 @@ toolchain_type(
     visibility = ["//visibility:public"],
 )
 
-# Tools found on PATH, provisioned by the default_codechecker_tools extension
+# The clang tools are found on PATH, provisioned by the default_codechecker_tools
+# extension. CodeChecker itself is provided hermetically from PyPI by the pip
+# extension (see MODULE.bazel), so it does not need to be installed on PATH.
 codechecker_toolchain(
     name = "default_tools",
     clang_tidy = "@default_codechecker_tools//:clang_tidy",
     clangsa = "@default_codechecker_tools//:clang",
-    codechecker = "@default_codechecker_tools//:CodeChecker",
+    codechecker = "//src/codechecker_pip:CodeChecker",
 )
 
 toolchain(

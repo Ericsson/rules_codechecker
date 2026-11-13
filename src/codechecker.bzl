@@ -123,7 +123,7 @@ def _codechecker_impl(ctx):
 
     ctx.actions.run(
         inputs = depset(input_files),
-        tools = [info.runfiles, codechecker_script],
+        tools = info.runfiles + [codechecker_script],
         outputs = [codechecker_files, ctx.outputs.codechecker_log],
         executable = codechecker_script,
         arguments = [arguments],
@@ -242,12 +242,27 @@ def _codechecker_test_impl(ctx):
         is_executable = True,
     )
 
-    # Return test script and all required files
-    run_files = default_runfiles + [launcher] + info.runfiles.to_list()
-    all_runfiles = ctx.runfiles(files = run_files)
-
-    # Add runfiles from the py_binary target:
-    all_runfiles = all_runfiles.merge(ctx.attr._codechecker_script[DefaultInfo].default_runfiles)
+    # The analysis already ran in the build phase; "bazel test" only reads the
+    # produced result files (check_results), so the test runfiles carry the
+    # analysis outputs and the launcher, not the analysis tools themselves.
+    # The tools are still exposed so per-target toolchain selection stays
+    # observable in the test runfiles. info.runfiles mixes a FilesToRunProvider
+    # (the CodeChecker launcher) with depsets of plain tool files, so each
+    # element is merged in according to its type.
+    tool_runfiles = ctx.runfiles()
+    for entry in info.runfiles:
+        if type(entry) == "depset":
+            tool_runfiles = tool_runfiles.merge(
+                ctx.runfiles(transitive_files = entry),
+            )
+        else:
+            tool_runfiles = tool_runfiles.merge(
+                ctx.runfiles(files = [entry.executable]),
+            )
+    all_runfiles = ctx.runfiles(files = default_runfiles + [launcher]).merge_all([
+        tool_runfiles,
+        ctx.attr._codechecker_script[DefaultInfo].default_runfiles,
+    ])
     return [
         DefaultInfo(
             files = depset(all_files),

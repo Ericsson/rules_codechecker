@@ -165,9 +165,9 @@ def _get_codechecker_env(cfg: Config) -> dict[str, str]:
     Returns the environment for running CodeChecker
     """
     cc_env = os.environ.copy()
-    # Note: This is a workaround, CodeChecker requires the PATH to be set
     if "PATH" not in cc_env:
-        cc_env["PATH"] = "/bin"
+        # We only need the same python, codechecker was acquired with
+        cc_env["PATH"] = os.path.dirname(os.path.realpath(sys.executable))
     # Overwrite analyzer paths
     cc_env["CC_ANALYZER_BIN"] = cfg.analyzer_executables_env_var
     return cc_env

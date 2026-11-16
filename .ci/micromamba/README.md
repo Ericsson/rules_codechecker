@@ -11,8 +11,10 @@ Files
 
 File                        | Description
 --------------------------- | -----------
-.ci/micromamba/dev.yaml     | Conda environment specification with all dependencies
+.ci/micromamba/env.yaml     | Conda environment specification with all dependencies
+.ci/micromamba/ci.yaml      | Environment specification without a fixed Bazel version
 .ci/micromamba/init.sh      | Source this script to install micromamba and create environment
+.ci/micromamba/run_tests.sh | Script to create the environment and run the tests
 .ci/micromamba/uninstall.sh | Script to remove micromamba installation
 
 
@@ -28,7 +30,7 @@ source .ci/micromamba/init.sh
 
 This script automatically:
 - Downloads and installs micromamba to `.ci/micromamba/bin/`
-- Creates a conda environment from `dev.yaml`
+- Generates `envs/<name>.yaml` from `env.yaml` and creates a conda environment from it
 - Activates the environment
 
 > [!IMPORTANT]
@@ -40,7 +42,8 @@ For verbose output, use the `-v` or `-vv` flags:
 source .ci/micromamba/init.sh -v
 ```
 
-Alternatively you can run the `run_test.sh` script to handle both the environment and running of the tests.
+Alternatively you can run the `run_tests.sh` script to handle both the environment and running of the tests.
+It forwards its arguments to `init.sh`.
 
 ### After installation
 
@@ -70,5 +73,13 @@ To completely remove micromamba and all environments:
 ```bash
 bash .ci/micromamba/uninstall.sh
 ```
+
+The script first stops running `bazel`, `java`, `python3` and `CodeChecker`
+processes with `killall`, then deletes `bin/` and `micromamba/` (including all
+environments).
+
+> [!WARNING]
+> The `killall` call affects all processes with these names, including
+> unrelated ones that are not part of this repository.
 
 Then exit your shell session to complete the cleanup.

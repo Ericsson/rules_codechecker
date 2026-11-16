@@ -36,7 +36,7 @@ bash   .ci/micromamba/init.sh                  # only create, activate later
 ```
 
 See [.ci/micromamba/README.md](https://github.com/Ericsson/rules_codechecker/blob/main/.ci/micromamba/README.md)
-for the details, and `.ci/mise/README.md` for the Mise based alternative.
+for the details.
 
 Bazel auto-completion, once the environment is active:
 
@@ -50,11 +50,10 @@ source $(dirname $(realpath $(which bazel)))/bazel-complete.bash
 ```tree
 rules_codechecker/
 ├── .ci/
-│   ├── micromamba/                 Development and CI environment
-│   └── mise/                       Alternative dev environment
+│   └── micromamba/                 Development and CI environment
 ├── docs/                           This documentation
 ├── src/                            Implementation of the rules
-│   ├── BUILD                       Exports the python scripts
+│   ├── BUILD                       Python targets and clang-tidy flags
 │   ├── clang.bzl                   Clang-Tidy and Clang Analyzer rules
 │   ├── clang_ctu.bzl               Clang Analyzer with CTU (PoC)
 │   ├── codechecker.bzl             CodeChecker rules
@@ -62,15 +61,19 @@ rules_codechecker/
 │   ├── codechecker_script.py       Wrapper around CodeChecker
 │   ├── codechecker_toolchain.bzl   Toolchain rule and provider
 │   ├── common.bzl                  Helpers shared by the rules
+│   ├── common.py                   Python helpers shared by the scripts
 │   ├── compile_commands.bzl        Compilation database aspect
 │   ├── compile_commands_filter.py  Filters compile_commands.json
+│   ├── metadata_merge.py           Merges per-file metadata
 │   ├── per_file.bzl                CodeChecker analyze --file (PoC)
 │   ├── per_file_script.py          Wrapper around analyze --file
 │   └── tools.bzl                   Default tools and module extension
 ├── test/                           Tests for the rules
 │   ├── buildifier/                 Starlark linting
-│   ├── common/                     Test base classes and helpers
+│   ├── clang/                      Clang-Tidy and Clang Analyzer rule tests
 │   ├── foss/                       Rules on open source projects
+│   ├── legacy/                     Legacy tests of the CodeChecker rules
+│   ├── pylint/                     Pylint check of the repository
 │   └── unit/                       Unit tests
 ├── BUILD                           Toolchain type and default toolchain
 ├── MODULE.bazel                    Module and its dependencies
@@ -83,7 +86,6 @@ rules_codechecker/
 Run all of these inside the Micromamba environment before submitting:
 
 ```bash
-pylint .
 bazel test //...
 pytest test
 ```
@@ -97,16 +99,13 @@ Or let one script do the whole round:
 On how to run or add a new test, see
 [test/README.md](https://github.com/Ericsson/rules_codechecker/blob/main/test/README.md).
 
-Note that `test/unit/external_repository` is in `.bazelignore`, it consumes
-these rules as an external module and therefore runs through `pytest` only.
-It is the test that catches breakage visible to our users but not to us.
 
 
 ## Submitting a patch
 
 Fill out the pull request template: why the change is needed, what it does, and
 the issue it addresses. Keep the public API in mind: anything added to
-[defs.bzl](public-api) is a promise to our users, anything under `src/` is not.
+[defs.bzl](public-api.md) is a promise to our users, anything under `src/` is not.
 
 If you are a new contributor and the template is confusing, feel free to submit
 the pull request and we will help you iron it out.

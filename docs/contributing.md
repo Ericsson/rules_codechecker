@@ -71,6 +71,7 @@ rules_codechecker/
 │   ├── buildifier/                 Starlark linting
 │   ├── common/                     Test base classes and helpers
 │   ├── foss/                       Rules on open source projects
+│   ├── pycodestyle/                Pycodestyle bazel integration and test
 │   └── unit/                       Unit tests
 ├── BUILD                           Toolchain type and default toolchain
 ├── MODULE.bazel                    Module and its dependencies
@@ -84,9 +85,11 @@ Run all of these inside the Micromamba environment before submitting:
 
 ```bash
 pylint .
+pycodestyle . --config ./test/pycodestyle/setup.cfg
 bazel test //...
 pytest test
 ```
+Pylint are pycodestyle are also run via bazel tests!
 
 Or let one script do the whole round:
 

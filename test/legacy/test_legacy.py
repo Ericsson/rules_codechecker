@@ -82,6 +82,7 @@ class TestBase(unittest.TestCase):
                     return line
         self.fail(f"Could not find r'{regex}' in '{filename}'")
 
+
 class TestBasic(TestBase):
     """Basic tests"""
 

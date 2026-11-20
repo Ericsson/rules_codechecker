@@ -82,6 +82,7 @@ jobs:
         run: |
           bazel test //test/buildifier --test_output=all
           bazel test //test/pylint --test_output=all
+          bazel test //test/pycodestyle --test_output=all
         shell: bash -el {0}
 
       # Splitting test runs to: bazel unit tests, bazel foss tests, python unittests
@@ -157,6 +158,7 @@ jobs:
         run: |
           runuser -u test -- bazel test //test/buildifier --test_output=all
           runuser -u test -- bazel test //test/pylint --test_output=all
+          runuser -u test -- bazel test //test/pycodestyle --test_output=all
         shell: bash -el {0}
 
       # Splitting test runs to: bazel unit tests, bazel foss tests, python unittests

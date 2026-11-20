@@ -57,6 +57,12 @@ pip.parse(
     requirements_lock = "//test/pylint:requirements.txt",
 )
 use_repo(pip, "pylint_deps")
+pip.parse(
+    hub_name = "pycodestyle_deps",
+    python_version = "3.11",
+    requirements_lock = "//test/pycodestyle:requirements.txt",
+)
+use_repo(pip, "pycodestyle_deps")
 
 register_toolchains(
     "//:default_toolchain",

@@ -46,6 +46,7 @@ exports_files(
     ["MODULE.bazel"],
     visibility = [
         "//test/buildifier:__pkg__",
+        "//test/pycodestyle:__pkg__",
         "//test/pylint:__pkg__",
         "//test/unit/external_repository:__pkg__",
     ],

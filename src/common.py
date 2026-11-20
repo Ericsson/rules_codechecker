@@ -179,7 +179,7 @@ def check_results(output_dir, log, severities):
     Args:
         output_dir (str): Path to the output directory
         log (str): Path to the log file
-        severities (str): Comma separated list of defect severities 
+        severities (str): Comma separated list of defect severities
                           or checker names to fail on.
     """
     stage("Checking result:")

@@ -46,11 +46,11 @@ class TestPathResolve(unittest.TestCase):
             ): "test/unit/legacy/src/fail.cc",
             # This resolution is impossible,
             # because "test_inc" => "inc" cannot be resolved
-            #(
+            # (
             #    "/worker/build/28e82627f5078a2d"
             #    "/root/bazel-out/k8-fastbuild/bin/test/unit"
             #    "/virtual_include/_virtual_includes/test_inc/zeroDiv.h"
-            #): "test/unit/virtual_include/inc/zeroDiv.h",
+            # ): "test/unit/virtual_include/inc/zeroDiv.h",
         }
         test_on: Dict[str, str] = test_path_collection.copy()
         for before, res in test_on.items():

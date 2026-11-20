@@ -131,17 +131,18 @@ def parse_args(argv=None):
 COMPILE_COMMANDS_ABSOLUTE_SUFFIX = ".abs"
 
 EMPTY_PLIST = """<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" \
+                        "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>metadata</key>
-	<dict>
-		<key>generated_by</key>
-		<dict>
-			<key>name</key>
-			<string>CodeChecker</string>
-		</dict>
-	</dict>
+    <key>metadata</key>
+    <dict>
+        <key>generated_by</key>
+        <dict>
+            <key>name</key>
+            <string>CodeChecker</string>
+        </dict>
+    </dict>
 </dict>
 </plist>
 """

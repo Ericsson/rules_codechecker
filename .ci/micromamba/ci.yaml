@@ -8,8 +8,6 @@ channels:
 dependencies:
   - python=3.11
   - pytest
-  - pycodestyle
-  - buildifier
   - clang=21
   - clang-tools=21
   - bazel

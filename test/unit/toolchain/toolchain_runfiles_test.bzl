@@ -13,12 +13,13 @@
 # limitations under the License.
 
 """
-Analysis test verifying that codechecker_toolchain propagates data_runfiles
-of its tool targets into the `runfiles` depset of CodeCheckerInfo.
+Analysis test verifying that codechecker_toolchain propagates the runfiles of
+its tool targets (including data dependencies) into the `runfiles` of
+CodeCheckerInfo.
 
 The test wires mock executable tools (one with a data dependency) through
-codechecker_toolchain and asserts the data files appear in the resulting
-runfiles depset.
+codechecker_toolchain and asserts the tool executables and their data files
+appear in the runfiles the toolchain hands to the analysis actions.
 """
 
 load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts")
@@ -31,7 +32,7 @@ load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts")
 _RunfilesInfo = provider(
     doc = "Re-exports toolchain runfiles for test inspection.",
     fields = {
-        "basenames": "Sorted list of basenames of files in the runfiles depset.",
+        "basenames": "Sorted list of basenames of files in the runfiles.",
         "has_runfiles": "Whether the toolchain has a runfiles field.",
     },
 )
@@ -40,7 +41,17 @@ def _subject_impl(ctx):
     tc_info = ctx.attr.toolchain[platform_common.ToolchainInfo]
     info = tc_info.codecheckerinfo
 
-    basenames = sorted([f.basename for f in info.runfiles.to_list()])
+    # CodeCheckerInfo.runfiles is a list the analysis rules spread into the
+    # `tools` of ctx.actions.run: a FilesToRunProvider (the CodeChecker
+    # launcher) and a depset carrying every tool file. Collect the basenames
+    # of both to assert the tools and their data deps are propagated.
+    files = []
+    for entry in info.runfiles:
+        if type(entry) == "depset":
+            files += entry.to_list()
+        else:
+            files.append(entry.executable)
+    basenames = sorted([f.basename for f in files])
 
     return [_RunfilesInfo(basenames = basenames)]
 

@@ -41,6 +41,9 @@ def _codechecker_local_repository_impl(repository_ctx):
     defs += "CLANG_TIDY_BIN_PATH = '{}'\n".format(clang_tidy_bin_path)
     defs += "BAZEL_VERSION = '{}'\n".format(native.bazel_version)
     defs += "CODECHECKER_VERSION = '{}'\n".format(codechecker_version)
+    defs += "CODECHECKER_FALLBACK_PATH = '{}'\n".format(
+        repository_ctx.attr.fallback_path,
+    )
     repository_ctx.file(
         repository_ctx.path("defs.bzl"),
         content = defs,
@@ -74,18 +77,58 @@ filegroup(
     )
 
 default_codechecker_tools = repository_rule(
-    attrs = {},
+    attrs = {
+        "fallback_path": attr.string(
+            default = "/bin",
+            doc = "PATH written into the environment when it has none. The " +
+                  "analysis uses tools from outside of Bazel, so it cannot " +
+                  "run without a PATH. Until the tools are hermetic this " +
+                  "lets the rule take them from PATH as a temporary measure.",
+        ),
+    },
     local = True,
     doc = "Generate repository for default CodeChecker tools",
     implementation = _codechecker_local_repository_impl,
 )
 
-# buildifier: disable=unused-variable
-# This parameter is provided, regardless if we use it or not
-def register_default_codechecker_tools(ctx = None):
-    default_codechecker_tools(name = "default_codechecker_tools")
+# Tag class letting the root module configure the fallback PATH in MODULE.bazel:
+#
+#     codechecker_extension = use_extension(
+#         "@rules_codechecker//src:tools.bzl",
+#         "module_register_default_codechecker_tools",
+#     )
+#     codechecker_extension.fallback_path(path = "/your/path")
+_fallback_path_tag = tag_class(
+    attrs = {
+        "path": attr.string(
+            default = "/bin",
+            doc = "PATH written into the environment when it has none.",
+        ),
+    },
+)
+
+def register_default_codechecker_tools(module_ctx):
+    """Create the default CodeChecker tools repository.
+
+    The root module may set the fallback PATH with the fallback_path tag:
+    the last value wins, so the root module always overrides dependencies.
+
+    Args:
+        module_ctx: The module extension context.
+    """
+    fallback_path = "/bin"
+    for mod in module_ctx.modules:
+        for tag in mod.tags.fallback_path:
+            fallback_path = tag.path
+    default_codechecker_tools(
+        name = "default_codechecker_tools",
+        fallback_path = fallback_path,
+    )
 
 # Define the extension here
 module_register_default_codechecker_tools = module_extension(
     implementation = register_default_codechecker_tools,
+    tag_classes = {
+        "fallback_path": _fallback_path_tag,
+    },
 )
